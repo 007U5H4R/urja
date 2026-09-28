@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "verify": "pnpm typecheck && pnpm lint && pnpm test",
-    "eval": "tsx evals/run-ask-eval.ts"
+    "eval": "tsx evals/run-ask-eval.ts",
+    "check:bundle": "tsx scripts/check-bundle.ts"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
@@ -19,6 +20,7 @@
     "next": "16.3.6",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "server-only": "0.0.1",
     "tailwind-merge": "^3.7.0",
     "zod": "^4.6.5"
   },
