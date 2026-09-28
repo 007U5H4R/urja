@@ -3,47 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Morning brief · Urja</title>
-<link rel="stylesheet" href="urja.css">
-<style>
-  body { min-height: 100dvh; }
-  .m { max-width: 480px; margin: 0 auto; padding: 0 16px 120px; }
-  .m-top { display: flex; align-items: center; justify-content: space-between; height: 56px; }
-  .m-top .wordmark { font-size: 1.05rem; }
-  .lang { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px; }
-  .lang button { min-width: 44px; height: 32px; border-radius: 999px; font-size: var(--t-sm); color: var(--fg-muted); }
-  .lang button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
-  .greet { margin-top: 18px; font-size: 1.05rem; color: var(--fg-muted); }
-  .date { font-size: var(--t-sm); color: var(--fg-subtle); }
-  .earned { margin-top: 18px; }
-  .earned .lbl { font-size: var(--t-sm); color: var(--fg-muted); }
-  .earned .big { font-size: clamp(2.8rem, 10vw + 0.5rem, 3.6rem); font-weight: 600; letter-spacing: -0.03em; line-height: 1; font-stretch: 92%; }
-  .leak { margin-top: 10px; font-size: 1.12rem; font-weight: 560; }
-  .m-sec { margin-top: 30px; }
-  .m-sec h2 { font-size: 1.05rem; margin-bottom: 8px; }
-  .item { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; padding: 14px 0; border-top: 1px solid var(--line-soft); min-height: 44px; }
-  .item:last-of-type { border-bottom: 1px solid var(--line-soft); }
-  .item .txt { grid-column: 1 / -1; font-size: 1.02rem; line-height: 1.45; }
-  .item .amt { font-weight: 650; font-size: 1.05rem; }
-  .item .plate { justify-self: start; }
-  .item .foot { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; font-size: var(--t-sm); color: var(--fg-muted); }
-  .clean { margin-top: 14px; font-size: var(--t-sm); color: var(--fg-muted); }
-  .clean b { color: var(--gain); font-weight: 600; }
-  .month { margin-top: 26px; padding: 16px; border-radius: var(--r-lg); background: var(--surface-2); display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .month .k { font-size: var(--t-xs); color: var(--fg-muted); }
-  .month .v { font-size: 1.35rem; font-weight: 600; }
-  .dock { position: fixed; left: 0; right: 0; bottom: 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: var(--bg); border-top: 1px solid var(--line-soft); }
-  .dock form { max-width: 448px; margin: 0 auto; display: flex; gap: 8px; }
-  .dock input { flex: 1; height: 48px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-1); color: var(--fg); padding: 0 18px; font: inherit; }
-  .dock .btn { height: 48px; border-radius: 999px; padding: 0 18px; }
-</style>
+<title>सुबह का हिसाब · Urja</title>
+<link rel="stylesheet" href="lamp.css">
 </head>
-<body class="theme-light">
+<body class="hi">
 <div class="proto-banner">DESIGN PROTOTYPE — NOT PRODUCTION</div>
 <main class="m">
   <div class="m-top">
-    <span class="wordmark"><svg viewBox="0 0 26 26" aria-hidden="true"><rect width="26" height="26" rx="7" fill="var(--brand)"/><path d="M6.5 18a6.5 6.5 0 0 1 13 0" fill="none" stroke="var(--brand-ink)" stroke-width="2.2" stroke-linecap="round"/><path d="M13 18l4-6" stroke="var(--brand-ink)" stroke-width="2.2" stroke-linecap="round"/></svg>Urja</span>
-    <div class="lang" role="group" aria-label="Language">
+    <span class="wordmark"><span class="mark"><svg viewBox="0 0 26 26"><use href="#i-mark"/></svg></span>Urja</span>
+    <div class="lang" role="group" aria-label="Language / भाषा">
       <button data-set="hi" aria-pressed="true" lang="hi">हिं</button><button data-set="en" aria-pressed="false" lang="en">EN</button>
     </div>
   </div>
@@ -51,49 +19,61 @@
   <p class="greet" data-hi="सुप्रभात, शर्मा जी" data-en="Good morning, Sharma ji"></p>
   <p class="date" data-hi="सोमवार, 28 सितंबर · कल की 17 ट्रिप का हिसाब" data-en="Monday, 28 September · yesterday’s 17 trips reconciled"></p>
 
-  <section class="earned" aria-live="polite">
-    <p class="lbl" data-hi="कल की कमाई" data-en="Earned yesterday"></p>
-    <p class="big gain">₹1,86,400</p>
-    <p class="leak loss" data-hi="₹11,430 का हिसाब नहीं मिल रहा" data-en="₹11,430 doesn’t add up"></p>
+  <section class="panel earned" aria-live="polite">
+    <p class="lbl"><span data-hi="कल की कमाई" data-en="Earned yesterday"></span><span data-hi="पिछले 14 दिन" data-en="last 14 days"></span></p>
+    <p class="big">₹1,86,400</p>
+    <div class="chart" id="c-days" role="img" data-hi-label="पिछले 14 दिन की कमाई, कल की सबसे ऊँची में से एक" data-en-label="Profit over the last 14 days; yesterday was one of the highest"></div>
+    <p class="leak"><span class="lit-loss">₹11,430</span> <span data-hi="का हिसाब नहीं मिल रहा · 3 ट्रिप में" data-en="doesn’t add up · across 3 trips"></span></p>
   </section>
 
   <section class="m-sec">
     <h2 data-hi="इन 3 ट्रिप को देखें" data-en="Look at these 3 trips"></h2>
-    <a class="item" href="trip.html">
+    <a class="panel item first" href="trip.html">
       <span class="plate">RJ14 GB 4521</span><span class="amt loss">₹3,420</span>
       <span class="txt" data-hi="बहरोड़ के पास खड़े ट्रक में 38 L डीज़ल का हिसाब नहीं — रात 2:14 बजे" data-en="38 L diesel unaccounted while parked near Behror, 2:14 AM"></span>
-      <span class="foot"><span class="conf" data-level="3"><i><b></b><b></b><b></b></i><span data-hi="पक्का" data-en="High"></span></span><span data-hi="रमेश से अभी नहीं पूछा ›" data-en="Ramesh not asked yet ›"></span></span>
+      <span class="foot"><span class="conf" data-level="3"><i><b></b><b></b><b></b></i><span data-hi="पक्का" data-en="High"></span></span><span data-hi="रमेश से अभी नहीं पूछा" data-en="Ramesh not asked yet"></span><span class="go"><span data-hi="सबूत" data-en="Evidence"></span><svg class="i"><use href="#i-right"/></svg></span></span>
     </a>
-    <a class="item" href="trip.html">
+    <a class="panel item" href="trip.html">
       <span class="plate">RJ14 GA 1182</span><span class="amt loss">₹4,500</span>
       <span class="txt" data-hi="किशनगढ़ में बिल 250 L का, पर टंकी में सिर्फ़ 200 L बढ़ा" data-en="Fuel bill says 250 L, but the tank rose only 200 L — Kishangarh"></span>
-      <span class="foot"><span class="conf" data-level="2"><i><b></b><b></b><b></b></i><span data-hi="शायद" data-en="Likely"></span></span><span data-hi="विक्रम ने जवाब दिया — देखें ›" data-en="Vikram replied — review ›"></span></span>
+      <span class="foot"><span class="conf" data-level="2"><i><b></b><b></b><b></b></i><span data-hi="शायद" data-en="Likely"></span></span><span data-hi="विक्रम ने जवाब दिया" data-en="Vikram replied"></span><span class="go"><span data-hi="देखें" data-en="Review"></span><svg class="i"><use href="#i-right"/></svg></span></span>
     </a>
-    <a class="item" href="trip.html">
+    <a class="panel item" href="trip.html">
       <span class="plate">RJ14 GC 3309</span><span class="amt loss">₹3,510</span>
       <span class="txt" data-hi="भिवंडी ट्रिप में आम से 39 L ज़्यादा डीज़ल लगा" data-en="Used 39 L more diesel than usual on the Bhiwandi run"></span>
-      <span class="foot"><span class="conf" data-level="1"><i><b></b><b></b><b></b></i><span data-hi="जाँचें" data-en="Check"></span></span><span data-hi="अनिल से अभी नहीं पूछा ›" data-en="Anil not asked yet ›"></span></span>
+      <span class="foot"><span class="conf" data-level="1"><i><b></b><b></b><b></b></i><span data-hi="जाँचें" data-en="Check"></span></span><span data-hi="अनिल से अभी नहीं पूछा" data-en="Anil not asked yet"></span><span class="go"><span data-hi="सबूत" data-en="Evidence"></span><svg class="i"><use href="#i-right"/></svg></span></span>
     </a>
-    <p class="clean" data-hi="✓ बाकी <b>14 ट्रिप</b> का हिसाब ठीक है — डीज़ल, टोल और किलोमीटर सब मेल खाते हैं।" data-en="✓ The other <b>14 trips</b> add up — diesel, tolls and km all match."></p>
+    <p class="clean"><svg class="i"><use href="#i-check"/></svg><span data-hi="बाकी <b>14 ट्रिप</b> का हिसाब ठीक है — डीज़ल, टोल और किलोमीटर सब मेल खाते हैं।" data-en="The other <b>14 trips</b> add up — diesel, tolls and km all match."></span></p>
   </section>
 
-  <section class="month" aria-label="September so far">
-    <div><p class="k" data-hi="सितंबर में पकड़ा" data-en="Flagged in September"></p><p class="v">₹58,240</p></div>
-    <div><p class="k" data-hi="वापस मिला" data-en="Recovered"></p><p class="v gain">₹21,600</p></div>
+  <section class="panel monthcard" aria-label="September so far">
+    <div class="two">
+      <div><p class="k" data-hi="सितंबर में पकड़ा" data-en="Flagged in September"></p><p class="v">₹58,240</p></div>
+      <div><p class="k" data-hi="वापस मिला" data-en="Recovered"></p><p class="v lit">₹21,600</p></div>
+    </div>
+    <div class="chart" id="c-weeks" role="img" data-hi-label="हफ़्तेवार: पकड़ा और वापस मिला" data-en-label="Flagged and recovered, week by week"></div>
+    <p class="cap" data-hi="हर ब्लॉक ≈ ₹1,000 · चमकीले = वापस मिला" data-en="Each block ≈ ₹1,000 · lit = recovered"></p>
   </section>
 </main>
 
 <div class="dock">
-  <form onsubmit="return false"><label for="q" style="position:absolute;left:-9999px">Ask Urja</label><input id="q" data-ph-hi="कुछ भी पूछें, हिंदी या English में…" data-ph-en="Ask anything, in Hindi or English…"><button class="btn btn-primary" data-hi="पूछें" data-en="Ask"></button></form>
+  <form class="glass" onsubmit="return false"><label for="q" class="sr" data-hi="Urja से पूछें" data-en="Ask Urja"></label><input id="q" data-ph-hi="कुछ भी पूछें, हिंदी या English में…" data-ph-en="Ask anything, in Hindi or English…"><button class="btn btn-lamp" data-hi="पूछें" data-en="Ask"></button></form>
 </div>
 
+<script src="icons.js"></script>
+<script src="charts.js"></script>
 <script>
+  const days = [1.42, 1.61, 0.98, 1.77, 1.55, 1.30, 1.88, 1.49, 1.66, 1.21, 1.948, 1.58, 1.72, 1.864];
+  bars('#c-days', { values: days, max: 2.1, stripes: true, kind: (i) => (i === 13 ? 'hot' : 'dim') });
+  bricks('#c-weeks', { cols: [{ n: 9, lit: 6 }, { n: 14, lit: 8 }, { n: 12, lit: 5 }, { n: 23, lit: 2 }], labels: ['1–7', '8–14', '15–21', '22–27'] });
   function setLang(l) {
     document.documentElement.lang = l;
     document.querySelectorAll('[data-hi]').forEach((el) => { el.innerHTML = el.dataset[l]; });
     document.querySelectorAll('[data-ph-hi]').forEach((el) => { el.placeholder = el.dataset['ph' + l[0].toUpperCase() + l.slice(1)]; });
+    document.querySelectorAll('[data-hi-label]').forEach((el) => el.setAttribute('aria-label', el.dataset[l + 'Label']));
     document.querySelectorAll('.lang button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.set === l));
     document.body.classList.toggle('hi', l === 'hi');
+    document.title = l === 'hi' ? 'सुबह का हिसाब · Urja' : 'Morning brief · Urja';
   }
   document.querySelectorAll('.lang button').forEach((b) => b.onclick = () => setLang(b.dataset.set));
   setLang(new URLSearchParams(location.search).get('lang') || 'hi');

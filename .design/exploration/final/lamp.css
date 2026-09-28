@@ -79,7 +79,7 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
   background: var(--surface-1); border: 1px solid var(--line-soft); color: var(--fg-subtle); font-size: var(--t-sm); }
 .askbar:hover { border-color: var(--line); color: var(--fg-muted); }
 .askbar .kbd { margin-left: auto; }
-.kbd { font-size: 11.5px; padding: 1px 6px; border-radius: 5px; background: var(--surface-3); color: var(--fg-muted); font-weight: 500; }
+.kbd { font-size: 12px; padding: 1px 6px; border-radius: 5px; background: var(--surface-3); color: var(--fg-muted); font-weight: 500; }
 .navpills { display: flex; gap: 6px; margin: 0 auto; }
 .pill { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border-radius: var(--r-md);
   background: var(--surface-1); border: 1px solid var(--line-soft); color: var(--fg-muted); font-size: var(--t-sm); font-weight: 500; white-space: nowrap; }
@@ -262,7 +262,7 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: var(--t-sm); }
 .tbl tbody tr:hover td { background: oklch(0.212 0.006 60 / .45); }
 .tbl .r { text-align: right; }
 .tbl .rank { width: 44px; }
-.tbl .rk { width: 26px; height: 26px; border-radius: 50%; display: inline-grid; place-items: center; font-size: 11.5px; background: var(--surface-2); color: var(--fg-muted); }
+.tbl .rk { width: 26px; height: 26px; border-radius: 50%; display: inline-grid; place-items: center; font-size: 12px; background: var(--surface-2); color: var(--fg-muted); }
 .tbl .rk.top { color: var(--lamp-ink); background-color: var(--lamp); background-image: linear-gradient(150deg, var(--cream), var(--lamp)); box-shadow: 0 0 14px var(--glow); }
 .tbl .rk.low { color: var(--loss); background: var(--loss-bg); }
 .tbl .gap td { text-align: center; color: var(--fg-subtle); font-size: var(--t-xs); padding: 8px; }
@@ -284,7 +284,7 @@ body.ask-open .drawer { transform: none; }
 .q { justify-self: end; max-width: 88%; background: var(--surface-2); border: 1px solid var(--line-soft); padding: 10px 14px; border-radius: 14px 14px 4px 14px; font-size: var(--t-sm); }
 .a { font-size: var(--t-sm); line-height: 1.6; display: grid; gap: 10px; }
 .a ol { padding-left: 18px; display: grid; gap: 4px; }
-.cite { display: inline-flex; align-items: center; height: 22px; padding: 0 7px; margin-left: 4px; border-radius: 5px; font-size: 11.5px; background: var(--surface-3); color: var(--cream); border: 1px solid var(--lamp-line); }
+.cite { display: inline-flex; align-items: center; height: 22px; padding: 0 7px; margin-left: 4px; border-radius: 5px; font-size: 12px; background: var(--surface-3); color: var(--cream); border: 1px solid var(--lamp-line); }
 .prov { font-size: var(--t-xs); color: var(--fg-subtle); border-top: 1px solid var(--line-soft); padding-top: 10px; }
 .sugg { display: flex; flex-wrap: wrap; gap: 8px; }
 .sugg button { font-size: var(--t-xs); padding: 7px 10px; border-radius: 8px; background: var(--surface-1); border: 1px solid var(--line-soft); color: var(--fg-muted); text-align: left; }
@@ -385,7 +385,7 @@ body.ask-open .drawer { transform: none; }
 .evidence { list-style: none; padding: 0; display: grid; gap: 11px; }
 .evidence li { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 10px; align-items: start; font-size: var(--t-sm); }
 .evidence li svg { color: var(--fg-muted); margin-top: 2px; }
-.evidence .src { font-size: 11.5px; color: var(--fg-subtle); background: var(--surface-2); border-radius: 5px; padding: 1px 7px; white-space: nowrap; }
+.evidence .src { font-size: 12px; color: var(--fg-subtle); background: var(--surface-2); border-radius: 5px; padding: 1px 7px; white-space: nowrap; }
 .flagcard .why { margin-top: 14px; font-size: var(--t-sm); color: var(--fg-muted); }
 .flagcard .why b { color: var(--fg); font-weight: 520; }
 .drv { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
@@ -514,11 +514,11 @@ body.ask-open .drawer { transform: none; }
 }
 
 /* ---------- 3D scene in the hero card (user-requested delighter; poster fallback) ---------- */
-.scene { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; display: none; background: #0b0a09; }
-.mapcard.is-scene .scene { display: block; }
+.truck3d { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; display: none; background: #0b0a09; }
+.mapcard.is-scene .truck3d { display: block; }
 .mapcard.is-scene .map, .mapcard.is-scene .pool { visibility: hidden; }
-.scene canvas { display: block; width: 100% !important; height: 100% !important; }
-.scene.fallback { background: #0b0a09 url(assets/truck-scene.png) center / cover no-repeat; }
+.truck3d canvas { display: block; width: 100% !important; height: 100% !important; }
+.truck3d.fallback { background: #0b0a09 url(assets/truck-scene.png) center / cover no-repeat; }
 .scene-tag { position: absolute; left: 0; top: 0; display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; font-size: var(--t-xs); color: var(--fg-muted); white-space: nowrap; pointer-events: none; z-index: 2; }
 .scene-tag::after { content: ""; position: absolute; left: 50%; bottom: -26px; width: 1px; height: 26px; background: linear-gradient(var(--line), transparent); }
 .scene-tag .plate { align-self: flex-start; height: 20px; font-size: .78rem; }
@@ -526,7 +526,7 @@ body.ask-open .drawer { transform: none; }
 @media (max-width: 760px) { .scene-tag { display: none; } }
 @media (max-width: 760px) { .maplegend { top: 54px; bottom: auto; } }
 /* the poster shows immediately (loading), stays if WebGL is weak or fails; the live scene covers it when ready */
-.scene { background: #0b0a09 url(assets/truck-scene.png) 30% center / cover no-repeat; }
-.scene:not(.ready) .scene-tag { display: none; }
+.truck3d { background: #0b0a09 url(assets/truck-scene.png) 30% center / cover no-repeat; }
+.truck3d:not(.ready) .scene-tag { display: none; }
 
 .scene-tag small { font-size: var(--t-xs); color: var(--fg-subtle); }

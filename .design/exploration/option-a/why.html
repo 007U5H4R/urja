@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Why Urja · a concept for Bytebeam</title>
+<link rel="stylesheet" href="urja.css">
+<style>
+  .essay { max-width: 1080px; margin: 0 auto; padding: 0 clamp(16px, 3vw, 32px) 96px; }
+  .w-hero { padding: 72px 0 48px; border-bottom: 1px solid var(--line-soft); }
+  .w-hero .by { font-size: var(--t-sm); color: var(--fg-muted); margin-bottom: 18px; }
+  .w-hero h1 { font-size: clamp(2.2rem, 1.2rem + 3.4vw, 4.2rem); line-height: 1.04; letter-spacing: -0.03em; font-weight: 560; max-width: 18ch; }
+  .w-hero h1 em { font-style: normal; color: var(--brand); }
+  .w-hero .lede { margin-top: 22px; font-size: 1.2rem; color: var(--fg-muted); max-width: 58ch; }
+  .w-hero .actions { display: flex; gap: 10px; margin-top: 28px; flex-wrap: wrap; }
+  .chap { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 32px; padding: 48px 0; border-bottom: 1px solid var(--line-soft); }
+  .chap .n { font-size: var(--t-sm); color: var(--fg-subtle); padding-top: 6px; }
+  .chap h2 { font-size: clamp(1.5rem, 1.1rem + 1.2vw, 2.1rem); line-height: 1.15; letter-spacing: -0.02em; font-weight: 560; max-width: 26ch; }
+  .chap .body { max-width: 68ch; }
+  .chap .body > p { margin-top: 14px; color: var(--fg-muted); font-size: 1.05rem; }
+  .quote { margin-top: 20px; position: relative; padding-left: 1.4em; }
+  .quote::before { content: "“"; position: absolute; left: 0; top: -0.18em; font-size: 2.6rem; line-height: 1; color: var(--brand); }
+  .quote p { font-size: 1.25rem; line-height: 1.45; }
+  .quote small { display: block; color: var(--fg-subtle); margin-top: 6px; font-size: var(--t-xs); }
+  .assume { font-size: var(--t-xs); color: oklch(0.8 0.12 300); margin-top: 8px; }
+  table.cmp { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: var(--t-sm); }
+  table.cmp th, table.cmp td { text-align: left; padding: 10px 10px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  table.cmp th { color: var(--fg-subtle); font-weight: 500; }
+  table.cmp td:first-child { font-weight: 560; white-space: nowrap; }
+  table.cmp tr.us td { background: var(--surface-1); }
+  .pipe { margin-top: 22px; display: grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap: 8px; }
+  .pipe div { border: 1px solid var(--line); border-radius: var(--r-md); padding: 12px; font-size: var(--t-sm); position: relative; }
+  .pipe div small { display: block; font-size: var(--t-xs); color: var(--fg-subtle); margin-top: 4px; }
+  .pipe .new { border-color: var(--brand); background: oklch(0.8 0.155 72 / .08); }
+  .pipe .tagx { font-size: var(--t-xs); color: var(--fg-subtle); }
+  .pipe .new .tagx { color: var(--brand); }
+  .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
+  .metric { border: 1px solid var(--line-soft); border-radius: var(--r-lg); padding: 18px; background: var(--surface-1); }
+  .metric .k { font-size: var(--t-xs); color: var(--fg-subtle); }
+  .metric h3 { font-size: 1.2rem; margin: 6px 0 8px; }
+  .metric p { font-size: var(--t-sm); color: var(--fg-muted); }
+  .plan { list-style: none; padding: 0; margin-top: 18px; display: grid; gap: 14px; }
+  .plan li { display: grid; grid-template-columns: 90px 1fr; gap: 16px; }
+  .plan b { color: var(--brand); font-weight: 600; }
+  .plan p { color: var(--fg-muted); font-size: var(--t-sm); }
+  @media (max-width: 860px) {
+    .chap { grid-template-columns: 1fr; gap: 10px; padding: 36px 0; }
+    .pipe { grid-template-columns: 1fr 1fr; }
+    .metrics { grid-template-columns: 1fr; }
+    table.cmp .hide-sm { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="proto-banner">DESIGN PROTOTYPE — NOT PRODUCTION</div>
+<header class="topbar">
+  <div class="wrap">
+    <a class="wordmark" href="index.html"><svg viewBox="0 0 26 26" aria-hidden="true"><rect width="26" height="26" rx="7" fill="var(--brand)"/><path d="M6.5 18a6.5 6.5 0 0 1 13 0" fill="none" stroke="var(--brand-ink)" stroke-width="2.2" stroke-linecap="round"/><path d="M13 18l4-6" stroke="var(--brand-ink)" stroke-width="2.2" stroke-linecap="round"/></svg>Urja</a>
+    <nav class="nav" aria-label="Main"><a href="index.html">Today</a><a href="index.html#trucks">Trucks</a><a href="trip.html">Trips</a><a href="why.html" aria-current="page">Why Urja</a></nav>
+    <div class="spacer"></div>
+    <details class="m-menu"><summary class="btn btn-ghost">Menu</summary><nav aria-label="Main (mobile)"><a href="brief.html">Morning brief</a><a href="index.html">Today</a><a href="index.html#trucks">Trucks</a><a href="trip.html">Trips</a><a href="why.html">Why Urja</a></nav></details>
+    <a class="btn btn-ghost" href="message.html">Start the demo</a>
+  </div>
+</header>
+
+<main class="essay">
+  <section class="w-hero">
+    <p class="by">A concept for Bytebeam · Tushar Pathak · September 2026</p>
+    <h1>Fleet owners learn where their money leaked at month end. <em>Urja tells them the next morning.</em></h1>
+    <p class="lede">Urja is an AI munshi for Indian truck owners. It reconciles every trip’s diesel, tolls and kilometres from data Bytebeam-class devices already send, and explains each rupee that doesn’t add up — in Hindi or English, on WhatsApp, with the driver’s side attached.</p>
+    <div class="actions"><a class="btn btn-primary" href="message.html">See the 7 AM brief</a><a class="btn btn-ghost" href="trip.html">Open a flagged trip</a></div>
+  </section>
+
+  <section class="chap">
+    <p class="n">01 · What I heard</p>
+    <div class="body">
+      <h2>I’m new to trucking, so I went and asked.</h2>
+      <div class="quote"><p>[Field quote 1 — from conversations by 1 Oct]</p><small>[Role, fleet size, city]</small></div>
+      <p class="assume">ASSUMPTION: quotes are placeholders until the field conversations happen. None will be invented.</p>
+      <p>What vendor research says, to be tested against the field: fuel is 35–45% of a truck’s operating cost, and industry blogs claim 15–20% of fuel spend is lost to theft or bill fraud. Those numbers are directional, not proven.</p>
+    </div>
+  </section>
+
+  <section class="chap">
+    <p class="n">02 · The owner</p>
+    <div class="body">
+      <h2>10 to 100 trucks, run from a phone.</h2>
+      <p>The owner doesn’t sit in a control room. They think in rupees per trip, live on WhatsApp, and often prefer Hindi. Today a munshi reconciles trips by hand from paper slips, days late. Every competitor built a dashboard for an enterprise fleet manager. Nobody built for this person.</p>
+    </div>
+  </section>
+
+  <section class="chap">
+    <p class="n">03 · Why not another dashboard</p>
+    <div class="body">
+      <h2>The market has tools. The owner still finds out too late.</h2>
+      <table class="cmp">
+        <thead><tr><th></th><th>What it does well</th><th class="hide-sm">What the small-fleet owner still lacks</th></tr></thead>
+        <tbody>
+          <tr><td>Fleetx</td><td>Fuel-sensor theft alerts, FASTag, trip P&amp;L, TMS</td><td class="hide-sm">Needs an extra fuel sensor; built around a dashboard</td></tr>
+          <tr><td>Intangles</td><td>Predictive maintenance, digital twin</td><td class="hide-sm">Answers “will it break?”, not “where did my money go?”</td></tr>
+          <tr><td>LocoNav</td><td>GPS, video telematics, driver scorecards</td><td class="hide-sm">Scores drivers without asking their side</td></tr>
+          <tr><td>Samsara</td><td>AI agents and daily fleet summaries (US)</td><td class="hide-sm">Not built for Indian roads, Hindi, or FASTag</td></tr>
+          <tr class="us"><td>Urja</td><td>One morning answer in rupees, with evidence and the driver’s side</td><td class="hide-sm">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="chap">
+    <p class="n">04 · Built on Bytebeam</p>
+    <div class="body">
+      <h2>Most of the stack already exists. The new part is the reconciliation.</h2>
+      <div class="pipe" role="list">
+        <div role="listitem"><span class="tagx">exists</span><br>CAN / DBC parsers<small>fuel level, odometer</small></div>
+        <div role="listitem"><span class="tagx">exists</span><br>Streams<small>30-second telemetry</small></div>
+        <div role="listitem"><span class="tagx">exists</span><br>Geofences<small>pumps, plazas, yards</small></div>
+        <div role="listitem" class="new"><span class="tagx">new</span><br>Leakage rules<small>5 rules + confidence</small></div>
+        <div role="listitem" class="new"><span class="tagx">new</span><br>Brief + Ask Urja<small>Hindi / English</small></div>
+        <div role="listitem"><span class="tagx">exists</span><br>WhatsApp alerts<small>delivery at 7 AM</small></div>
+      </div>
+      <p>No new hardware: fuel level comes from the vehicle’s CAN bus, and FASTag records come from the toll statement.</p>
+    </div>
+  </section>
+
+  <section class="chap">
+    <p class="n">05 · How we’ll know</p>
+    <div class="body">
+      <h2>One metric that proves the promise, one guardrail for when it works too well.</h2>
+      <div class="metrics">
+        <div class="metric"><p class="k">Success metric</p><h3>₹ recovered per truck per month</h3><p>Leading signals: share of mornings the owner opens the brief; share of flags acted on within 24 hours.</p></div>
+        <div class="metric"><p class="k">Guardrail</p><h3>False-accusation rate under 10%</h3><p>Flags the driver disputes and the owner accepts as innocent. If Urja works too well, owners blame drivers for sensor glitches and good drivers leave. Watch driver 90-day retention too.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="chap">
+    <p class="n">06 · First 90 days</p>
+    <div class="body">
+      <h2>What I’d do if I joined.</h2>
+      <ol class="plan">
+        <li><b>Days 1–30</b><p>Sit with 15 fleet owners and their munshis in Jaipur, Kishangarh and Delhi transport hubs. Map how a trip is reconciled today, and what they do when diesel goes missing.</p></li>
+        <li><b>Days 31–60</b><p>Pilot the five rules on 3 fleets’ real CAN data. Measure the false-flag rate before any owner sees a flag.</p></li>
+        <li><b>Days 61–90</b><p>Ship the WhatsApp brief to the pilot owners. Go or no-go on ₹ recovered per truck and the guardrail.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="chap">
+    <p class="n">07 · About this prototype</p>
+    <div class="body">
+      <h2>What’s real here and what isn’t.</h2>
+      <p>Sharma Roadlines is fictional, and its 24 trucks and 30 days of trips are simulated. The leakage rules really run on that data, every rupee on screen is computed, and Ask Urja is a live model answering only from it. Nothing here is a Bytebeam product.</p>
+    </div>
+  </section>
+</main>
+</body>
+</html>

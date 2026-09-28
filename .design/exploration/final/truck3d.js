@@ -169,7 +169,7 @@ window.truckScene = async function truckScene(el, opts = {}) {
 
   // ---------- tag anchored to the truck (DOM, so it stays text) ----------
   const tag = el.querySelector('.scene-tag');
-  const anchor = new THREE.Vector3(-2.6, 5.4, 11);
+  const anchor = new THREE.Vector3(-2.6, 4.2, 11);
   const placeTag = () => { if (!tag) return; const v = anchor.clone().project(camera); tag.style.transform = `translate(${((v.x + 1) / 2) * W()}px, ${((1 - v.y) / 2) * H()}px) translate(-50%, -100%)`; };
 
   // ---------- loop (render only while visible) ----------

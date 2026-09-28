@@ -4,154 +4,256 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Why Urja · a concept for Bytebeam</title>
-<link rel="stylesheet" href="urja.css">
+<link rel="stylesheet" href="lamp.css">
 <style>
-  .essay { max-width: 1080px; margin: 0 auto; padding: 0 clamp(16px, 3vw, 32px) 96px; }
-  .w-hero { padding: 72px 0 48px; border-bottom: 1px solid var(--line-soft); }
-  .w-hero .by { font-size: var(--t-sm); color: var(--fg-muted); margin-bottom: 18px; }
-  .w-hero h1 { font-size: clamp(2.2rem, 1.2rem + 3.4vw, 4.2rem); line-height: 1.04; letter-spacing: -0.03em; font-weight: 560; max-width: 18ch; }
-  .w-hero h1 em { font-style: normal; color: var(--brand); }
-  .w-hero .lede { margin-top: 22px; font-size: 1.2rem; color: var(--fg-muted); max-width: 58ch; }
-  .w-hero .actions { display: flex; gap: 10px; margin-top: 28px; flex-wrap: wrap; }
-  .chap { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 32px; padding: 48px 0; border-bottom: 1px solid var(--line-soft); }
-  .chap .n { font-size: var(--t-sm); color: var(--fg-subtle); padding-top: 6px; }
-  .chap h2 { font-size: clamp(1.5rem, 1.1rem + 1.2vw, 2.1rem); line-height: 1.15; letter-spacing: -0.02em; font-weight: 560; max-width: 26ch; }
-  .chap .body { max-width: 68ch; }
-  .chap .body > p { margin-top: 14px; color: var(--fg-muted); font-size: 1.05rem; }
-  .quote { margin-top: 20px; position: relative; padding-left: 1.4em; }
-  .quote::before { content: "“"; position: absolute; left: 0; top: -0.18em; font-size: 2.6rem; line-height: 1; color: var(--brand); }
-  .quote p { font-size: 1.25rem; line-height: 1.45; }
-  .quote small { display: block; color: var(--fg-subtle); margin-top: 6px; font-size: var(--t-xs); }
-  .assume { font-size: var(--t-xs); color: oklch(0.8 0.12 300); margin-top: 8px; }
-  table.cmp { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: var(--t-sm); }
-  table.cmp th, table.cmp td { text-align: left; padding: 10px 10px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
-  table.cmp th { color: var(--fg-subtle); font-weight: 500; }
-  table.cmp td:first-child { font-weight: 560; white-space: nowrap; }
-  table.cmp tr.us td { background: var(--surface-1); }
-  .pipe { margin-top: 22px; display: grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap: 8px; }
-  .pipe div { border: 1px solid var(--line); border-radius: var(--r-md); padding: 12px; font-size: var(--t-sm); position: relative; }
-  .pipe div small { display: block; font-size: var(--t-xs); color: var(--fg-subtle); margin-top: 4px; }
-  .pipe .new { border-color: var(--brand); background: oklch(0.8 0.155 72 / .08); }
-  .pipe .tagx { font-size: var(--t-xs); color: var(--fg-subtle); }
-  .pipe .new .tagx { color: var(--brand); }
-  .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
-  .metric { border: 1px solid var(--line-soft); border-radius: var(--r-lg); padding: 18px; background: var(--surface-1); }
-  .metric .k { font-size: var(--t-xs); color: var(--fg-subtle); }
-  .metric h3 { font-size: 1.2rem; margin: 6px 0 8px; }
-  .metric p { font-size: var(--t-sm); color: var(--fg-muted); }
-  .plan { list-style: none; padding: 0; margin-top: 18px; display: grid; gap: 14px; }
-  .plan li { display: grid; grid-template-columns: 90px 1fr; gap: 16px; }
-  .plan b { color: var(--brand); font-weight: 600; }
-  .plan p { color: var(--fg-muted); font-size: var(--t-sm); }
-  @media (max-width: 860px) {
-    .chap { grid-template-columns: 1fr; gap: 10px; padding: 36px 0; }
-    .pipe { grid-template-columns: 1fr 1fr; }
-    .metrics { grid-template-columns: 1fr; }
-    table.cmp .hide-sm { display: none; }
+  /* Page styles for the Why Urja essay; tokens and components come from lamp.css. */
+  .essay { max-width: 1120px; margin: 0 auto; padding: 0 clamp(16px, 3vw, 32px) 104px; }
+  .topbar .btn { flex: none; }
+
+  /* small label above every big title (case-study treatment) */
+  .kicker { display: flex; align-items: center; gap: 10px; font-size: var(--t-xs); font-weight: 520; letter-spacing: .12em; text-transform: uppercase; color: var(--fg-muted); }
+  .kicker::before { content: ""; width: 18px; height: 2px; border-radius: 2px; flex: none; background: linear-gradient(90deg, var(--lamp-deep), var(--cream)); box-shadow: 0 0 10px var(--glow); }
+  .kicker b { color: var(--lamp); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  /* hero */
+  .w-hero { padding: clamp(40px, 6vw, 80px) 0 0; }
+  .w-hero .kicker { text-transform: none; letter-spacing: .01em; font-size: var(--t-sm); font-weight: 450; }
+  .w-hero h1 { margin-top: 22px; font-size: clamp(2.3rem, 1.1rem + 4vw, 4.75rem); line-height: 1.02; letter-spacing: -0.038em; font-weight: 300; max-width: 17ch; text-wrap: balance; }
+  .w-hero h1 em { font-style: normal; }
+  .w-hero .lede { margin-top: 26px; font-size: clamp(1.05rem, .98rem + .3vw, 1.22rem); line-height: 1.55; color: var(--fg-muted); max-width: 60ch; }
+  .w-hero .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
+
+  /* 16:9 slot for assets/truck-scene.png; the lamplit panel holds the layout until the render exists */
+  .w-scene { position: relative; margin: clamp(36px, 5vw, 56px) 0 0; aspect-ratio: 16 / 9; border-radius: var(--r-xl); overflow: hidden; border: 1px solid var(--line-soft);
+    background:
+      radial-gradient(46% 62% at 28% 18%, oklch(0.705 0.166 53 / .30), transparent 72%),
+      radial-gradient(34% 42% at 78% 70%, oklch(0.705 0.166 53 / .09), transparent 70%),
+      linear-gradient(180deg, oklch(0.175 0.008 60) 0%, oklch(0.120 0.004 60) 64%, oklch(0.100 0.003 60) 100%); }
+  .w-scene svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .w-scene img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  /* chapters */
+  .chap { padding-top: clamp(64px, 8vw, 112px); }
+  .chap h2 { margin-top: 18px; font-size: clamp(2rem, 1.15rem + 3vw, 3.5rem); line-height: 1.06; letter-spacing: -0.034em; font-weight: 300; max-width: 22ch; text-wrap: balance;
+    text-shadow: 0 0 34px oklch(0.705 0.166 53 / .32), 0 0 90px oklch(0.705 0.166 53 / .16); }
+  .chap .body { margin-top: 24px; max-width: 68ch; }
+  .chap .body > p { color: var(--fg-muted); font-size: 1.05rem; line-height: 1.62; }
+  .chap .body > * + p { margin-top: 14px; }
+
+  /* 01 · placeholder quote: hatched and dashed, like days that haven't happened yet */
+  .quote { margin: 4px 0 0; padding: 18px 22px 20px; border-radius: var(--r-lg); border: 1px dashed var(--line);
+    background: repeating-linear-gradient(135deg, oklch(1 0 0 / .03) 0 1px, transparent 1px 8px), var(--surface-1); }
+  .quote blockquote { margin: 14px 0 0; }
+  .quote blockquote p { font-size: clamp(1.2rem, 1.05rem + .6vw, 1.5rem); line-height: 1.4; font-weight: 350; color: var(--fg-muted); }
+  .quote blockquote p::before { content: "“"; color: var(--lamp); margin-right: .06em; }
+  .quote figcaption { margin-top: 10px; font-size: var(--t-sm); color: var(--fg-muted); }
+  .assume { margin-top: 12px; font-size: var(--t-sm); color: var(--fg-muted); }
+  .assume b { color: var(--cream); font-weight: 560; letter-spacing: .02em; }
+
+  /* 03 · the market */
+  .cmpcard { margin-top: 30px; padding: 4px 6px; overflow: hidden; }
+  table.cmp { width: 100%; border-collapse: collapse; font-size: var(--t-sm); }
+  .cmp th, .cmp td { text-align: left; vertical-align: top; padding: 14px 16px; border-bottom: 1px solid var(--line-soft); }
+  .cmp thead th { font-size: var(--t-xs); font-weight: 450; color: var(--fg-subtle); padding-top: 14px; padding-bottom: 10px; }
+  .cmp tbody th { font-weight: 560; color: var(--fg); white-space: nowrap; width: 1%; }
+  .cmp td { color: var(--fg-muted); }
+  .cmp tbody tr:last-child th, .cmp tbody tr:last-child td { border-bottom: 0; }
+  .cmp tr.us th, .cmp tr.us td { background: oklch(0.705 0.166 53 / .07); }
+  .cmp tr.us th { color: var(--cream); position: relative; }
+  .cmp tr.us th::before { content: ""; position: absolute; left: 0; top: 12px; bottom: 12px; width: 2px; border-radius: 2px; background: linear-gradient(var(--cream), var(--lamp)); box-shadow: 0 0 12px var(--glow); }
+  .cmp tr.us td { color: var(--fg); }
+
+  /* 04 · pipeline: glowing nodes, thin connectors; only the new part is lit */
+  .pipe { list-style: none; padding: 0; margin-top: 32px; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 18px; }
+  .node { position: relative; display: grid; gap: 4px; align-content: start; padding: 14px 14px 16px; border-radius: var(--r-lg); background: var(--surface-1); border: 1px solid var(--line-soft); }
+  .node .st { display: inline-flex; align-items: center; gap: 7px; font-size: var(--t-xs); color: var(--fg-subtle); }
+  .node .st::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--surface-3); box-shadow: inset 0 0 0 1px var(--line); }
+  .node b { margin-top: 8px; font-weight: 520; line-height: 1.3; }
+  .node small { font-size: var(--t-sm); color: var(--fg-subtle); line-height: 1.4; }
+  .node:not(:last-child)::after { content: ""; position: absolute; top: 50%; left: calc(100% + 1px); width: 16px; height: 1px; background: var(--line); }
+  .node.new { background: linear-gradient(180deg, oklch(0.245 0.035 55), oklch(0.190 0.018 55)); border-color: var(--lamp-line);
+    box-shadow: 0 0 0 1px oklch(0.705 0.166 53 / .10) inset, 0 14px 40px -16px var(--glow), 0 0 32px -10px var(--glow); }
+  .node.new .st { color: var(--lamp); }
+  .node.new .st::before { background: var(--cream); box-shadow: 0 0 10px var(--glow), 0 0 2px var(--cream); }
+  .node.new b { color: var(--cream); }
+  .node.new small { color: var(--fg-muted); }
+  .node.new::after, .node:has(+ .new)::after { height: 2px; margin-top: -.5px; background: linear-gradient(90deg, var(--lamp-deep), var(--cream)); box-shadow: 0 0 8px var(--glow); }
+
+  /* 05 · how we'll know: two big number tiles */
+  .tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 30px; }
+  .tile { padding: 22px 24px 24px; display: flex; flex-direction: column; min-width: 0; }
+  .tile .k { font-size: var(--t-sm); color: var(--fg-muted); }
+  .tile .big { margin-top: 20px; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; line-height: 1.02; }
+  .tile .big .n { font-size: clamp(2.9rem, 1.9rem + 3.3vw, 5rem); font-weight: 300; letter-spacing: -0.04em; white-space: nowrap; }
+  .tile .big .u { font-size: clamp(1.35rem, 1.05rem + 1.1vw, 2rem); font-weight: 300; letter-spacing: -0.02em; }
+  .tile .d { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--line-soft); color: var(--fg-muted); font-size: var(--t-sm); line-height: 1.6; }
+  .tile .d b { color: var(--fg); font-weight: 520; }
+  .tile.lit { border-color: var(--lamp-line); }
+  .tile.lit::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: radial-gradient(420px 260px at 0% 0%, oklch(0.705 0.166 53 / .18), transparent 70%); }
+  .tile.lit > * { position: relative; z-index: 1; }
+
+  /* 06 · first 90 days */
+  .plan { list-style: none; padding: 0; margin-top: 32px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+  .plan li { position: relative; padding-top: 30px; }
+  .plan li::before { content: ""; position: absolute; left: 0; top: 4px; width: 11px; height: 11px; border-radius: 50%; background: var(--surface-3); box-shadow: 0 0 0 1px var(--line); }
+  .plan li:first-child::before { background: var(--cream); box-shadow: 0 0 12px var(--glow); }
+  .plan li:not(:last-child)::after { content: ""; position: absolute; left: 19px; right: -18px; top: 9px; height: 1px; background: var(--line); }
+  .plan .ph { font-size: var(--t-sm); font-weight: 560; color: var(--lamp); font-variant-numeric: tabular-nums; }
+  .plan .ph + p { margin-top: 8px; color: var(--fg-muted); line-height: 1.6; }
+
+  @media (max-width: 900px) {
+    .pipe { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+    .node { grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; }
+    .node b { margin-top: 0; grid-row: 1; grid-column: 1; }
+    .node .st { grid-row: 1; grid-column: 2; }
+    .node small { grid-column: 1 / -1; }
+    .node:not(:last-child)::after { top: calc(100% + 1px); left: 26px; width: 1px; height: 14px; }
+    .node.new::after, .node:has(+ .new)::after { width: 2px; height: 14px; margin-top: 0; z-index: 2; background: linear-gradient(180deg, var(--lamp-deep), var(--cream)); }
   }
+  @media (max-width: 860px) { .cmp .hide-sm { display: none; } }
+  @media (max-width: 760px) {
+    .tiles { grid-template-columns: minmax(0, 1fr); }
+    .tile { padding: 18px 18px 20px; }
+    .plan { grid-template-columns: minmax(0, 1fr); gap: 22px; }
+    .plan li { padding: 0 0 0 28px; }
+    .plan li::before { top: 5px; }
+    .plan li:not(:last-child)::after { left: 5px; right: auto; top: 22px; bottom: -16px; width: 1px; height: auto; }
+    .cmp th, .cmp td { padding: 12px 12px; }
+  }
+  @media (max-width: 420px) { .topbar .btn { padding: 0 12px; } }
 </style>
 </head>
 <body>
 <div class="proto-banner">DESIGN PROTOTYPE — NOT PRODUCTION</div>
+
 <header class="topbar">
   <div class="wrap">
-    <a class="wordmark" href="index.html"><svg viewBox="0 0 26 26" aria-hidden="true"><rect width="26" height="26" rx="7" fill="var(--brand)"/><path d="M6.5 18a6.5 6.5 0 0 1 13 0" fill="none" stroke="var(--brand-ink)" stroke-width="2.2" stroke-linecap="round"/><path d="M13 18l4-6" stroke="var(--brand-ink)" stroke-width="2.2" stroke-linecap="round"/></svg>Urja</a>
-    <nav class="nav" aria-label="Main"><a href="index.html">Today</a><a href="index.html#trucks">Trucks</a><a href="trip.html">Trips</a><a href="why.html" aria-current="page">Why Urja</a></nav>
+    <a class="wordmark" href="index.html" aria-label="Urja, Today"><span class="mark"><svg viewBox="0 0 26 26"><use href="#i-mark"/></svg></span>Urja</a>
+    <nav class="navpills" aria-label="Main">
+      <a class="pill" href="index.html" aria-label="Today"><svg class="i"><use href="#i-today"/></svg><span class="lbl">Today</span></a>
+      <a class="pill" href="index.html#trucks" aria-label="Trucks"><svg class="i"><use href="#i-truck"/></svg><span class="lbl">Trucks</span></a>
+      <a class="pill" href="trip.html" aria-label="Trips"><svg class="i"><use href="#i-route"/></svg><span class="lbl">Trips</span></a>
+      <a class="pill" href="why.html" aria-current="page" aria-label="Why Urja"><svg class="i"><use href="#i-book"/></svg><span class="lbl">Why Urja</span></a>
+    </nav>
     <div class="spacer"></div>
-    <details class="m-menu"><summary class="btn btn-ghost">Menu</summary><nav aria-label="Main (mobile)"><a href="brief.html">Morning brief</a><a href="index.html">Today</a><a href="index.html#trucks">Trucks</a><a href="trip.html">Trips</a><a href="why.html">Why Urja</a></nav></details>
-    <a class="btn btn-ghost" href="message.html">Start the demo</a>
+    <a class="btn btn-line" href="message.html">Start the demo</a>
+    <details class="m-menu"><summary class="iconbtn" aria-label="Menu"><svg class="i"><use href="#i-menu"/></svg></summary>
+      <nav aria-label="Main (mobile)"><a href="brief.html">Morning brief</a><a href="index.html">Today</a><a href="index.html#trucks">Trucks</a><a href="trip.html">Trips</a><a href="why.html" aria-current="page">Why Urja</a></nav></details>
   </div>
 </header>
 
 <main class="essay">
-  <section class="w-hero">
-    <p class="by">A concept for Bytebeam · Tushar Pathak · September 2026</p>
-    <h1>Fleet owners learn where their money leaked at month end. <em>Urja tells them the next morning.</em></h1>
+  <section class="w-hero" aria-labelledby="w-h1">
+    <p class="kicker">A concept for Bytebeam · Tushar Pathak · September 2026</p>
+    <h1 id="w-h1">Fleet owners learn where their money leaked at month end. <em class="lit">Urja tells them the next morning.</em></h1>
     <p class="lede">Urja is an AI munshi for Indian truck owners. It reconciles every trip’s diesel, tolls and kilometres from data Bytebeam-class devices already send, and explains each rupee that doesn’t add up — in Hindi or English, on WhatsApp, with the driver’s side attached.</p>
-    <div class="actions"><a class="btn btn-primary" href="message.html">See the 7 AM brief</a><a class="btn btn-ghost" href="trip.html">Open a flagged trip</a></div>
+    <div class="actions"><a class="btn btn-lamp" href="message.html">See the 7 AM brief<svg class="i"><use href="#i-right"/></svg></a><a class="btn btn-line" href="trip.html">Open a flagged trip</a></div>
+    <figure class="w-scene" aria-hidden="true">
+      <svg viewBox="0 0 1600 900" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="road" gradientUnits="userSpaceOnUse" x1="0" y1="900" x2="0" y2="576"><stop offset="0" style="stop-color:oklch(0.21 0.007 60);stop-opacity:.95"/><stop offset="1" style="stop-color:oklch(0.16 0.005 60);stop-opacity:0"/></linearGradient>
+          <linearGradient id="fade" gradientUnits="userSpaceOnUse" x1="0" y1="900" x2="0" y2="576"><stop offset="0" style="stop-color:oklch(0.705 0.166 53);stop-opacity:.5"/><stop offset="1" style="stop-color:oklch(0.705 0.166 53);stop-opacity:0"/></linearGradient>
+          <pattern id="hatchG" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="1.2" height="10" style="fill:oklch(1 0 0 / .035)"/></pattern>
+        </defs>
+        <rect x="0" y="576" width="1600" height="324" fill="url(#hatchG)"/>
+        <polygon points="520,900 1080,900 806,576 794,576" fill="url(#road)"/>
+        <path d="M520 900 794 576M1080 900 806 576" style="fill:none;stroke:url(#fade);stroke-width:1.5"/>
+        <line x1="800" y1="900" x2="800" y2="584" style="stroke:url(#fade);stroke-width:3;stroke-dasharray:30 26"/>
+        <line x1="0" y1="576" x2="1600" y2="576" style="stroke:oklch(0.705 0.166 53 / .40);stroke-width:1.5"/>
+      </svg>
+      <img src="assets/truck-scene.png" alt="" onerror="this.style.display='none'">
+    </figure>
   </section>
 
-  <section class="chap">
-    <p class="n">01 · What I heard</p>
+  <section class="chap" aria-labelledby="c1">
+    <p class="kicker"><b>01</b> · What I heard</p>
+    <h2 id="c1">I’m new to trucking, so I went and asked.</h2>
     <div class="body">
-      <h2>I’m new to trucking, so I went and asked.</h2>
-      <div class="quote"><p>[Field quote 1 — from conversations by 1 Oct]</p><small>[Role, fleet size, city]</small></div>
-      <p class="assume">ASSUMPTION: quotes are placeholders until the field conversations happen. None will be invented.</p>
-      <p>What vendor research says, to be tested against the field: fuel is 35–45% of a truck’s operating cost, and industry blogs claim 15–20% of fuel spend is lost to theft or bill fraud. Those numbers are directional, not proven.</p>
+      <figure class="quote">
+        <span class="chip wait">Placeholder</span>
+        <blockquote><p>[Field quote 1 — from conversations by 1 Oct]</p></blockquote>
+        <figcaption>[Role, fleet size, city]</figcaption>
+      </figure>
+      <p class="assume"><b>ASSUMPTION:</b> quotes are placeholders until the field conversations happen. None will be invented.</p>
+      <p>What vendor research says, to be tested against the field: fuel is 35–45% of a truck’s operating cost, and industry blogs claim 15–20% of fuel spend is lost to missing diesel or bill fraud. Those numbers are directional, not proven.</p>
     </div>
   </section>
 
-  <section class="chap">
-    <p class="n">02 · The owner</p>
+  <section class="chap" aria-labelledby="c2">
+    <p class="kicker"><b>02</b> · The owner</p>
+    <h2 id="c2">10 to 100 trucks, run from a phone.</h2>
     <div class="body">
-      <h2>10 to 100 trucks, run from a phone.</h2>
       <p>The owner doesn’t sit in a control room. They think in rupees per trip, live on WhatsApp, and often prefer Hindi. Today a munshi reconciles trips by hand from paper slips, days late. Every competitor built a dashboard for an enterprise fleet manager. Nobody built for this person.</p>
     </div>
   </section>
 
-  <section class="chap">
-    <p class="n">03 · Why not another dashboard</p>
-    <div class="body">
-      <h2>The market has tools. The owner still finds out too late.</h2>
+  <section class="chap" aria-labelledby="c3">
+    <p class="kicker"><b>03</b> · Why not another dashboard</p>
+    <h2 id="c3">The market has tools. The owner still finds out too late.</h2>
+    <div class="panel cmpcard">
       <table class="cmp">
-        <thead><tr><th></th><th>What it does well</th><th class="hide-sm">What the small-fleet owner still lacks</th></tr></thead>
+        <thead><tr><th scope="col"><span class="sr">Product</span></th><th scope="col">What it does well</th><th scope="col" class="hide-sm">What the small-fleet owner still lacks</th></tr></thead>
         <tbody>
-          <tr><td>Fleetx</td><td>Fuel-sensor theft alerts, FASTag, trip P&amp;L, TMS</td><td class="hide-sm">Needs an extra fuel sensor; built around a dashboard</td></tr>
-          <tr><td>Intangles</td><td>Predictive maintenance, digital twin</td><td class="hide-sm">Answers “will it break?”, not “where did my money go?”</td></tr>
-          <tr><td>LocoNav</td><td>GPS, video telematics, driver scorecards</td><td class="hide-sm">Scores drivers without asking their side</td></tr>
-          <tr><td>Samsara</td><td>AI agents and daily fleet summaries (US)</td><td class="hide-sm">Not built for Indian roads, Hindi, or FASTag</td></tr>
-          <tr class="us"><td>Urja</td><td>One morning answer in rupees, with evidence and the driver’s side</td><td class="hide-sm">—</td></tr>
+          <tr><th scope="row">Fleetx</th><td>Fuel-sensor alerts for diesel drops, FASTag, trip P&amp;L, TMS</td><td class="hide-sm">Needs an extra fuel sensor; built around a dashboard</td></tr>
+          <tr><th scope="row">Intangles</th><td>Predictive maintenance, digital twin</td><td class="hide-sm">Answers “will it break?”, not “where did my money go?”</td></tr>
+          <tr><th scope="row">LocoNav</th><td>GPS, video telematics, driver scorecards</td><td class="hide-sm">Scores drivers without asking their side</td></tr>
+          <tr><th scope="row">Samsara</th><td>AI agents and daily fleet summaries (US)</td><td class="hide-sm">Not built for Indian roads, Hindi, or FASTag</td></tr>
+          <tr class="us"><th scope="row">Urja</th><td>One morning answer in rupees, with evidence and the driver’s side</td><td class="hide-sm">—</td></tr>
         </tbody>
       </table>
     </div>
   </section>
 
-  <section class="chap">
-    <p class="n">04 · Built on Bytebeam</p>
-    <div class="body">
-      <h2>Most of the stack already exists. The new part is the reconciliation.</h2>
-      <div class="pipe" role="list">
-        <div role="listitem"><span class="tagx">exists</span><br>CAN / DBC parsers<small>fuel level, odometer</small></div>
-        <div role="listitem"><span class="tagx">exists</span><br>Streams<small>30-second telemetry</small></div>
-        <div role="listitem"><span class="tagx">exists</span><br>Geofences<small>pumps, plazas, yards</small></div>
-        <div role="listitem" class="new"><span class="tagx">new</span><br>Leakage rules<small>5 rules + confidence</small></div>
-        <div role="listitem" class="new"><span class="tagx">new</span><br>Brief + Ask Urja<small>Hindi / English</small></div>
-        <div role="listitem"><span class="tagx">exists</span><br>WhatsApp alerts<small>delivery at 7 AM</small></div>
-      </div>
-      <p>No new hardware: fuel level comes from the vehicle’s CAN bus, and FASTag records come from the toll statement.</p>
+  <section class="chap" aria-labelledby="c4">
+    <p class="kicker"><b>04</b> · Built on Bytebeam</p>
+    <h2 id="c4">Most of the stack already exists. The new part is the reconciliation.</h2>
+    <ol class="pipe" aria-label="From the truck to the owner’s WhatsApp: four parts exist, two are new">
+      <li class="node"><span class="st">exists</span><b>CAN / DBC parsers</b><small>fuel level, odometer</small></li>
+      <li class="node"><span class="st">exists</span><b>Streams</b><small>30-second telemetry</small></li>
+      <li class="node"><span class="st">exists</span><b>Geofences</b><small>pumps, plazas, yards</small></li>
+      <li class="node new"><span class="st">new</span><b>Leakage rules</b><small>5 rules + confidence</small></li>
+      <li class="node new"><span class="st">new</span><b>Brief + Ask Urja</b><small>Hindi / English</small></li>
+      <li class="node"><span class="st">exists</span><b>WhatsApp alerts</b><small>delivery at 7 AM</small></li>
+    </ol>
+    <div class="body"><p>No new hardware: fuel level comes from the vehicle’s CAN bus, and FASTag records come from the toll statement.</p></div>
+  </section>
+
+  <section class="chap" aria-labelledby="c5">
+    <p class="kicker"><b>05</b> · How we’ll know</p>
+    <h2 id="c5">One metric that proves the promise, one guardrail for when it works too well.</h2>
+    <div class="tiles">
+      <article class="panel tile lit" aria-label="Success metric: rupees recovered per truck per month">
+        <p class="k">Success metric</p>
+        <p class="big"><span class="n lit">₹ recovered</span><span class="u">/ truck / month</span></p>
+        <p class="d">Leading signals: share of mornings the owner opens the brief; share of flags acted on within 24 hours.</p>
+      </article>
+      <article class="panel tile" aria-label="Guardrail: under 10 percent wrong flags">
+        <p class="k">Guardrail</p>
+        <p class="big"><span class="n">&lt; 10%</span><span class="u">wrong flags</span></p>
+        <p class="d"><b>False-accusation rate under 10%:</b> flags the driver disputes and the owner accepts as innocent. If Urja works too well, owners blame drivers for sensor glitches and good drivers leave. Watch driver 90-day retention too.</p>
+      </article>
     </div>
   </section>
 
-  <section class="chap">
-    <p class="n">05 · How we’ll know</p>
-    <div class="body">
-      <h2>One metric that proves the promise, one guardrail for when it works too well.</h2>
-      <div class="metrics">
-        <div class="metric"><p class="k">Success metric</p><h3>₹ recovered per truck per month</h3><p>Leading signals: share of mornings the owner opens the brief; share of flags acted on within 24 hours.</p></div>
-        <div class="metric"><p class="k">Guardrail</p><h3>False-accusation rate under 10%</h3><p>Flags the driver disputes and the owner accepts as innocent. If Urja works too well, owners blame drivers for sensor glitches and good drivers leave. Watch driver 90-day retention too.</p></div>
-      </div>
-    </div>
+  <section class="chap" aria-labelledby="c6">
+    <p class="kicker"><b>06</b> · First 90 days</p>
+    <h2 id="c6">What I’d do if I joined.</h2>
+    <ol class="plan">
+      <li><p class="ph">Days 1–30</p><p>Sit with 15 fleet owners and their munshis in Jaipur, Kishangarh and Delhi transport hubs. Map how a trip is reconciled today, and what they do when diesel goes missing.</p></li>
+      <li><p class="ph">Days 31–60</p><p>Pilot the five rules on 3 fleets’ real CAN data. Measure the false-flag rate before any owner sees a flag.</p></li>
+      <li><p class="ph">Days 61–90</p><p>Ship the WhatsApp brief to the pilot owners. Go or no-go on ₹ recovered per truck and the guardrail.</p></li>
+    </ol>
   </section>
 
-  <section class="chap">
-    <p class="n">06 · First 90 days</p>
+  <section class="chap" aria-labelledby="c7">
+    <p class="kicker"><b>07</b> · About this prototype</p>
+    <h2 id="c7">What’s real here and what isn’t.</h2>
     <div class="body">
-      <h2>What I’d do if I joined.</h2>
-      <ol class="plan">
-        <li><b>Days 1–30</b><p>Sit with 15 fleet owners and their munshis in Jaipur, Kishangarh and Delhi transport hubs. Map how a trip is reconciled today, and what they do when diesel goes missing.</p></li>
-        <li><b>Days 31–60</b><p>Pilot the five rules on 3 fleets’ real CAN data. Measure the false-flag rate before any owner sees a flag.</p></li>
-        <li><b>Days 61–90</b><p>Ship the WhatsApp brief to the pilot owners. Go or no-go on ₹ recovered per truck and the guardrail.</p></li>
-      </ol>
-    </div>
-  </section>
-
-  <section class="chap">
-    <p class="n">07 · About this prototype</p>
-    <div class="body">
-      <h2>What’s real here and what isn’t.</h2>
       <p>Sharma Roadlines is fictional, and its 24 trucks and 30 days of trips are simulated. The leakage rules really run on that data, every rupee on screen is computed, and Ask Urja is a live model answering only from it. Nothing here is a Bytebeam product.</p>
     </div>
   </section>
 </main>
+
+<script src="icons.js"></script>
 </body>
 </html>

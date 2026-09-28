@@ -3,71 +3,161 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Screen states · Urja</title>
-<link rel="stylesheet" href="urja.css">
+<title>Screen states · Urja · Sharma Roadlines</title>
+<link rel="stylesheet" href="lamp.css">
 <style>
-  .grid4 { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 20px; padding: 28px 0 64px; }
-  @media (max-width: 900px) { .grid4 { grid-template-columns: 1fr; } }
-  .state { border: 1px solid var(--line-soft); border-radius: var(--r-lg); padding: 22px; background: var(--bg); }
-  .state > .tag { font-size: var(--t-xs); color: var(--fg-subtle); margin-bottom: 14px; }
-  .state h3 { font-size: 1.6rem; line-height: 1.15; font-weight: 560; letter-spacing: -0.02em; }
-  .state p { color: var(--fg-muted); margin-top: 8px; font-size: var(--t-sm); max-width: 52ch; }
-  .state .actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
-  .sk { background: var(--surface-2); border-radius: 6px; }
-  .sk-row { display: grid; grid-template-columns: 110px 1fr 80px; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--line-soft); }
-  .status-note { font-size: var(--t-sm); color: var(--fg-muted); margin-top: 14px; }
-  .fallback { border-top: 1px solid var(--line-soft); margin-top: 16px; padding-top: 14px; font-size: var(--t-sm); display: grid; gap: 6px; }
+  /* Page styles for the state specimens only; tokens and components come from lamp.css. */
+  .st-head { padding: 30px 0 22px; }
+  .st-head .greet { font-size: var(--t-sm); color: var(--fg-muted); margin-bottom: 10px; }
+  .st-head h1 { font-size: clamp(1.6rem, 1.1rem + 1.6vw, 2.4rem); font-weight: 420; letter-spacing: -0.025em; line-height: 1.1; }
+  .states { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding-bottom: 72px; }
+  .state { padding: 22px; display: flex; flex-direction: column; min-width: 0; }
+  .state.wide { grid-column: 1 / -1; }
+  .st-tag { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: var(--t-sm); font-weight: 450; color: var(--fg-muted); margin-bottom: 20px; }
+  .state h3 { font-size: clamp(1.35rem, 1.1rem + .8vw, 1.75rem); font-weight: 450; letter-spacing: -0.02em; line-height: 1.18; max-width: 28ch; text-wrap: balance; }
+  .state .copy { margin-top: 10px; color: var(--fg-muted); max-width: 58ch; }
+  .state .copy b { color: var(--fg); font-weight: 520; }
+  .state .actions { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 22px; }
+  /* one tick per trip; capped so 17 ticks read as a rail, not a ruler */
+  .trips { max-width: 440px; }
+
+  /* loading: a static skeleton of Today (no shimmer); only the real progress is lit */
+  .sk { display: block; background: var(--surface-2); border-radius: 6px; }
+  .sk-rows { margin-top: 20px; border-top: 1px solid var(--line-soft); }
+  .sk-row { display: grid; grid-template-columns: 24px 96px minmax(0, 1fr) 64px; gap: 10px 12px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--line-soft); }
+  .sk-row .dot { width: 24px; height: 24px; border-radius: 50%; }
+  .sk-row .pl { height: 24px; border-radius: 5px; }
+  .sk-row .ln { height: 12px; }
+  .sk-row .am { height: 18px; }
+  .sk-row .ln2 { grid-column: 2 / -1; height: 14px; width: 82%; }
+  .progress { margin-top: 18px; }
+  .progress p { font-size: var(--t-sm); color: var(--fg-muted); }
+  .progress p b { color: var(--fg); font-weight: 520; }
+  .progress .rail { margin-top: 10px; }
+
+  /* working, a clean day: the emotional peak gets the lamp */
+  .state.clean { border-color: var(--lamp-line); box-shadow: 0 0 0 1px oklch(0.705 0.166 53 / .08) inset, 0 30px 80px -40px var(--glow); }
+  .state.clean::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    background: radial-gradient(640px 360px at 10% -12%, oklch(0.705 0.166 53 / .20), transparent 70%),
+                radial-gradient(420px 260px at 96% 112%, oklch(0.705 0.166 53 / .07), transparent 70%); }
+  .state.clean > * { position: relative; z-index: 1; }
+  .state.clean h3 { font-size: var(--t-verdict); font-weight: 400; letter-spacing: -0.028em; line-height: 1.12; max-width: 30ch; }
+  .state.clean .copy { font-size: 1.05rem; }
+  .state.clean .rail { margin-top: 22px; }
+  .state.clean .rail svg { filter: drop-shadow(0 0 6px var(--glow)); }
+  .state.clean .rail-ends { color: var(--fg-muted); }
+
+  /* Ask Urja fallback: the drawer's conversation, answered from the data without the model */
+  .ask-body { display: grid; gap: 14px; }
+  .ask-body .q { font-size: 1rem; }
+  .ask-body h3 { font-size: 1.15rem; font-weight: 500; letter-spacing: -0.01em; line-height: 1.35; max-width: 42ch; }
+  .fallback { display: grid; gap: 12px; padding: 14px 16px; border-radius: var(--r-lg); background: var(--surface-1); border: 1px solid var(--line-soft); }
+  .fallback .ans b { font-weight: 560; }
+  .fallback .cites { display: flex; flex-wrap: wrap; gap: 6px; }
+  .fallback .cite { margin-left: 0; font-size: var(--t-xs); }
+  .fallback .saved { font-size: var(--t-sm); color: var(--fg-muted); border-top: 1px solid var(--line-soft); padding-top: 10px; }
+
+  @media (max-width: 900px) { .states { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 760px) { .state { padding: 18px 16px; } .st-head { padding-top: 22px; } }
 </style>
 </head>
 <body>
 <div class="proto-banner">DESIGN PROTOTYPE — NOT PRODUCTION</div>
+
+<header class="topbar">
+  <div class="wrap">
+    <a class="wordmark" href="index.html" aria-label="Urja, Today"><span class="mark"><svg viewBox="0 0 26 26"><use href="#i-mark"/></svg></span>Urja</a>
+    <a class="askbar" href="index.html?ask"><svg class="i"><use href="#i-search"/></svg><span class="ph">Ask about any truck, trip or driver…</span><span class="kbd">⌘K</span></a>
+    <nav class="navpills" aria-label="Main">
+      <a class="pill" href="index.html" aria-label="Today"><svg class="i"><use href="#i-today"/></svg><span class="lbl">Today</span></a>
+      <a class="pill" href="index.html#trucks" aria-label="Trucks"><svg class="i"><use href="#i-truck"/></svg><span class="lbl">Trucks</span></a>
+      <a class="pill" href="trip.html" aria-label="Trips"><svg class="i"><use href="#i-route"/></svg><span class="lbl">Trips</span></a>
+      <a class="pill" href="why.html" aria-label="Why Urja"><svg class="i"><use href="#i-book"/></svg><span class="lbl">Why Urja</span></a>
+    </nav>
+    <div class="spacer"></div>
+    <span class="fleet"><span class="name">Sharma Roadlines · 24 trucks</span><span class="avatar" aria-hidden="true">SR</span></span>
+    <details class="m-menu"><summary class="iconbtn" aria-label="Menu"><svg class="i"><use href="#i-menu"/></svg></summary>
+      <nav aria-label="Main (mobile)"><a href="brief.html">Morning brief</a><a href="index.html">Today</a><a href="index.html#trucks">Trucks</a><a href="trip.html">Trips</a><a href="why.html">Why Urja</a><a href="index.html?ask">Ask Urja</a></nav></details>
+  </div>
+</header>
+
 <main class="wrap">
-  <div class="sec-head" style="padding-top:28px"><h2>Screen states — Today and Ask Urja</h2><span class="count">every data view has all four</span></div>
-  <div class="grid4">
+  <section class="st-head">
+    <p class="greet">Every data view has all four: loading, empty, error and working</p>
+    <h1>Screen states: Today and Ask Urja</h1>
+  </section>
 
-    <section class="state" aria-busy="true">
-      <p class="tag">Loading · reconciling yesterday’s trips</p>
-      <div class="sk" style="height:18px;width:60%"></div>
-      <div class="sk" style="height:44px;width:90%;margin-top:12px"></div>
-      <div style="margin-top:18px">
-        <div class="sk-row"><div class="sk" style="height:24px"></div><div class="sk" style="height:24px"></div><div class="sk" style="height:24px"></div></div>
-        <div class="sk-row"><div class="sk" style="height:24px"></div><div class="sk" style="height:24px"></div><div class="sk" style="height:24px"></div></div>
+  <div class="states">
+    <!-- LOADING -->
+    <section class="panel state" aria-busy="true" aria-labelledby="st-load">
+      <h2 class="st-tag" id="st-load"><span class="chip moving">Loading</span><span class="sr"> · </span>reconciling yesterday’s trips</h2>
+      <div aria-hidden="true">
+        <span class="sk" style="width:38%;height:12px"></span>
+        <span class="sk" style="width:90%;height:28px;margin-top:14px"></span>
+        <span class="sk" style="width:62%;height:28px;margin-top:8px"></span>
+        <span class="sk" style="width:100%;height:10px;margin-top:20px"></span>
+        <div class="sk-rows">
+          <div class="sk-row"><span class="sk dot"></span><span class="sk pl"></span><span class="sk ln"></span><span class="sk am"></span><span class="sk ln2"></span></div>
+          <div class="sk-row"><span class="sk dot"></span><span class="sk pl"></span><span class="sk ln"></span><span class="sk am"></span><span class="sk ln2" style="width:64%"></span></div>
+        </div>
       </div>
-      <p class="status-note" role="status">Checking 17 trips against fuel, FASTag and GPS · 11 of 17 done</p>
+      <div class="progress">
+        <p role="status">Checking 17 trips against fuel, FASTag and GPS · <b>11 of 17 done</b></p>
+        <div class="rail trips" id="r-load" role="img" aria-label="Progress: 11 of 17 trips checked, 6 still to check"></div>
+      </div>
     </section>
 
-    <section class="state">
-      <p class="tag">Empty · no trips finished yesterday</p>
+    <!-- EMPTY -->
+    <section class="panel state" aria-labelledby="st-empty">
+      <h2 class="st-tag" id="st-empty"><span class="chip">Empty</span><span class="sr"> · </span>no trips finished yesterday</h2>
       <h3>No trips finished yesterday.</h3>
-      <p>9 trucks are still on the road and 15 were in the yard or workshop. Urja will reconcile each trip the morning after it ends. Next brief: tomorrow, 7:00 AM.</p>
-      <div class="actions"><a class="btn btn-ghost" href="index.html#trucks">See where trucks are now</a><a class="btn btn-ghost" href="#">Open last week</a></div>
+      <p class="copy">9 trucks are still on the road and 15 were in the yard or workshop. Urja will reconcile each trip the morning after it ends. Next brief: tomorrow, 7:00 AM.</p>
+      <div class="actions"><a class="btn btn-line" href="index.html?fleet">See where trucks are now</a><a class="btn btn-quiet" href="#">Open last week</a></div>
     </section>
 
-    <section class="state">
-      <p class="tag">Working · a clean day (the peak)</p>
-      <h3>All 17 trips add up. <span class="gain">₹1,94,800</span> earned, nothing unaccounted.</h3>
-      <p>Diesel, tolls and km matched on every trip. That’s the 4th clean day this month.</p>
-      <div class="actions"><a class="btn btn-ghost" href="#">See the ledger</a></div>
-    </section>
-
-    <section class="state" role="alert">
-      <p class="tag">Error · data didn’t arrive</p>
-      <h3>Yesterday’s trips haven’t reached Urja yet.</h3>
-      <p>6 trucks haven’t sent data since 2 AM, most likely no mobile network on the Udaipur stretch. Nothing is lost: the devices store data and send it when they reconnect. The other 11 trips are ready.</p>
-      <div class="actions"><button class="btn btn-primary">Show the 11 ready trips</button><button class="btn btn-ghost">Try again</button></div>
-    </section>
-
-    <section class="state" style="grid-column:1/-1">
-      <p class="tag">Ask Urja · AI service unavailable (fallback)</p>
-      <div class="q" style="max-width:520px;margin-left:auto">पिछले हफ़्ते कितना डीज़ल गायब हुआ?</div>
-      <h3 style="font-size:1.2rem;margin-top:14px">Urja’s AI couldn’t answer right now, so here is the number straight from your data.</h3>
-      <div class="fallback">
-        <div><b>21–27 Sep:</b> <span class="loss">96 L diesel unaccounted (₹8,640)</span> on 3 trips — <a class="cite" href="trip.html">Trip 0926-04</a> <a class="cite" href="#">Trip 0923-02</a> <a class="cite" href="#">Trip 0921-09</a></div>
-        <div class="subtle">Your question is saved. Try again in a minute for a written answer.</div>
+    <!-- WORKING: A CLEAN DAY (the peak) -->
+    <section class="panel state wide clean" aria-labelledby="st-clean">
+      <h2 class="st-tag" id="st-clean"><span class="chip ok">Working</span><span class="sr"> · </span>a clean day (the peak)</h2>
+      <h3>All 17 trips add up. <span class="lit">₹1,94,800</span> earned, nothing unaccounted.</h3>
+      <p class="copy">Diesel, tolls and km matched on every trip. That’s the <b>4th clean day</b> this month.</p>
+      <div class="trips">
+        <div class="rail" id="r-clean" role="img" aria-label="All 17 of 17 trips checked, and every one adds up"></div>
+        <div class="rail-ends" aria-hidden="true"><span>17 trips reconciled</span><span>0 flags</span></div>
       </div>
-      <div class="actions"><button class="btn btn-ghost">Try again</button></div>
+      <div class="actions"><a class="btn btn-line" href="#">See the ledger</a></div>
+    </section>
+
+    <!-- ERROR: data late -->
+    <section class="panel state" role="alert" aria-labelledby="st-err">
+      <h2 class="st-tag" id="st-err"><span class="chip wait">Error</span><span class="sr"> · </span>data didn’t arrive</h2>
+      <h3>Yesterday’s trips haven’t reached Urja yet.</h3>
+      <p class="copy">6 trucks haven’t sent data since 2 AM, most likely no mobile network on the Udaipur stretch. Nothing is lost: the devices store data and send it when they reconnect. The other 11 trips are ready.</p>
+      <div class="actions"><button class="btn btn-lamp">Show the 11 ready trips</button><button class="btn btn-line">Try again</button></div>
+    </section>
+
+    <!-- ASK URJA: AI unavailable, fallback -->
+    <section class="panel state" aria-labelledby="st-ask">
+      <h2 class="st-tag" id="st-ask"><span class="chip wait">Ask Urja</span><span class="sr"> · </span>AI service unavailable (fallback)</h2>
+      <div class="ask-body">
+        <div class="q hi" lang="hi">पिछले हफ़्ते कितना डीज़ल गायब हुआ?</div>
+        <h3>Urja’s AI couldn’t answer right now, so here is the number straight from your data.</h3>
+        <div class="fallback">
+          <p class="ans"><b>21–27 Sep:</b> <span class="loss">217 L diesel unaccounted (₹19,530)</span> on 5 trips</p>
+          <p class="cites"><a class="cite" href="trip.html">Trip 0926-04</a><a class="cite" href="#">Trip 0927-02</a><a class="cite" href="#">Trip 0926-11</a><a class="cite" href="#">Trip 0923-02</a><a class="cite" href="#">Trip 0921-09</a></p>
+          <p class="saved">Your question is saved. Try again in a minute for a written answer.</p>
+        </div>
+      </div>
+      <div class="actions"><button class="btn btn-line">Try again</button></div>
     </section>
   </div>
 </main>
+
+<script src="icons.js"></script>
+<script src="charts.js"></script>
+<script>
+  // one tick per trip: lit = checked, dim = still to check
+  rail('#r-load', { total: 16, step: 1, segs: [{ from: 11, to: 16, s: 'stop' }] });
+  rail('#r-clean', { total: 16, step: 1, segs: [] });
+</script>
 </body>
 </html>

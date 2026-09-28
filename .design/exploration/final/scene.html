@@ -9,12 +9,12 @@
 <style>
   html, body { height: 100%; }
   body::before { display: none; }
-  .scene { display: block; position: fixed; inset: 0; border-radius: 0; }
+  .truck3d { display: block; position: fixed; inset: 0; border-radius: 0; }
 </style>
 </head>
 <body>
 <!-- Full-bleed scene: used to capture the poster (fallback + Why Urja + link preview). No UI chrome. -->
-<div class="scene" id="scene" role="img" aria-label="3D scene of truck RJ14 GB 4521 parked off NH48 near Behror at night, its fuel tank lit red."></div>
+<div class="truck3d" id="scene" role="img" aria-label="3D scene of truck RJ14 GB 4521 parked off NH48 near Behror at night, its fuel tank lit red."></div>
 <script src="truck3d.js"></script>
 <script>truckScene(document.getElementById('scene'), { target: [.4, 0.4, 10.6], cam: [-14.5, 9.8, 25.5], still: location.search.includes('still') });</script>
 </body>

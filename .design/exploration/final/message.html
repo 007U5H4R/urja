@@ -2,55 +2,41 @@
 <html lang="hi">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>7 AM message · Urja</title>
-<link rel="stylesheet" href="urja.css">
-<style>
-  body { min-height: 100dvh; background: oklch(0.93 0.012 85); }
-  .chat { max-width: 480px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; }
-  .chat-top { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: var(--surface-1); border-bottom: 1px solid var(--line-soft); }
-  .chat-top .av { width: 38px; height: 38px; border-radius: 50%; background: var(--brand); display: grid; place-items: center; }
-  .chat-top .av svg { width: 22px; height: 22px; }
-  .chat-top b { display: block; font-weight: 600; }
-  .chat-top small { color: var(--fg-subtle); font-size: var(--t-xs); }
-  .thread { flex: 1; padding: 18px 12px; display: flex; flex-direction: column; gap: 10px; }
-  .day { align-self: center; font-size: var(--t-xs); color: var(--fg-muted); background: var(--surface-1); padding: 3px 10px; border-radius: 6px; }
-  .bubble { max-width: 88%; background: var(--surface-1); border-radius: 4px 14px 14px 14px; padding: 12px 14px 8px; box-shadow: 0 1px 1px oklch(0 0 0 / .08); }
-  .bubble h3 { font-size: 1.02rem; font-weight: 650; margin-bottom: 6px; }
-  .bubble p { font-size: .97rem; line-height: 1.5; }
-  .bubble ol { padding-left: 20px; margin: 8px 0; display: grid; gap: 6px; font-size: .95rem; line-height: 1.45; }
-  .bubble .meta { text-align: right; font-size: 12px; color: var(--fg-subtle); margin-top: 4px; }
-  .bubble .act { display: block; text-align: center; border-top: 1px solid var(--line-soft); margin: 10px -14px -8px; padding: 11px; color: oklch(0.5 0.12 240); font-weight: 560; min-height: 44px; }
-  .replies { display: flex; gap: 8px; max-width: 88%; }
-  .replies button { flex: 1; min-height: 44px; background: var(--surface-1); border-radius: 12px; color: oklch(0.5 0.12 240); font-size: var(--t-sm); font-weight: 560; box-shadow: 0 1px 1px oklch(0 0 0 / .08); }
-  .caption { text-align: center; font-size: var(--t-xs); color: var(--fg-muted); padding: 10px 16px 18px; }
-  .lang { position: fixed; top: 14px; right: max(14px, calc(50% - 226px)); display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px; background: var(--surface-1); }
-  .lang button { min-width: 40px; height: 28px; border-radius: 999px; font-size: var(--t-xs); color: var(--fg-muted); }
-  .lang button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>सुबह 7 बजे का संदेश · Urja</title>
+<link rel="stylesheet" href="lamp.css">
 </head>
-<body class="theme-light hi">
+<body class="hi">
 <div class="proto-banner">DESIGN PROTOTYPE — NOT PRODUCTION</div>
 <div class="chat">
   <div class="chat-top">
-    <span class="av"><svg viewBox="0 0 26 26" aria-hidden="true"><path d="M6.5 18a6.5 6.5 0 0 1 13 0" fill="none" stroke="var(--brand-ink)" stroke-width="2.4" stroke-linecap="round"/><path d="M13 18l4-6" stroke="var(--brand-ink)" stroke-width="2.4" stroke-linecap="round"/></svg></span>
+    <span class="mark" aria-hidden="true"><svg viewBox="0 0 26 26"><use href="#i-mark"/></svg></span>
     <div><b>Urja</b><small data-hi="Sharma Roadlines का हिसाब" data-en="Accounts for Sharma Roadlines"></small></div>
+    <div class="lang" role="group" aria-label="Language / भाषा"><button data-set="hi" aria-pressed="true" lang="hi">हिं</button><button data-set="en" aria-pressed="false" lang="en">EN</button></div>
   </div>
-  <div class="lang" role="group" aria-label="Language"><button data-set="hi" aria-pressed="true">हिं</button><button data-set="en" aria-pressed="false">EN</button></div>
 
   <div class="thread">
     <span class="day" data-hi="आज" data-en="Today"></span>
     <div class="bubble">
-      <h3 data-hi="कल: ₹1,86,400 कमाए · ₹11,430 का हिसाब नहीं" data-en="Yesterday: ₹1,86,400 earned · ₹11,430 doesn’t add up"></h3>
-      <p data-hi="17 ट्रिप पूरी हुईं। इन 3 को देखें:" data-en="17 trips finished. Look at these 3:"></p>
-      <ol>
-        <li data-hi="<b>RJ14 GB 4521</b> — बहरोड़ के पास, रात 2:14, खड़े ट्रक में 38 L डीज़ल कम। ₹3,420 · <b>पक्का</b>" data-en="<b>RJ14 GB 4521</b> — 38 L diesel down while parked near Behror, 2:14 AM. ₹3,420 · <b>High</b>"></li>
-        <li data-hi="<b>RJ14 GA 1182</b> — बिल 250 L, टंकी में 200 L। ₹4,500 · <b>शायद</b>" data-en="<b>RJ14 GA 1182</b> — bill 250 L, tank rose 200 L. ₹4,500 · <b>Likely</b>"></li>
-        <li data-hi="<b>RJ14 GC 3309</b> — भिवंडी ट्रिप में 39 L ज़्यादा डीज़ल। ₹3,510 · <b>जाँचें</b>" data-en="<b>RJ14 GC 3309</b> — 39 L more diesel than usual to Bhiwandi. ₹3,510 · <b>Check</b>"></li>
-      </ol>
-      <p data-hi="बाकी 14 ट्रिप ठीक हैं ✓" data-en="The other 14 trips are fine ✓"></p>
-      <p class="meta">7:00</p>
-      <a class="act" href="brief.html" data-hi="पूरा हिसाब देखें" data-en="Open today’s brief"></a>
+      <a class="pv" href="brief.html" aria-label="Open today’s brief">
+        <span class="pv-art" aria-hidden="true">
+          <span class="pv-title" data-hi="डीज़ल कहाँ गया?" data-en="Where did the diesel go?"></span>
+          <svg viewBox="0 0 150 64"><g id="pvbars"></g></svg>
+        </span>
+        <span class="pv-meta"><b data-hi="आज का हिसाब · Sharma Roadlines" data-en="Today’s brief · Sharma Roadlines"></b>urja.app</span>
+      </a>
+      <div class="txt">
+        <h3 data-hi="कल: ₹1,86,400 कमाए · ₹11,430 का हिसाब नहीं" data-en="Yesterday: ₹1,86,400 earned · ₹11,430 doesn’t add up"></h3>
+        <p data-hi="17 ट्रिप पूरी हुईं। इन 3 को देखें:" data-en="17 trips finished. Look at these 3:"></p>
+        <ol>
+          <li data-hi="<b>RJ14 GB 4521</b> — बहरोड़ के पास, रात 2:14, खड़े ट्रक में 38 L डीज़ल कम। ₹3,420 · <b>पक्का</b>" data-en="<b>RJ14 GB 4521</b> — 38 L diesel down while parked near Behror, 2:14 AM. ₹3,420 · <b>High</b>"></li>
+          <li data-hi="<b>RJ14 GA 1182</b> — बिल 250 L, टंकी में 200 L। ₹4,500 · <b>शायद</b>" data-en="<b>RJ14 GA 1182</b> — bill 250 L, tank rose 200 L. ₹4,500 · <b>Likely</b>"></li>
+          <li data-hi="<b>RJ14 GC 3309</b> — भिवंडी ट्रिप में 39 L ज़्यादा डीज़ल। ₹3,510 · <b>जाँचें</b>" data-en="<b>RJ14 GC 3309</b> — 39 L more diesel than usual to Bhiwandi. ₹3,510 · <b>Check</b>"></li>
+        </ol>
+        <p data-hi="बाकी 14 ट्रिप ठीक हैं ✓" data-en="The other 14 trips are fine ✓"></p>
+        <p class="meta">7:00</p>
+      </div>
+      <a class="act" href="brief.html"><span data-hi="पूरा हिसाब देखें" data-en="Open today’s brief"></span><svg class="i"><use href="#i-right"/></svg></a>
     </div>
     <div class="replies">
       <button data-hi="रमेश से पूछो" data-en="Ask Ramesh"></button>
@@ -59,7 +45,18 @@
   </div>
   <p class="caption" data-hi="ऐसे WhatsApp पर सुबह 7 बजे आता है (डिज़ाइन प्रोटोटाइप)" data-en="How it arrives on WhatsApp at 7 AM (design prototype)"></p>
 </div>
+<script src="icons.js"></script>
 <script>
+  // the preview's little fuel trace: steady, the drop (red), refuel (lit)
+  (() => {
+    const g = document.getElementById('pvbars'); let s = '';
+    const v = [44, 43, 43, 42, 42, 41, 41, 40, 40, 39, 36, 33, 30, 30, 29, 58, 57, 56, 55, 54];
+    v.forEach((h, i) => {
+      const c = i >= 10 && i <= 13 ? 'var(--loss)' : i === 15 ? 'var(--cream)' : 'oklch(0.48 0.008 60)';
+      s += `<rect x="${i * 7.5}" y="${62 - h}" width="5.5" height="${h}" rx="1" style="fill:${c}"/>`;
+    });
+    g.innerHTML = s;
+  })();
   function setLang(l) {
     document.documentElement.lang = l;
     document.querySelectorAll('[data-hi]').forEach((el) => { el.innerHTML = el.dataset[l]; });
