@@ -227,3 +227,8 @@
 ## EXE8 · The Today clean line drops the quoted word — accepted 2026-09-28
 - The mockup's clean line (`final/index.html:101`) reads: Urja says “unaccounted”, never “theft”. The wording rule (CLAUDE.md, §1, TC-014) forbids that word anywhere in UI copy, even quoted.
 - The build reads: "The other 14 trips add up: diesel, tolls and km all match. Urja only points at what doesn't add up. You decide." The count is computed. This is a copy fix under an existing hard rule, not a Design Freeze change.
+
+## EXE9 · Route normal needs earlier clean trips on the same route — accepted 2026-09-28
+- `routeNormal(tripId)` is the mean profit of the last 13 clean trips on the same route that ended before this trip (fewer if fewer exist). For 0926-04 that is exactly the 13 anchor trips, ₹16,660.
+- 18 trips have no earlier clean trip on their route, so `routeNormal` returns `null` and the Trip page says there is no route history yet instead of inventing a normal.
+- Open for Stage 8: some balancer trips on long routes (for example on AHM-JAI) carry low profits (₹850–1,520), which show as outliers in that route's normal chart. It's not an anchor; it's a DES/CR candidate.
