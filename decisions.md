@@ -206,3 +206,20 @@
 ## EXE3 · No Gemini key and no preview access in the cloud VM — accepted 2026-09-28
 - `GEMINI_API_KEY` is not available here (§16.1 path B). Ask is built and tested with a mocked client and the deterministic fallback. TSK-07.1 (probe), TKT-07 AC6 (live answer < 4 s) and TSK-13.3 (baseline run) are `BLOCKED-pending-key` in the ledger.
 - Vercel previews may not exist yet or may be auth-protected; each ledger row records the pushed SHA and preview checks are marked pending for the local session.
+
+## EXE4 · R3 nets out litres another rule already explains — accepted 2026-09-28
+- §4.4 defines R3's `used` as tank consumption minus the R1 and R2 litres. The build also subtracts the diesel that an R4 detour's extra km explains (extra km ÷ the truck's km/L on the route).
+- Without it, N14 (the 260 km police diversion, ₹6,780, marked wrong) also fires R3 at +22% and creates a 24th flag, which breaks "23 flags" and double-counts the same litres.
+- The 1.12 threshold is unchanged and compared in integers (`used×100 ≥ 112×baseline`). R2's litres never reached the tank, so they are not in tank consumption to begin with.
+
+## EXE5 · R1's `at` is the drop's onset — accepted 2026-09-28
+- §4.4 says `at` is the first minute the smoothed fuel is ≥ 1 L below the window-start level. With a 5-sample median that lands one minute after the anchored 2:14 AM.
+- The build defines `at` as the last minute the smoothed fuel is still within 1 L of the start level, i.e. the onset, so flag 1 reads 2:14–2:40 AM as anchored (§4.3). `until` is unchanged.
+
+## EXE6 · Noise-free tank readings for the ledger — accepted 2026-09-28
+- `Trip.tank {startCl, endCl}` and `RefuelBill.tankRiseCl` were added to the §4.1 types: the sensor's settled readings at trip start, trip end and around each refuel.
+- The ledger (§4.5) and R3 read them, so diesel totals are exact (for example, yesterday's ₹1,58,300). R1 and R2 still detect from the noisy per-minute samples. The first and last samples carry no noise, so the readings equal the telemetry.
+
+## EXE7 · Non-anchor plaza tariffs — accepted 2026-09-28
+- The mockups name only the three JAI-OKH plazas (₹705, ₹725, ₹710; unchanged). The other plazas and pumps were named after towns on the route, and their tariffs were set to ₹790–1,180 so 27 Sep's tolls can reach the anchored ₹38,900 inside TC-013's ₹100–1,500 band.
+- Plaza and pump names and every Hindi place name go into `docs/exec/hindi-review.md` for the native review.
