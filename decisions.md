@@ -190,3 +190,19 @@
 - Copying the user's personal skills into the repo: they carry local paths and would confuse the cloud session.
 - Building locally: breaks the machine rule and the E Drive disk limit.
 - A plain environment variable for the key: anyone who uses the environment can see it.
+
+## EXE1 · Stage 7 runs its gates autonomously; "task" = one implementer unit — accepted 2026-09-28 (Stage 7 cloud session)
+**Context.** The user is AFK and delegated gate decisions: continue past a milestone when every exit criterion passes; stop only on a gate still failing after 2 fix rounds, or on a Design Freeze, fixed-number, golden-value or threshold change.
+**Decision.**
+- Each gate still runs `pnpm verify`, `pnpm test:e2e` (plus `pnpm eval` when a key exists) and an independent QA subagent, and its report is written into `docs/exec/ledger.md` and pushed.
+- One implementer subagent per unit of work, with TDD, a spec review and a quality review by fresh subagents, and at most 2 fix rounds. Small tickets are one unit (one commit). Large tickets (TKT-02) are split into a few units along the §17 TSK boundaries, each committed as `<imperative summary> (TASK-n)` and pushed; §17 itself prescribes per-TSK commits.
+- Parallel streams run in separate git worktrees outside the repo; their single commit per unit is cherry-picked onto `build/stage7`.
+
+## EXE2 · shadcn configured by hand; Playwright pinned to 1.56.1 — accepted 2026-09-28
+- `ui.shadcn.com` is blocked by the cloud egress policy, so `components.json`, `lib/utils.ts` (`cn`) and the shadcn deps were written by hand. Components shadcn would add later (the Sheet in TKT-12) are written directly on `@radix-ui/react-dialog` if the registry is still unreachable.
+- `@playwright/test` is pinned to 1.56.1, which matches the Chromium revision (1194) preinstalled in the VM; CI installs its own browser.
+- The Playwright web server runs `pnpm build && exec next start -p 3000`: pnpm 12 starts script children in a new process group, which left `next start` alive after the run.
+
+## EXE3 · No Gemini key and no preview access in the cloud VM — accepted 2026-09-28
+- `GEMINI_API_KEY` is not available here (§16.1 path B). Ask is built and tested with a mocked client and the deterministic fallback. TSK-07.1 (probe), TKT-07 AC6 (live answer < 4 s) and TSK-13.3 (baseline run) are `BLOCKED-pending-key` in the ledger.
+- Vercel previews may not exist yet or may be auth-protected; each ledger row records the pushed SHA and preview checks are marked pending for the local session.
