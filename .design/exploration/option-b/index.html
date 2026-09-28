@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="lamp.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script>
 </head>
 <body>
 <div class="proto-banner">DESIGN PROTOTYPE — NOT PRODUCTION</div>
@@ -53,13 +54,16 @@
 
   <section class="hero-row">
     <!-- where it happened: the flagged trips on a real, tilted night map -->
-    <article class="panel mapcard" id="mapcard" aria-labelledby="map-h">
+    <article class="panel mapcard is-scene" id="mapcard" aria-labelledby="map-h">
+      <div class="scene" id="scene" role="img" aria-label="3D scene of truck RJ14 GB 4521 parked 1.6 km off NH48 near Behror at 2:14 AM with its ignition off. The fuel tank is lit red because 38 litres went unaccounted.">
+        <div class="scene-tag glass" aria-hidden="true"><span class="plate">RJ14 GB 4521</span><span>Parked · ignition off</span><b class="loss">Fuel −38 L · 2:14 AM</b></div>
+      </div>
       <div class="map" id="heroMap" role="img" aria-label="Map of the three flagged trips. Selected: RJ14 GB 4521, Jaipur to Delhi, parked near Behror when 38 litres of diesel went unaccounted."></div>
       <div class="fade"></div>
       <div class="mc-top">
         <h2 id="map-h">Where it happened</h2>
         <div class="right">
-          <div class="seg" role="group" aria-label="Map shows"><button data-mode="flags" aria-pressed="true">Flagged trips</button><button data-mode="fleet" aria-pressed="false">Whole fleet</button></div>
+          <div class="seg" role="group" aria-label="View"><button data-mode="scene" aria-pressed="true">Scene</button><button data-mode="flags" aria-pressed="false">Map</button><button data-mode="fleet" aria-pressed="false">Fleet</button></div>
           <button class="iconbtn" id="fs" aria-label="Full screen map"><svg class="i"><use href="#i-expand"/></svg></button>
         </div>
       </div>
@@ -179,6 +183,7 @@
 <script src="icons.js"></script>
 <script src="charts.js"></script>
 <script src="map.js"></script>
+<script src="truck3d.js"></script>
 <script>
   const conf = (l, w) => `<span class="conf" data-level="${l}"><i><b></b><b></b><b></b></i>${w}</span>`;
   const FL = [
@@ -218,12 +223,27 @@
   heroMap('heroMap', (api) => {
     ready = api;
     api.onselect = showFlag;
-    api.onmode = (m) => { document.querySelectorAll('.seg button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.mode === m)); if (m === 'fleet') showFleet(); };
-    if (location.search.includes('fleet')) api.setMode('fleet');
+    api.onmode = (m) => { if (m === 'fleet') showFleet(); };
+    if (location.search.includes('fleet')) setView('fleet');
     const s = new URLSearchParams(location.search).get('flag'); if (s) api.select(+s - 1);
   });
-  document.querySelectorAll('.eye').forEach((row, i) => row.querySelector('.eye-sel').onclick = () => ready ? ready.select(i) : showFlag(i));
-  document.querySelectorAll('.seg button').forEach((b) => b.onclick = () => { if (!ready) return; b.dataset.mode === 'fleet' ? ready.setMode('fleet') : ready.select(ready.sel); });
+  // hero view: the 3D scene (flag 1's moment), the map, or the whole fleet
+  const card = document.getElementById('mapcard');
+  let scene3d = null, view = 'scene';
+  function setView(v) {
+    view = v; card.classList.toggle('is-scene', v === 'scene');
+    document.querySelectorAll('.seg button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.mode === v));
+    if (v === 'scene') { scene3d && scene3d.start(); showFlag(0); } else scene3d && scene3d.stop();
+    if (v === 'flags' && ready) ready.select(ready.sel);
+    if (v === 'fleet' && ready) ready.setMode('fleet');
+  }
+  truckScene(document.getElementById('scene'), { still: location.search.includes('still') }).then((api) => { scene3d = api; if (view !== 'scene' && api) api.stop(); });
+  document.querySelectorAll('.eye').forEach((row, i) => row.querySelector('.eye-sel').onclick = () => {
+    if (i > 0 && view === 'scene') setView('flags');           // the scene reconstructs flag 1; others show on the map
+    ready ? ready.select(i) : showFlag(i);
+  });
+  document.querySelectorAll('.seg button').forEach((b) => b.onclick = () => setView(b.dataset.mode));
+  if (location.search.includes('map')) setView('flags');
   document.getElementById('fs').onclick = () => { const m = document.getElementById('mapcard'); document.fullscreenElement ? document.exitFullscreen() : m.requestFullscreen && m.requestFullscreen(); };
 
   // September charts

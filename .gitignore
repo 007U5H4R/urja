@@ -10,3 +10,6 @@ out/
 
 # os
 .DS_Store
+
+# agent worktrees (local isolation copies)
+.claude/worktrees/

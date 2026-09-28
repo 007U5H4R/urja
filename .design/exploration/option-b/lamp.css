@@ -512,3 +512,16 @@ body.ask-open .drawer { transform: none; }
   .railbox { padding-bottom: 12px; }
   .rail-ends { margin-top: 22px; }
 }
+
+/* ---------- 3D scene in the hero card (user-requested delighter; poster fallback) ---------- */
+.scene { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; display: none; background: #0b0a09; }
+.mapcard.is-scene .scene { display: block; }
+.mapcard.is-scene .map, .mapcard.is-scene .pool { visibility: hidden; }
+.scene canvas { display: block; width: 100% !important; height: 100% !important; }
+.scene.fallback { background: #0b0a09 url(assets/truck-scene.png) center / cover no-repeat; }
+.scene-tag { position: absolute; left: 0; top: 0; display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; font-size: var(--t-xs); color: var(--fg-muted); white-space: nowrap; pointer-events: none; z-index: 2; }
+.scene-tag::after { content: ""; position: absolute; left: 50%; bottom: -26px; width: 1px; height: 26px; background: linear-gradient(var(--line), transparent); }
+.scene-tag .plate { align-self: flex-start; height: 20px; font-size: .78rem; }
+.scene-tag b { font-weight: 560; font-size: var(--t-sm); }
+@media (max-width: 760px) { .scene-tag { display: none; } }
+@media (max-width: 760px) { .maplegend { top: 54px; bottom: auto; } }
