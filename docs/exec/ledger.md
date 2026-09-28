@@ -32,6 +32,21 @@ Vercel: previews may be missing or auth-protected from the VM, so each row recor
 
 _(one section per milestone, newest last)_
 
+### Gate M-001 · Data truth and foundation — PASS (2026-09-28, delegated gate policy)
+- **Commit:** d04f4f4 (code); ledger 0f09759. Vercel preview: **pending** (the VM can't reach it; the local session checks `build/stage7` returns 200).
+- **Commands:** `pnpm verify` → 36 files / 318 tests pass; `pnpm test:e2e` → 30 pass / 6 skipped by project design / 0 fail; `pnpm build` pass (all routes static).
+- **Independent QA subagent** (against `next start`, own scripts):
+  1. TC-001..TC-014: **PASS**, including an independent tsx spot-check of every §4.3 anchor under `TZ=America/Los_Angeles`.
+  2. `/` renders "Your trucks earned ₹1,86,400 yesterday. ₹11,430 of it doesn’t add up, across 3 trips." from `getTodayHead()`, with no numeric literals in components/app: **PASS**.
+  3. The shell at 375/768/1440 on /, /brief, /trips, /why and the 404: no horizontal scroll, top bar everywhere, the 375 menu reaches all 6 destinations, `.kbd` hidden on the phone: **PASS**.
+  4. CI (TC-060): **PASS locally** (frozen install + verify + build on Node 22.22.2 / pnpm 12.6.0); **BLOCKED on GitHub**. Every Actions run fails in ~3 s with no steps or logs, an account-side block (billing/minutes). **User action:** GitHub → Settings → Billing and plans / Actions for the private repo.
+  5. DoD: determinism, no wall clock under lib/data, scenario.json committed one trip per line, secret scan with fail-proof (TC-061), no NEXT_PUBLIC_ key, no forbidden words: **PASS**.
+  6. Screenshot parity (`/` vs `final/index.html` at 1440 and 375) for the greeting, verdict, tags, ledger bar, legend and top bar: **PASS**. The only differences are fonts over file:// and the dropped prototype banner.
+- **TCs passed:** TC-001–TC-014, TC-021 (static and data), TC-022 (shell), TC-023 (menu destinations), TC-061; TC-060 is local only.
+- **Open issues:** (M) GitHub Actions account block. (L) The phone menu button is 38 px, the same as the mockup, against TC-023's 44 px target; M-002 fixes it as an accessibility fix. (L) Balancer-trip outliers in some long-route normals (EXE9), a DES/CR candidate.
+- **Decision:** every exit criterion except the external CI block passes. Continuing to M-002, M-003 and M-004 in parallel streams per §15.
+
+
 ## Decisions and scope log
 
 _(EXE# entries are mirrored in `decisions.md`)_
