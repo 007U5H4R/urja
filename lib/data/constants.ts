@@ -10,6 +10,9 @@ export const DIESEL_INR_PER_L = 90;
 /** The rules that measure diesel in litres: their flags are "diesel unaccounted" (§4.5). */
 export const DIESEL_RULES: readonly RuleId[] = ["R1", "R2", "R3"];
 
+/** The wrong-flag guardrail (D5): Urja should be wrong on fewer than 10% of its flags. */
+export const WRONG_FLAG_LIMIT_PCT = 10;
+
 /** Every truck's tank holds 400 L. */
 export const TANK_CL = 40_000;
 

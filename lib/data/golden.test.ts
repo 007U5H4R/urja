@@ -228,6 +228,10 @@ describe("TC-007 · September flags", () => {
     expect([s.wrongPct, s.sharePct]).toEqual([9, 37]);
   });
 
+  it("both wrong flags were cleared by the driver's side (N7, N14)", () => {
+    expect([s.wrong, s.wrongCleared]).toEqual([2, 2]);
+  });
+
   it("the weekly flagged / recovered table, with bricks of about ₹1,000", () => {
     expect(weeks().map((w) => [w.label, w.flaggedInr, w.recoveredInr, w.bricks.lit, w.bricks.total])).toEqual([
       ["1–7", 9480, 6300, 6, 9],

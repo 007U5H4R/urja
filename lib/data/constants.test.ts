@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DIESEL_INR_PER_L, R1, R2, R3, R4, R5, r2Fires, r3Fires, r4OverKmFires } from "./constants";
+import { DIESEL_INR_PER_L, R1, WRONG_FLAG_LIMIT_PCT, R2, R3, R4, R5, r2Fires, r3Fires, r4OverKmFires } from "./constants";
 
 describe("rule thresholds (TSK-02.1)", () => {
   it("values diesel at ₹90/L", () => {
@@ -33,5 +33,11 @@ describe("rule thresholds (TSK-02.1)", () => {
     expect(r4OverKmFires(106.01, 100)).toBe(true);
     expect(r4OverKmFires(303.16, 286)).toBe(false);
     expect(r4OverKmFires(303.2, 286)).toBe(true);
+  });
+});
+
+describe("wrong-flag guardrail (D5)", () => {
+  it("is 10% of flags", () => {
+    expect(WRONG_FLAG_LIMIT_PCT).toBe(10);
   });
 });

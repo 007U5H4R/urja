@@ -181,6 +181,8 @@ export interface SeptemberSummary {
   confirmed: number;
   waiting: number;
   wrong: number;
+  /** Of the wrong flags, those the driver's side cleared. */
+  wrongCleared: number;
   /** Wrong flags as a whole % of all flags. */
   wrongPct: number;
   flaggedInr: number;
@@ -215,6 +217,7 @@ export function september(): SeptemberSummary {
     confirmed: status("confirmed"),
     waiting: status("waiting"),
     wrong: status("wrong"),
+    wrongCleared: flags.filter((f) => f.status === "wrong" && f.driverSide.state === "cleared").length,
     wrongPct: flags.length ? Math.round((status("wrong") / flags.length) * 100) : 0,
     flaggedInr,
     recoveredInr,
@@ -234,7 +237,8 @@ export interface WeekSummary {
 }
 
 const WEEKS: readonly (readonly [number, number])[] = [[1, 7], [8, 14], [15, 21], [22, 27]];
-const BRICK_INR = 1000;
+/** One brick ≈ ₹1,000 flagged. */
+export const BRICK_INR = 1000;
 
 /** Flagged and recovered ₹ by week of September. */
 export function weeks(): WeekSummary[] {
