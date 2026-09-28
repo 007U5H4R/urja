@@ -232,3 +232,9 @@
 - `routeNormal(tripId)` is the mean profit of the last 13 clean trips on the same route that ended before this trip (fewer if fewer exist). For 0926-04 that is exactly the 13 anchor trips, ₹16,660.
 - 18 trips have no earlier clean trip on their route, so `routeNormal` returns `null` and the Trip page says there is no route history yet instead of inventing a normal.
 - Open for Stage 8: some balancer trips on long routes (for example on AHM-JAI) carry low profits (₹850–1,520), which show as outliers in that route's normal chart. It's not an anchor; it's a DES/CR candidate.
+
+## EXE10 · Trip pages for trucks still on the road — accepted 2026-09-28
+- Every trip gets a static page, including the 11 in progress at 7:12 AM. Those pages say "On the road", show the chart and timeline up to the last reading, and show no profit, flag or ledger. Nothing is invented for the unfinished part.
+- Unknown ids get the root 404 page (Next's `dynamicParams = false` behaviour).
+- Trips over 10 hours use a wider chart step (for example 15/30 min) so the chart keeps about 115 bars; the header states the step.
+- The R2–R5 and clean-trip variant copy (only R1 was mocked up, §5.4) was written in the build and goes to the Stage 8 critique.
