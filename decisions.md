@@ -223,3 +223,7 @@
 ## EXE7 · Non-anchor plaza tariffs — accepted 2026-09-28
 - The mockups name only the three JAI-OKH plazas (₹705, ₹725, ₹710; unchanged). The other plazas and pumps were named after towns on the route, and their tariffs were set to ₹790–1,180 so 27 Sep's tolls can reach the anchored ₹38,900 inside TC-013's ₹100–1,500 band.
 - Plaza and pump names and every Hindi place name go into `docs/exec/hindi-review.md` for the native review.
+
+## EXE8 · The Today clean line drops the quoted word — accepted 2026-09-28
+- The mockup's clean line (`final/index.html:101`) reads: Urja says “unaccounted”, never “theft”. The wording rule (CLAUDE.md, §1, TC-014) forbids that word anywhere in UI copy, even quoted.
+- The build reads: "The other 14 trips add up: diesel, tolls and km all match. Urja only points at what doesn't add up. You decide." The count is computed. This is a copy fix under an existing hard rule, not a Design Freeze change.
