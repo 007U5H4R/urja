@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trip 0926-04 · Urja — Sharma Roadlines</title>
+<link rel="stylesheet" href="lamp.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+</head>
+<body>
+<div class="proto-banner">DESIGN PROTOTYPE — NOT PRODUCTION</div>
+
+<header class="topbar">
+  <div class="wrap">
+    <a class="wordmark" href="index.html" aria-label="Urja, Today"><span class="mark"><svg viewBox="0 0 26 26"><use href="#i-mark"/></svg></span>Urja</a>
+    <a class="askbar" href="index.html?ask"><svg class="i"><use href="#i-search"/></svg><span class="ph">Ask about any truck, trip or driver…</span><span class="kbd">⌘K</span></a>
+    <nav class="navpills" aria-label="Main">
+      <a class="pill" href="index.html"><svg class="i"><use href="#i-today"/></svg><span class="lbl">Today</span></a>
+      <a class="pill" href="index.html#trucks"><svg class="i"><use href="#i-truck"/></svg><span class="lbl">Trucks</span></a>
+      <a class="pill" href="trip.html" aria-current="page"><svg class="i"><use href="#i-route"/></svg><span class="lbl">Trips</span></a>
+      <a class="pill" href="../final/why.html"><svg class="i"><use href="#i-book"/></svg><span class="lbl">Why Urja</span></a>
+    </nav>
+    <div class="spacer"></div>
+    <span class="fleet"><span class="name">Sharma Roadlines · 24 trucks</span><span class="avatar" aria-hidden="true">SR</span></span>
+    <details class="m-menu"><summary class="iconbtn" aria-label="Menu"><svg class="i"><use href="#i-menu"/></svg></summary>
+      <nav aria-label="Main (mobile)"><a href="brief.html">Morning brief</a><a href="index.html">Today</a><a href="index.html#trucks">Trucks</a><a href="trip.html" aria-current="page">Trips</a><a href="../final/why.html">Why Urja</a><a href="index.html?ask">Ask Urja</a></nav></details>
+  </div>
+</header>
+
+<main class="wrap">
+  <nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">Today</a><svg class="i"><use href="#i-right"/></svg><a href="index.html">Needs your eyes</a><svg class="i"><use href="#i-right"/></svg><span aria-current="page">Trip 0926-04</span></nav>
+
+  <section class="triphead">
+    <div>
+      <div class="title"><span class="plate lg">RJ14 GB 4521</span><h1>Jaipur → Delhi (Okhla)</h1></div>
+      <p class="meta">Sat 26 Sep, 9:05 PM → Sun 27 Sep, 6:40 AM · 286 km on NH48 · 24 t cement · Driver Ramesh Kumar</p>
+    </div>
+    <div class="result">
+      <p class="big">₹13,240<small>profit</small></p>
+      <p class="vs"><span class="delta loss">₹3,420 below</span>this route’s normal of ₹16,660</p>
+    </div>
+  </section>
+
+  <section class="trip-grid">
+    <!-- verdict first in reading order; placed right of the map on wide screens -->
+    <article class="panel flagcard" aria-labelledby="flag-h">
+      <div>
+        <div class="rule"><span class="chip warn">Stationary fuel drop</span><span class="conf" data-level="3"><i><b></b><b></b><b></b></i>High confidence</span></div>
+        <h2 id="flag-h">38 L diesel unaccounted</h2>
+        <p class="amt"><span class="lit-loss">₹3,420</span><span class="muted">at ₹90 / L</span></p>
+      </div>
+      <div class="block">
+        <p class="label">What the truck recorded</p>
+        <ul class="evidence">
+          <li><svg class="i"><use href="#i-drop"/></svg><span>Fuel fell 168 → 130 L in 26 minutes</span><span class="src">Fuel sensor</span></li>
+          <li><svg class="i"><use href="#i-clock"/></svg><span>Parked with ignition off, 2:08–2:44 AM</span><span class="src">GPS · ignition</span></li>
+          <li><svg class="i"><use href="#i-pin"/></svg><span>1.6 km off NH48; nearest pump is 3.1 km away</span><span class="src">Geofence</span></li>
+          <li><svg class="i"><use href="#i-route"/></svg><span>Same stretch flagged 4 more times this month</span><span class="src">Fleet history</span></li>
+        </ul>
+        <p class="why"><b>Why high:</b> the fuel sensor stayed within ±2 L for the rest of the trip, so a 38 L drop is about 19× its normal noise.</p>
+      </div>
+      <div class="block">
+        <div class="drv">
+          <span class="avatar" aria-hidden="true">RK</span>
+          <div><b>Ramesh Kumar</b><small>Driver · with Sharma Roadlines since 2019</small></div>
+          <div class="acts"><button class="iconbtn" aria-label="Call Ramesh"><svg class="i"><use href="#i-phone"/></svg></button><button class="iconbtn" aria-label="Message Ramesh"><svg class="i"><use href="#i-chat"/></svg></button></div>
+        </div>
+        <p class="label">Driver’s side</p>
+        <span class="chip">Ramesh hasn’t been asked yet</span>
+        <div class="actions">
+          <button class="btn btn-lamp"><svg class="i"><use href="#i-chat"/></svg>Ask Ramesh on WhatsApp</button>
+          <button class="btn btn-line">Mark as explained</button>
+        </div>
+        <p class="fine">Ramesh gets a neutral message: “Fuel dropped 38 L near Behror at 2:14 AM on 27 Sep. Can you tell us what happened?” Nothing is deducted until you decide.</p>
+      </div>
+    </article>
+
+    <article class="panel mapcard" id="mapcard" aria-labelledby="route-h">
+      <div class="map" id="tripMap" role="img" aria-label="Route map: planned NH48 route from Jaipur to Okhla, Delhi, and the actual route, which leaves the highway for 1.6 km near Behror where fuel dropped"></div>
+      <div class="fade"></div>
+      <div class="mc-top"><h2 id="route-h">Route</h2><div class="right"><button class="iconbtn" id="fs" aria-label="Full screen map"><svg class="i"><use href="#i-expand"/></svg></button></div></div>
+      <div class="glass maplegend" aria-hidden="true"><span><i class="dash"></i>Planned · NH48</span><span><i class="solid"></i>Actual</span><span><i class="dl"></i>Fuel drop</span><span><i class="dk"></i>Checked stop</span></div>
+      <div class="glass railbox">
+        <div class="rb-head"><b>Night of 26–27 Sep</b><span>moving · stopped · the flagged stop · refuel</span></div>
+        <div class="rail" id="rail"></div>
+        <div class="rail-ends"><span>9:05 PM · Jaipur</span><span>6:40 AM · Okhla</span></div>
+      </div>
+    </article>
+  </section>
+
+  <section class="panel chartpanel" aria-labelledby="fuel-h">
+    <div class="sec-head"><h2 id="fuel-h">Fuel in the tank, and speed</h2><span class="count">CAN fuel sensor + GPS · every 5 min</span>
+      <span class="right legend" aria-hidden="true"><span><i style="background:oklch(0.52 0.008 60)"></i>Fuel</span><span><i style="background:var(--loss)"></i>The drop</span><span><i style="background:var(--cream)"></i>Refuel</span><span><i style="width:16px;height:0;border-top:2px dashed var(--cream);border-radius:0"></i>Without the drop</span></span></div>
+    <div class="wave-desk" id="wave" role="img" aria-label="Fuel and speed chart. Fuel falls slowly while driving, stays flat at the dhaba stop, then drops 38 litres between 2:14 and 2:40 AM while speed is zero near Behror. At 3:10 AM a refuel adds 138 litres, matching the 140 litre bill. Without the drop the tank would have ended at 268 litres instead of 230."></div>
+    <div class="wave-mob" id="waveM" role="img" aria-label="Fuel and speed chart: a 38 litre drop while parked near Behror at 2:14 AM, then a refuel at Neemrana that matches the bill."></div>
+    <p class="note">Top: litres in the tank. Below the line: speed. The drop happened while the truck wasn’t moving.</p>
+  </section>
+
+  <section class="lower">
+    <article class="panel lpanel" aria-labelledby="tl-h">
+      <div class="sec-head"><h2 id="tl-h">What happened, in order</h2></div>
+      <ol class="timeline">
+        <li><span class="t">9:05 PM</span><span class="dot lamp"></span><span class="e">Left Jaipur Transport Nagar<small>Fuel 210 L</small></span><span class="v"></span></li>
+        <li><span class="t">10:40 PM</span><span class="dot ok"></span><span class="e">Dhaba stop, Shahpura · 50 min<small>Fuel steady, checked: nothing to see</small></span><span class="v"></span></li>
+        <li><span class="t">11:48 PM</span><span class="dot"></span><span class="e">FASTag · Manoharpur plaza</span><span class="v">₹705</span></li>
+        <li class="flag"><span class="t">2:08 AM</span><span class="dot bad"></span><span class="e">Parked 1.6 km off NH48 near Behror<small>Ignition off 2:10 AM</small></span><span class="v"></span></li>
+        <li class="flag"><span class="t">2:14 AM</span><span class="dot bad"></span><span class="e">Fuel fell 168 → 130 L while parked<small>Flagged: stationary fuel drop</small></span><span class="v loss">−38 L</span></li>
+        <li><span class="t">2:44 AM</span><span class="dot lamp"></span><span class="e">Moving again</span><span class="v"></span></li>
+        <li><span class="t">3:10 AM</span><span class="dot ok"></span><span class="e">Refuelled, HP pump Neemrana<small>Bill 140 L · tank rose 138 L, matches</small></span><span class="v">₹12,600</span></li>
+        <li><span class="t">3:31 AM</span><span class="dot"></span><span class="e">FASTag · Shahjahanpur plaza</span><span class="v">₹725</span></li>
+        <li><span class="t">5:52 AM</span><span class="dot"></span><span class="e">FASTag · Kherki Daula plaza</span><span class="v">₹710</span></li>
+        <li><span class="t">6:40 AM</span><span class="dot lamp"></span><span class="e">Arrived Okhla, Delhi<small>Fuel 230 L</small></span><span class="v"></span></li>
+      </ol>
+    </article>
+    <article class="panel lpanel ledgerp" aria-labelledby="led-h">
+      <div class="sec-head"><h2 id="led-h">Trip ledger</h2></div>
+      <div class="row"><span>Freight · 24 t cement</span><span>₹28,000</span></div>
+      <div class="row"><span>Diesel used · 118 L × ₹90</span><span>−₹10,620</span></div>
+      <div class="row indent loss"><span>of which unaccounted · 38 L</span><span>−₹3,420</span></div>
+      <div class="row"><span>Tolls · FASTag, 3 plazas</span><span>−₹2,140</span></div>
+      <div class="row"><span>Driver allowance</span><span>−₹1,200</span></div>
+      <div class="row"><span>Loading &amp; other</span><span>−₹800</span></div>
+      <div class="row total"><span>Profit</span><span class="lit">₹13,240</span></div>
+      <div class="routechart">
+        <p><span>This route, last 14 trips</span><span>- - normal ₹16,660</span></p>
+        <div class="chart" id="c-route" role="img" aria-label="Profit on the Jaipur to Delhi route for the last 14 trips: 13 trips between ₹15,800 and ₹17,400, and this trip at ₹13,240, ₹3,420 below the normal of ₹16,660."></div>
+      </div>
+    </article>
+  </section>
+</main>
+
+<script src="icons.js"></script>
+<script src="charts.js"></script>
+<script src="map.js"></script>
+<script>
+  tripMap('tripMap');
+  rail('#rail', { total: 575, step: 5, segs: [{ from: 96, to: 144, s: 'stop' }, { from: 304, to: 308, s: 'stop' }, { from: 309, to: 335, s: 'flag' }, { from: 336, to: 338, s: 'stop' }, { from: 361, to: 365, s: 'stop' }, { from: 366, to: 372, s: 'fuel' }], knob: { t: 309, label: '2:14 AM · −38 L' } });
+  // expected tank level without the drop, from the drop onward
+  const exp = (d) => { const pts = []; for (let t = 309; t <= 575; t += d.step) { const i = Math.round(t / d.step); pts.push([i, d.fuel[i] + (t < 335 ? 38 * (t - 309) / 26 : 38)]); } return pts; };
+  const D = night0926(5); D.step = 5;
+  wave('#wave', { fuel: D.fuel, speed: D.speed, kind: (i) => D.kind[i], window: [62, 67], expected: exp(D), h: 300,
+    notes: [
+      { i: 61, y: 66, a: 'end', text: '−38 L in 26 min', c: 'var(--loss)', w: 600, fs: 13 },
+      { i: 61, y: 83, a: 'end', text: 'parked, ignition off', fs: 12 },
+      { i: 75, y: 12, text: '+138 L refuel · bill 140 L ✓', fs: 12 },
+      { i: 19, y: 70, text: 'dhaba stop · steady ✓', fs: 12 },
+    ],
+    times: [{ i: 1, text: '9 PM' }, { i: 23, text: '11 PM' }, { i: 47, text: '1 AM' }, { i: 71, text: '3 AM' }, { i: 95, text: '5 AM' }, { i: 114, text: '6:40 AM' }] });
+  const M = night0926(10); M.step = 10;
+  wave('#waveM', { fuel: M.fuel, speed: M.speed, kind: (i) => M.kind[i], window: [31, 33], expected: exp(M), w: 360, h: 250, gap: 1.2, fs: 12,
+    notes: [{ i: 30, y: 58, a: 'end', text: '−38 L, parked', c: 'var(--loss)', w: 600, fs: 13 }, { i: 38, y: 11, text: '+138 L ✓', fs: 12 }],
+    times: [{ i: 1, text: '9 PM' }, { i: 24, text: '1 AM' }, { i: 48, text: '5 AM' }] });
+  const route = [16.2, 17.1, 16.9, 15.8, 17.4, 16.5, 16.1, 17.0, 16.8, 16.3, 17.2, 16.6, 16.7, 13.24];
+  bars('#c-route', { values: route, max: 18.5, ref: { v: 16.66 }, kind: (i) => (i === 13 ? 'loss' : 'dim') });
+  document.getElementById('fs').onclick = () => { const m = document.getElementById('mapcard'); document.fullscreenElement ? document.exitFullscreen() : m.requestFullscreen && m.requestFullscreen(); };
+</script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Urja · design gallery</title>
+<link rel="stylesheet" href="option-b/lamp.css">
+<style>
+  .g { max-width: 1320px; margin: 0 auto; padding: 40px clamp(16px, 3vw, 32px) 80px; }
+  .g h1 { font-size: clamp(1.8rem, 1.2rem + 2vw, 2.8rem); letter-spacing: -0.025em; font-weight: 450; }
+  .g .lede { color: var(--fg-muted); max-width: 76ch; margin-top: 12px; }
+  .dir { margin-top: 40px; }
+  .dir > h2 { font-size: 1.35rem; font-weight: 500; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .dir > p { color: var(--fg-muted); font-size: var(--t-sm); margin-top: 6px; max-width: 90ch; }
+  .steps { margin-top: 20px; display: grid; gap: 24px; }
+  .step { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 20px; padding-top: 22px; border-top: 1px solid var(--line-soft); }
+  .step .n { font-size: 1.5rem; font-weight: 500; color: var(--lamp); }
+  .step h3 { font-size: 1.1rem; font-weight: 520; }
+  .step p { color: var(--fg-muted); font-size: var(--t-sm); margin-top: 4px; max-width: 84ch; }
+  .shots { display: flex; gap: 16px; margin-top: 14px; align-items: flex-start; flex-wrap: wrap; }
+  .shots a { display: block; border: 1px solid var(--line); border-radius: var(--r-md); overflow: hidden; background: var(--surface-1); }
+  .shots img { display: block; height: 320px; width: auto; }
+  .shots figcaption { font-size: var(--t-xs); color: var(--fg-subtle); padding: 6px 10px; }
+  details.old { margin-top: 48px; border-top: 1px solid var(--line-soft); padding-top: 18px; }
+  details.old summary { cursor: pointer; color: var(--fg-muted); font-size: 1.05rem; }
+  details.old .shots img { height: 220px; }
+  @media (max-width: 700px) { .step { grid-template-columns: 1fr; gap: 6px; } .shots img { height: 230px; } }
+</style>
+</head>
+<body>
+<div class="proto-banner">DESIGN PROTOTYPE — NOT PRODUCTION</div>
+<main class="g">
+  <h1>Urja · design gallery</h1>
+  <p class="lede">Direction B restyles Urja in the TerraFlux visual language you pointed to: near-black, warm amber light, gradient and hatched bar charts, pill navigation, a map-led hero with a glass card and a tick rail. Urja’s product thinking is kept: the verdict first, evidence one tap away, and the driver’s side before any rupee is deducted. Click any screenshot to open the live page.</p>
+
+  <section class="dir">
+    <h2>B · Lamplight <span class="delta">new · TerraFlux-inspired</span></h2>
+    <p>Rule of light: the page sits in the dark and only what needs the owner’s eyes is lit: the leaked rupees, the selected flag on the map, the bar for yesterday, the primary action.</p>
+    <div class="steps">
+      <section class="step"><span class="n">1</span><div>
+        <h3>The 7 AM message</h3><p>WhatsApp-style, Hindi by default with an English toggle. The link preview shows the fuel drop at a glance.</p>
+        <div class="shots"><figure><a href="option-b/message.html"><img src="shots/b-message-375.png" alt="Message at 375px"></a><figcaption>Phone · 375</figcaption></figure></div>
+      </div></section>
+      <section class="step"><span class="n">2</span><div>
+        <h3>Morning brief (phone)</h3><p>Earned yesterday with 14 days of context, the three trips to look at, the clean-trip line, September flagged vs recovered, and the Ask box.</p>
+        <div class="shots"><figure><a href="option-b/brief.html"><img src="shots/b-brief-375-hi.png" alt="Brief in Hindi"></a><figcaption>हिंदी · first screen</figcaption></figure><figure><a href="option-b/brief.html?lang=en"><img src="shots/b-brief-375-en.png" alt="Brief in English"></a><figcaption>English · first screen</figcaption></figure></div>
+      </div></section>
+      <section class="step"><span class="n">3</span><div>
+        <h3>Trip evidence</h3><p>Flag card with confidence, evidence and the driver’s side; the tilted night map with the tick rail; fuel above the line and speed below it, so a drop while parked is unmistakable; timeline and ledger.</p>
+        <div class="shots"><figure><a href="option-b/trip.html"><img src="shots/b-trip-1440.png" alt="Trip desktop"></a><figcaption>Desktop · 1440</figcaption></figure><figure><a href="option-b/trip.html"><img src="shots/b-trip-375.png" alt="Trip phone"></a><figcaption>Phone · 375</figcaption></figure></div>
+      </div></section>
+      <section class="step"><span class="n">4</span><div>
+        <h3>Today (desktop)</h3><p>The verdict, the ledger as one bar, the map and “Needs your eyes” linked (click a flag and the map flies to it), September as four chart cards including “When Urja was wrong”, and trucks by profit per km.</p>
+        <div class="shots"><figure><a href="option-b/index.html"><img src="shots/b-index-1440.png" alt="Today desktop"></a><figcaption>Desktop · 1440</figcaption></figure><figure><a href="option-b/index.html"><img src="shots/b-index-768.png" alt="Today tablet"></a><figcaption>Tablet · 768</figcaption></figure><figure><a href="option-b/index.html"><img src="shots/b-index-375.png" alt="Today phone"></a><figcaption>Phone · 375</figcaption></figure><figure><a href="option-b/index.html?fleet"><img src="shots/b-index-fleet-1440.png" alt="Whole fleet map"></a><figcaption>Map · whole fleet</figcaption></figure></div>
+      </div></section>
+      <section class="step"><span class="n">5</span><div>
+        <h3>Ask Urja</h3><p>Answers in the question’s language, cites the trips it used, states scope and model, and says it can be wrong.</p>
+        <div class="shots"><figure><a href="option-b/index.html?ask"><img src="shots/b-index-ask-1440.png" alt="Ask drawer"></a><figcaption>Drawer · 1440</figcaption></figure></div>
+      </div></section>
+      <section class="step"><span class="n">+</span><div>
+        <h3>Still in direction A’s look</h3><p>Screen states, Why Urja and the link-preview image. They get the B treatment once you approve this direction.</p>
+      </div></section>
+    </div>
+  </section>
+
+  <details class="old">
+    <summary>A · The Munshi’s Ledger (previous direction, for comparison)</summary>
+    <div class="shots">
+      <figure><a href="final/message.html"><img src="shots/message-375.png" alt=""></a><figcaption>Message</figcaption></figure>
+      <figure><a href="final/brief.html"><img src="shots/brief-375-hi.png" alt=""></a><figcaption>Brief</figcaption></figure>
+      <figure><a href="final/trip.html"><img src="shots/trip-1440.png" alt=""></a><figcaption>Trip</figcaption></figure>
+      <figure><a href="final/index.html"><img src="shots/index-1440.png" alt=""></a><figcaption>Today</figcaption></figure>
+      <figure><a href="final/states.html"><img src="shots/states-1440.png" alt=""></a><figcaption>States</figcaption></figure>
+      <figure><a href="final/why.html"><img src="shots/why-1440.png" alt=""></a><figcaption>Why Urja</figcaption></figure>
+      <figure><a href="og/index.html"><img src="shots/og.png" alt=""></a><figcaption>OG image</figcaption></figure>
+    </div>
+  </details>
+</main>
+</body>
+</html>

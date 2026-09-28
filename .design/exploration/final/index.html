@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Today · Urja — Sharma Roadlines</title>
+<link rel="stylesheet" href="urja.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+</head>
+<body>
+<div class="proto-banner">DESIGN PROTOTYPE — NOT PRODUCTION</div>
+
+<header class="topbar">
+  <div class="wrap">
+    <a class="wordmark" href="index.html" aria-label="Urja home">
+      <svg viewBox="0 0 26 26" aria-hidden="true"><rect width="26" height="26" rx="7" fill="var(--brand)"/><path d="M6.5 18a6.5 6.5 0 0 1 13 0" fill="none" stroke="var(--brand-ink)" stroke-width="2.2" stroke-linecap="round"/><path d="M13 18l4-6" stroke="var(--brand-ink)" stroke-width="2.2" stroke-linecap="round"/></svg>
+      Urja
+    </a>
+    <nav class="nav" aria-label="Main">
+      <a href="index.html" aria-current="page">Today</a>
+      <a href="#trucks">Trucks</a>
+      <a href="trip.html">Trips</a>
+      <a href="why.html">Why Urja</a>
+    </nav>
+    <div class="spacer"></div>
+    <details class="m-menu"><summary class="btn btn-ghost">Menu</summary><nav aria-label="Main (mobile)"><a href="brief.html">Morning brief</a><a href="index.html">Today</a><a href="index.html#trucks">Trucks</a><a href="trip.html">Trips</a><a href="why.html">Why Urja</a></nav></details>
+    <div class="fleet-switch"><b>Sharma Roadlines</b> · Jaipur · 24 trucks</div>
+    <button class="btn btn-primary" id="askBtn" aria-haspopup="dialog">Ask Urja <span class="kbd">⌘K</span></button>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- HERO: the day as one sentence, with the munshi's ledger beside it -->
+  <section class="hero" aria-labelledby="h1">
+    <div>
+      <p class="dateline">Sunday, 27 September · 17 trips finished and reconciled at 6:40 AM</p>
+      <h1 id="h1">Your trucks earned ₹1,86,400 yesterday.
+        <span class="sub"><span class="loss">₹11,430</span> of it doesn’t add up, across 3 trips.</span></h1>
+    </div>
+    <div class="ledger" aria-label="Yesterday's ledger">
+      <p class="caption">Yesterday’s ledger · 17 trips</p>
+      <div class="row"><span>Freight billed</span><span>₹4,12,000</span></div>
+      <div class="row"><span>Diesel</span><span>−₹1,58,300</span></div>
+      <div class="row"><span>Tolls (FASTag)</span><span>−₹38,900</span></div>
+      <div class="row"><span>Driver allowance &amp; other</span><span>−₹28,400</span></div>
+      <div class="row total"><span>Profit</span><span class="gain">₹1,86,400</span></div>
+    </div>
+  </section>
+
+  <!-- NEEDS YOUR EYES -->
+  <section class="sec" aria-labelledby="flags-h">
+    <div class="sec-head">
+      <h2 id="flags-h">Needs your eyes</h2><span class="count">3 of 17 trips</span>
+      <span class="right">Urja says “unaccounted”, never “theft”. You decide.</span>
+    </div>
+    <div class="flags" role="list">
+      <a class="flag-row" role="listitem" href="trip.html">
+        <span class="plate-cell"><span class="plate">RJ14 GB 4521</span></span>
+        <span class="whatcell"><span class="what">38 L diesel unaccounted</span><br><span class="where">Parked near Behror, 2:08–2:44 AM · Jaipur → Delhi</span></span>
+        <span class="conf" data-level="3"><i><b></b><b></b><b></b></i>High</span>
+        <span class="amt loss">₹3,420</span>
+        <span class="driver">Ramesh not asked yet</span>
+        <span class="chev" aria-hidden="true">›</span>
+      </a>
+      <a class="flag-row" role="listitem" href="trip.html">
+        <span class="plate-cell"><span class="plate">RJ14 GA 1182</span></span>
+        <span class="whatcell"><span class="what">Fuel bill higher than tank rise</span><br><span class="where">Bill 250 L, tank rose 200 L · Kishangarh pump, 4:50 PM</span></span>
+        <span class="conf" data-level="2"><i><b></b><b></b><b></b></i>Likely</span>
+        <span class="amt loss">₹4,500</span>
+        <span class="driver">Vikram explained · review</span>
+        <span class="chev" aria-hidden="true">›</span>
+      </a>
+      <a class="flag-row" role="listitem" href="trip.html">
+        <span class="plate-cell"><span class="plate">RJ14 GC 3309</span></span>
+        <span class="whatcell"><span class="what">Used 12% more diesel than usual</span><br><span class="where">39 L over this truck’s normal · Jaipur → Bhiwandi, 1,150 km</span></span>
+        <span class="conf" data-level="1"><i><b></b><b></b><b></b></i>Check</span>
+        <span class="amt loss">₹3,510</span>
+        <span class="driver">Anil not asked yet</span>
+        <span class="chev" aria-hidden="true">›</span>
+      </a>
+    </div>
+    <p class="clean-line"><span class="tick" aria-hidden="true">✓</span> The other 14 trips reconciled cleanly: diesel, tolls and km all match.</p>
+  </section>
+
+  <!-- TRUCKS + MAP -->
+  <section class="sec split" id="trucks">
+    <div>
+      <div class="sec-head"><h2>Trucks by profit per km</h2><span class="count">September so far</span><span class="right"><a href="#">All 24 trucks ›</a></span></div>
+      <table class="trucks">
+        <thead><tr><th class="rank">#</th><th>Truck</th><th class="hide-sm">Driver</th><th class="r hide-sm">Km</th><th class="r">₹ / km</th><th class="hide-sm"></th><th class="r">Unaccounted</th><th class="hide-sm">Now</th></tr></thead>
+        <tbody>
+          <tr><td class="rank">1</td><td><span class="plate">RJ14 GC 7710</span></td><td class="hide-sm">Mahesh Meena</td><td class="r hide-sm">6,840</td><td class="r perkm gain">₹31.8</td><td class="hide-sm"><span class="bar"><b style="width:100%"></b></span></td><td class="r subtle">₹0</td><td class="hide-sm"><span class="status moving">To Ahmedabad</span></td></tr>
+          <tr><td class="rank">2</td><td><span class="plate">RJ14 GA 2204</span></td><td class="hide-sm">Suresh Yadav</td><td class="r hide-sm">6,210</td><td class="r perkm">₹29.6</td><td class="hide-sm"><span class="bar"><b style="width:93%"></b></span></td><td class="r subtle">₹0</td><td class="hide-sm"><span class="status">Jaipur yard</span></td></tr>
+          <tr><td class="rank">3</td><td><span class="plate">RJ14 GB 1450</span></td><td class="hide-sm">Imran Khan</td><td class="r hide-sm">7,120</td><td class="r perkm">₹28.1</td><td class="hide-sm"><span class="bar"><b style="width:88%"></b></span></td><td class="r">₹900</td><td class="hide-sm"><span class="status moving">To Delhi</span></td></tr>
+          <tr><td class="rank">4</td><td><span class="plate">RJ14 GC 0931</span></td><td class="hide-sm">Balwant Singh</td><td class="r hide-sm">5,480</td><td class="r perkm">₹26.7</td><td class="hide-sm"><span class="bar"><b style="width:84%"></b></span></td><td class="r subtle">₹0</td><td class="hide-sm"><span class="status">Okhla, Delhi</span></td></tr>
+          <tr><td class="rank">5</td><td><span class="plate">RJ14 GA 6618</span></td><td class="hide-sm">Deepak Sharma</td><td class="r hide-sm">6,950</td><td class="r perkm">₹25.2</td><td class="hide-sm"><span class="bar"><b style="width:79%"></b></span></td><td class="r">₹1,480</td><td class="hide-sm"><span class="status moving">To Mumbai</span></td></tr>
+          <tr><td colspan="8" class="subtle" style="text-align:center;font-size:var(--t-xs)">16 more trucks between ₹16.9 and ₹25.0 per km</td></tr>
+          <tr><td class="rank">22</td><td><span class="plate">RJ14 GA 1182</span></td><td class="hide-sm">Vikram Choudhary</td><td class="r hide-sm">6,300</td><td class="r perkm">₹16.4</td><td class="hide-sm"><span class="bar"><b style="width:52%"></b></span></td><td class="r loss">₹8,100</td><td class="hide-sm"><span class="status">Jaipur yard</span></td></tr>
+          <tr><td class="rank">23</td><td><span class="plate">RJ14 GB 4521</span></td><td class="hide-sm">Ramesh Kumar</td><td class="r hide-sm">6,480</td><td class="r perkm">₹15.1</td><td class="hide-sm"><span class="bar"><b style="width:47%"></b></span></td><td class="r loss">₹9,630</td><td class="hide-sm"><span class="status">Okhla, Delhi</span></td></tr>
+          <tr><td class="rank">24</td><td><span class="plate">RJ14 GC 3309</span></td><td class="hide-sm">Anil Bairwa</td><td class="r hide-sm">7,410</td><td class="r perkm">₹12.7</td><td class="hide-sm"><span class="bar"><b style="width:40%"></b></span></td><td class="r loss">₹11,240</td><td class="hide-sm"><span class="status">Bhiwandi</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <div class="sec-head"><h2>Where they are now</h2><span class="count">updated 2 min ago</span></div>
+      <div class="mapbox" style="min-height:470px"><div class="map" id="fleetMap" role="img" aria-label="Map of 24 trucks between Delhi, Jaipur, Ahmedabad and Mumbai: 11 on a trip, 12 idle, 1 in workshop"></div>
+        <div class="map-legend"><span><i style="background:var(--brand)"></i>On trip · 11</span><span><i style="background:var(--fg-subtle)"></i>Idle · 12</span><span><i style="box-shadow:inset 0 0 0 1.5px var(--fg-muted)"></i>Workshop · 1</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MONTH REPORT CARDS -->
+  <section class="sec" aria-labelledby="month-h">
+    <div class="sec-head"><h2 id="month-h">September so far</h2><span class="count">1–27 Sep · 212 trips</span></div>
+    <div class="reports">
+      <article class="report t-loss">
+        <span class="k">Diesel unaccounted</span>
+        <span class="big">412<small>litres</small></span>
+        <div class="facts">
+          <div><span>Worth</span><span>₹37,080</span></div>
+          <div><span>Where it happens most</span><span>Behror stretch, NH48 · 5 times</span></div>
+          <div><span>When</span><span>7 of 9 between 11 PM and 4 AM</span></div>
+        </div>
+      </article>
+      <article class="report t-gain">
+        <span class="k">Best truck this month</span>
+        <span class="big">₹31.8<small>per km</small></span>
+        <div class="facts">
+          <div><span>Truck</span><span class="plate">RJ14 GC 7710</span></div>
+          <div><span>Driver</span><span>Mahesh Meena · 11 trips</span></div>
+          <div><span>Flags</span><span>None this month</span></div>
+        </div>
+      </article>
+      <article class="report t-brand">
+        <span class="k">What Urja caught</span>
+        <span class="big">₹58,240<small>flagged</small></span>
+        <div class="facts">
+          <div><span>Recovered so far</span><span class="gain">₹21,600</span></div>
+          <div><span>Cleared by the driver’s side</span><span>2 of 23 flags · 9%</span></div>
+          <div><span>Waiting for you</span><span>3 flags</span></div>
+        </div>
+      </article>
+    </div>
+  </section>
+</main>
+
+<!-- ASK URJA -->
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="ask-h" id="drawer">
+  <header><h2 id="ask-h">Ask Urja</h2><button class="btn btn-ghost" id="askClose" aria-label="Close Ask Urja">Esc</button></header>
+  <div class="body">
+    <div class="q">Which driver cost me the most diesel this month?</div>
+    <div class="a">
+      <p><b>Anil Bairwa</b> <span class="plate">RJ14 GC 3309</span>: his trips used <span class="loss">125 L (₹11,240)</span> more diesel than that truck normally uses on the same routes.</p>
+      <ol>
+        <li>Jaipur → Bhiwandi, 26 Sep: 39 L over <a class="cite" href="#">Trip 0926-11</a></li>
+        <li>Jaipur → Bhiwandi, 17 Sep: 48 L over <a class="cite" href="#">Trip 0917-06</a></li>
+        <li>Jaipur → Ahmedabad, 9 Sep: 38 L over <a class="cite" href="#">Trip 0909-03</a></li>
+      </ol>
+      <p class="muted">All three are “Check” confidence: extra use can come from heavier loads, traffic or idling, not only from missing diesel. Two of the three trips carried heavier loads than his usual.</p>
+      <p class="prov">From 212 trips across 24 trucks, 1–27 Sep · Gemini 3.5 Flash · answered in 1.8 s · Urja can be wrong, so open the trips before acting.</p>
+    </div>
+    <div class="chips" aria-label="Suggested questions">
+      <button class="chip">Which truck earns least per km, and why?</button>
+      <button class="chip hi" lang="hi">पिछले हफ़्ते कितना डीज़ल गायब हुआ?</button>
+      <button class="chip">Show every flag on the Behror stretch</button>
+    </div>
+  </div>
+  <form class="composer" onsubmit="return false"><label class="sr" for="askIn" style="position:absolute;left:-9999px">Your question</label><input id="askIn" placeholder="Ask in Hindi or English…"><button class="btn btn-primary">Ask</button></form>
+</aside>
+
+<script src="map.js"></script>
+<script>
+  fleetMap('fleetMap', 'dark');
+  const open = () => { document.body.classList.add('ask-open'); document.getElementById('askIn').focus(); };
+  const close = () => { document.body.classList.remove('ask-open'); document.getElementById('askBtn').focus(); };
+  document.getElementById('askBtn').onclick = open;
+  document.getElementById('askClose').onclick = close;
+  document.getElementById('scrim').onclick = close;
+  addEventListener('keydown', (e) => { if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); open(); } if (e.key === 'Escape') close(); });
+  if (location.search.includes('ask')) document.body.classList.add('ask-open');
+</script>
+</body>
+</html>
