@@ -8,9 +8,12 @@ Vercel: previews may be missing or auth-protected from the VM, so each row recor
 
 | TASK | TSK | status | commit | tests | evidence | notes |
 |---|---|---|---|---|---|---|
-| TASK-5 | TSK-01.1–01.5 | doing | — | — | — | TKT-01 scaffold, CI, preview |
-| TASK-6 | TSK-02.1–02.8 | todo | — | — | — | TKT-02 data engine and verdict |
-| TASK-7 | TSK-03.1–03.5 | todo | — | — | — | TKT-03 Lamplight foundation |
+| TASK-5 | TSK-01.1–01.5 | done | 38eda87, 05bb86f | TC-061 pass (fail-proof shown); format 15/15 under TZ=UTC and America/Los_Angeles; smoke e2e 3/3 (desktop/tablet/phone); `pnpm build` pass | pushed SHA 05bb86f; Vercel preview **pending** (checked by the local session) | Next **16.3.6** (`pnpm view next version`), React 19.2.8, pnpm 12.6.0, Playwright 1.56.1. Spec review PASS; quality review 1 fix round (worktree ignores, symmetric rounding, U+2212 litres). **CI (TC-060): GitHub Actions jobs fail in ~2 s with no steps or logs** on both pushes: an account-side block (likely Actions billing/minutes for the private repo), not the workflow; local `pnpm verify` + `pnpm build` stand in until the user checks Settings → Billing. EXE1–EXE3. |
+| TASK-6 | TSK-02.1–02.2 | done | f8bd27d | 74 unit tests pass (types verbatim, PRNG, clock, geo 1.6 km / 3.1 km, fleet 24/24 rows vs §4.3) | pushed | Unit A. Spec PASS; quality PASS + 1 fix round (integer R2/R3/R4 comparators, frozen routes). Invented plaza/pump names off NH48 and all Hindi place names go to the Hindi review. |
+| TASK-6 | TSK-02.3–02.5 (+ledger) | doing | — | — | — | Unit B: generator, simulator, rules, ledger |
+| TASK-6 | TSK-02.6–02.8 | todo | — | — | — | Unit C: aggregates, views, golden tests, Today head |
+| TASK-7 | TSK-03.1–03.3 | review | — | — | — | Unit A (worktree wip/stream-b): tokens, CSS port, fonts, icons, shell |
+| TASK-7 | TSK-03.4–03.5 | todo | — | — | — | Unit B: primitives, charts + parity |
 | TASK-8 | TSK-04.1–04.5 | todo | — | — | — | TKT-04 Today lower half |
 | TASK-9 | TSK-05.1–05.5 | todo | — | — | — | TKT-05 Trip evidence |
 | TASK-10 | TSK-06.1–06.4 | todo | — | — | — | TKT-06 Message and brief |
