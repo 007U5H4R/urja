@@ -19,6 +19,11 @@ const MONTHS = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ] as const;
+const WEEKDAYS_LONG = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] as const;
+const MONTHS_LONG = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+] as const;
 
 const INR_GROUPING = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
 const LITRES_0 = new Intl.NumberFormat("en-IN", {
@@ -81,12 +86,13 @@ export function formatTimeIST(t: Min): string {
   return `${h12}:${String(minute).padStart(2, "0")} ${hour < 12 ? "AM" : "PM"}`;
 }
 
-/** `Sun 27 Sep` or `27 Sep`. */
+/** `Sun 27 Sep`, `27 Sep`, or (`long`) `Monday, 28 September`. */
 export function formatDateIST(
   t: Min,
-  style: "weekday-day-month" | "day-month",
+  style: "weekday-day-month" | "day-month" | "long",
 ): string {
   const { day, month, weekday } = minToISTParts(t);
+  if (style === "long") return `${WEEKDAYS_LONG[weekday]}, ${day} ${MONTHS_LONG[month - 1]}`;
   const dayMonth = `${day} ${MONTHS[month - 1]}`;
   return style === "weekday-day-month" ? `${WEEKDAYS[weekday]} ${dayMonth}` : dayMonth;
 }

@@ -29,3 +29,6 @@ export function dayKey(t: Min): string {
   const { year, month, day } = minToISTParts(t);
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
+
+/** Mon 28 Sep 2026, 6:55 AM IST: when yesterday's trips were reconciled. */
+export const RECONCILED_AT: Min = istMin(2026, 9, 28, 6, 55);

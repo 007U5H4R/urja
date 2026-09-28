@@ -2,9 +2,13 @@
  * Money constant and rule thresholds (technical-plan §1, §4.4, §17 TSK-02.1).
  * These are fixed: never loosen one to make a gate pass.
  */
+import type { RuleId } from "./types";
 
 /** Diesel is valued at ₹90 per litre. Litres are stored as integer centilitres. */
 export const DIESEL_INR_PER_L = 90;
+
+/** The rules that measure diesel in litres: their flags are "diesel unaccounted" (§4.5). */
+export const DIESEL_RULES: readonly RuleId[] = ["R1", "R2", "R3"];
 
 /** Every truck's tank holds 400 L. */
 export const TANK_CL = 40_000;

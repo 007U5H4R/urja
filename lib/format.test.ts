@@ -81,6 +81,8 @@ describe("format", () => {
     expect(formatDateIST(0, "weekday-day-month")).toBe("Sat 29 Aug");
     // 23:59 IST stays on the same IST day even though it is the next day in UTC+
     expect(formatDateIST(at(SEP_27, 23, 59), "day-month")).toBe("27 Sep");
+    expect(formatDateIST(at(SEP_28, 7, 12), "long")).toBe("Monday, 28 September");
+    expect(formatDateIST(0, "long")).toBe("Saturday, 29 August");
   });
 
   it("splits minutes into IST parts", () => {

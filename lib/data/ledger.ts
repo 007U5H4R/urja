@@ -11,10 +11,8 @@
  * - tollsInr = Σ FASTag (a claim above FASTag is the R5 flag).
  * - profit = freight − dieselInr − tollsInr − allowance − other.
  */
-import { DIESEL_INR_PER_L } from "./constants";
+import { DIESEL_INR_PER_L, DIESEL_RULES } from "./constants";
 import type { Flag, Trip, TripLedger } from "./types";
-
-const DIESEL_RULES = new Set(["R1", "R2", "R3"]);
 
 export const clToInr = (cl: number) => Math.round((cl * DIESEL_INR_PER_L) / 100);
 
@@ -23,7 +21,7 @@ export function ledgerFor(trip: Trip, flags: readonly Flag[]): TripLedger {
   const risesCl = trip.refuels.reduce((a, r) => a + r.tankRiseCl, 0);
   const shortCl = own.filter((f) => f.rule === "R2").reduce((a, f) => a + (f.litres ?? 0) * 100, 0);
   const dieselCl = trip.tank.startCl + risesCl - trip.tank.endCl + shortCl;
-  const unaccountedCl = own.filter((f) => DIESEL_RULES.has(f.rule) && f.status !== "wrong").reduce((a, f) => a + (f.litres ?? 0) * 100, 0);
+  const unaccountedCl = own.filter((f) => DIESEL_RULES.includes(f.rule) && f.status !== "wrong").reduce((a, f) => a + (f.litres ?? 0) * 100, 0);
   const dieselInr = clToInr(dieselCl);
   const tollsInr = trip.fastag.reduce((a, e) => a + e.inr, 0);
   const { allowanceInr, otherInr } = trip.claims;
