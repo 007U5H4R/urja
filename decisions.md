@@ -238,3 +238,8 @@
 - Unknown ids get the root 404 page (Next's `dynamicParams = false` behaviour).
 - Trips over 10 hours use a wider chart step (for example 15/30 min) so the chart keeps about 115 bars; the header states the step.
 - The R2–R5 and clean-trip variant copy (only R1 was mocked up, §5.4) was written in the build and goes to the Stage 8 critique.
+
+## EXE11 · The Why Urja top bar follows its own mockup — accepted 2026-09-28
+- On `/why` the top bar matches `final/why.html`: wordmark, pills, "Start the demo" and the menu, with no Ask field and no fleet chip. The phone menu on `/why` therefore has no "Ask Urja" item. Every other route keeps the full shell, and TC-023's "menu reaches Ask" holds there.
+- The page's own styles (`why.html`'s `<style>` block) are ported verbatim into `components/why/why.css`, scoped under `.essay` and loaded only by `/why`.
+- Touch targets: on coarse pointers the phone menu button and the top-bar and hero buttons are at least 44 px (TC-023). This is an accessibility fix, so it needs no design review.
