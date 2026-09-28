@@ -1,0 +1,123 @@
+/* Why Urja: a verbatim port of the page styles in .design/exploration/final/why.html
+   (<style> block), values unchanged. Tokens and components come from app/globals.css.
+   Imported by app/why/page.tsx only. It joins the components layer declared in
+   globals.css, and loads after it, as the mockup's <style> follows lamp.css.
+   Every selector is scoped under .essay (the only change) so the short class names
+   cannot reach other routes after client-side navigation; .topbar .btn only exists on /why. */
+@layer components {
+  /* Page styles for the Why Urja essay; tokens and components come from lamp.css. */
+  .essay { max-width: 1120px; margin: 0 auto; padding: 0 clamp(16px, 3vw, 32px) 104px; }
+  .topbar .btn { flex: none; }
+
+  /* small label above every big title (case-study treatment) */
+  .essay .kicker { display: flex; align-items: center; gap: 10px; font-size: var(--t-xs); font-weight: 520; letter-spacing: .12em; text-transform: uppercase; color: var(--fg-muted); }
+  .essay .kicker::before { content: ""; width: 18px; height: 2px; border-radius: 2px; flex: none; background: linear-gradient(90deg, var(--lamp-deep), var(--cream)); box-shadow: 0 0 10px var(--glow); }
+  .essay .kicker b { color: var(--lamp); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  /* hero */
+  .essay .w-hero { padding: clamp(40px, 6vw, 80px) 0 0; }
+  .essay .w-hero .kicker { text-transform: none; letter-spacing: .01em; font-size: var(--t-sm); font-weight: 450; }
+  .essay .w-hero h1 { margin-top: 22px; font-size: clamp(2.3rem, 1.1rem + 4vw, 4.75rem); line-height: 1.02; letter-spacing: -0.038em; font-weight: 300; max-width: 17ch; text-wrap: balance; }
+  .essay .w-hero h1 em { font-style: normal; }
+  .essay .w-hero .lede { margin-top: 26px; font-size: clamp(1.05rem, .98rem + .3vw, 1.22rem); line-height: 1.55; color: var(--fg-muted); max-width: 60ch; }
+  .essay .w-hero .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
+
+  /* 16:9 slot for assets/truck-scene.png; the lamplit panel holds the layout until the render exists */
+  .essay .w-scene { position: relative; margin: clamp(36px, 5vw, 56px) 0 0; aspect-ratio: 16 / 9; border-radius: var(--r-xl); overflow: hidden; border: 1px solid var(--line-soft);
+    background:
+      radial-gradient(46% 62% at 28% 18%, oklch(0.705 0.166 53 / .30), transparent 72%),
+      radial-gradient(34% 42% at 78% 70%, oklch(0.705 0.166 53 / .09), transparent 70%),
+      linear-gradient(180deg, oklch(0.175 0.008 60) 0%, oklch(0.120 0.004 60) 64%, oklch(0.100 0.003 60) 100%); }
+  .essay .w-scene svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .essay .w-scene img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  /* chapters */
+  .essay .chap { padding-top: clamp(64px, 8vw, 112px); }
+  .essay .chap h2 { margin-top: 18px; font-size: clamp(2rem, 1.15rem + 3vw, 3.5rem); line-height: 1.06; letter-spacing: -0.034em; font-weight: 300; max-width: 22ch; text-wrap: balance;
+    text-shadow: 0 0 34px oklch(0.705 0.166 53 / .32), 0 0 90px oklch(0.705 0.166 53 / .16); }
+  .essay .chap .body { margin-top: 24px; max-width: 68ch; }
+  .essay .chap .body > p { color: var(--fg-muted); font-size: 1.05rem; line-height: 1.62; }
+  .essay .chap .body > * + p { margin-top: 14px; }
+
+  /* 01 · placeholder quote: hatched and dashed, like days that haven't happened yet */
+  .essay .quote { margin: 4px 0 0; padding: 18px 22px 20px; border-radius: var(--r-lg); border: 1px dashed var(--line);
+    background: repeating-linear-gradient(135deg, oklch(1 0 0 / .03) 0 1px, transparent 1px 8px), var(--surface-1); }
+  .essay .quote blockquote { margin: 14px 0 0; }
+  .essay .quote blockquote p { font-size: clamp(1.2rem, 1.05rem + .6vw, 1.5rem); line-height: 1.4; font-weight: 350; color: var(--fg-muted); }
+  .essay .quote blockquote p::before { content: "“"; color: var(--lamp); margin-right: .06em; }
+  .essay .quote figcaption { margin-top: 10px; font-size: var(--t-sm); color: var(--fg-muted); }
+  .essay .assume { margin-top: 12px; font-size: var(--t-sm); color: var(--fg-muted); }
+  .essay .assume b { color: var(--cream); font-weight: 560; letter-spacing: .02em; }
+
+  /* 03 · the market */
+  .essay .cmpcard { margin-top: 30px; padding: 4px 6px; overflow: hidden; }
+  .essay table.cmp { width: 100%; border-collapse: collapse; font-size: var(--t-sm); }
+  .essay .cmp th, .essay .cmp td { text-align: left; vertical-align: top; padding: 14px 16px; border-bottom: 1px solid var(--line-soft); }
+  .essay .cmp thead th { font-size: var(--t-xs); font-weight: 450; color: var(--fg-subtle); padding-top: 14px; padding-bottom: 10px; }
+  .essay .cmp tbody th { font-weight: 560; color: var(--fg); white-space: nowrap; width: 1%; }
+  .essay .cmp td { color: var(--fg-muted); }
+  .essay .cmp tbody tr:last-child th, .essay .cmp tbody tr:last-child td { border-bottom: 0; }
+  .essay .cmp tr.us th, .essay .cmp tr.us td { background: oklch(0.705 0.166 53 / .07); }
+  .essay .cmp tr.us th { color: var(--cream); position: relative; }
+  .essay .cmp tr.us th::before { content: ""; position: absolute; left: 0; top: 12px; bottom: 12px; width: 2px; border-radius: 2px; background: linear-gradient(var(--cream), var(--lamp)); box-shadow: 0 0 12px var(--glow); }
+  .essay .cmp tr.us td { color: var(--fg); }
+
+  /* 04 · pipeline: glowing nodes, thin connectors; only the new part is lit */
+  .essay .pipe { list-style: none; padding: 0; margin-top: 32px; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 18px; }
+  .essay .node { position: relative; display: grid; gap: 4px; align-content: start; padding: 14px 14px 16px; border-radius: var(--r-lg); background: var(--surface-1); border: 1px solid var(--line-soft); }
+  .essay .node .st { display: inline-flex; align-items: center; gap: 7px; font-size: var(--t-xs); color: var(--fg-subtle); }
+  .essay .node .st::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--surface-3); box-shadow: inset 0 0 0 1px var(--line); }
+  .essay .node b { margin-top: 8px; font-weight: 520; line-height: 1.3; }
+  .essay .node small { font-size: var(--t-sm); color: var(--fg-subtle); line-height: 1.4; }
+  .essay .node:not(:last-child)::after { content: ""; position: absolute; top: 50%; left: calc(100% + 1px); width: 16px; height: 1px; background: var(--line); }
+  .essay .node.new { background: linear-gradient(180deg, oklch(0.245 0.035 55), oklch(0.190 0.018 55)); border-color: var(--lamp-line);
+    box-shadow: 0 0 0 1px oklch(0.705 0.166 53 / .10) inset, 0 14px 40px -16px var(--glow), 0 0 32px -10px var(--glow); }
+  .essay .node.new .st { color: var(--lamp); }
+  .essay .node.new .st::before { background: var(--cream); box-shadow: 0 0 10px var(--glow), 0 0 2px var(--cream); }
+  .essay .node.new b { color: var(--cream); }
+  .essay .node.new small { color: var(--fg-muted); }
+  .essay .node.new::after, .essay .node:has(+ .new)::after { height: 2px; margin-top: -.5px; background: linear-gradient(90deg, var(--lamp-deep), var(--cream)); box-shadow: 0 0 8px var(--glow); }
+
+  /* 05 · how we'll know: two big number tiles */
+  .essay .tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 30px; }
+  .essay .tile { padding: 22px 24px 24px; display: flex; flex-direction: column; min-width: 0; }
+  .essay .tile .k { font-size: var(--t-sm); color: var(--fg-muted); }
+  .essay .tile .big { margin-top: 20px; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; line-height: 1.02; }
+  .essay .tile .big .n { font-size: clamp(2.9rem, 1.9rem + 3.3vw, 5rem); font-weight: 300; letter-spacing: -0.04em; white-space: nowrap; }
+  .essay .tile .big .u { font-size: clamp(1.35rem, 1.05rem + 1.1vw, 2rem); font-weight: 300; letter-spacing: -0.02em; }
+  .essay .tile .d { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--line-soft); color: var(--fg-muted); font-size: var(--t-sm); line-height: 1.6; }
+  .essay .tile .d b { color: var(--fg); font-weight: 520; }
+  .essay .tile.lit { border-color: var(--lamp-line); }
+  .essay .tile.lit::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: radial-gradient(420px 260px at 0% 0%, oklch(0.705 0.166 53 / .18), transparent 70%); }
+  .essay .tile.lit > * { position: relative; z-index: 1; }
+
+  /* 06 · first 90 days */
+  .essay .plan { list-style: none; padding: 0; margin-top: 32px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+  .essay .plan li { position: relative; padding-top: 30px; }
+  .essay .plan li::before { content: ""; position: absolute; left: 0; top: 4px; width: 11px; height: 11px; border-radius: 50%; background: var(--surface-3); box-shadow: 0 0 0 1px var(--line); }
+  .essay .plan li:first-child::before { background: var(--cream); box-shadow: 0 0 12px var(--glow); }
+  .essay .plan li:not(:last-child)::after { content: ""; position: absolute; left: 19px; right: -18px; top: 9px; height: 1px; background: var(--line); }
+  .essay .plan .ph { font-size: var(--t-sm); font-weight: 560; color: var(--lamp); font-variant-numeric: tabular-nums; }
+  .essay .plan .ph + p { margin-top: 8px; color: var(--fg-muted); line-height: 1.6; }
+
+  @media (max-width: 900px) {
+    .essay .pipe { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+    .essay .node { grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; }
+    .essay .node b { margin-top: 0; grid-row: 1; grid-column: 1; }
+    .essay .node .st { grid-row: 1; grid-column: 2; }
+    .essay .node small { grid-column: 1 / -1; }
+    .essay .node:not(:last-child)::after { top: calc(100% + 1px); left: 26px; width: 1px; height: 14px; }
+    .essay .node.new::after, .essay .node:has(+ .new)::after { width: 2px; height: 14px; margin-top: 0; z-index: 2; background: linear-gradient(180deg, var(--lamp-deep), var(--cream)); }
+  }
+  @media (max-width: 860px) { .essay .cmp .hide-sm { display: none; } }
+  @media (max-width: 760px) {
+    .essay .tiles { grid-template-columns: minmax(0, 1fr); }
+    .essay .tile { padding: 18px 18px 20px; }
+    .essay .plan { grid-template-columns: minmax(0, 1fr); gap: 22px; }
+    .essay .plan li { padding: 0 0 0 28px; }
+    .essay .plan li::before { top: 5px; }
+    .essay .plan li:not(:last-child)::after { left: 5px; right: auto; top: 22px; bottom: -16px; width: 1px; height: auto; }
+    .essay .cmp th, .essay .cmp td { padding: 12px 12px; }
+  }
+  @media (max-width: 420px) { .topbar .btn { padding: 0 12px; } }
+}

@@ -7,12 +7,15 @@ export type MenuLink = { href: string; label: string };
 // prefetch={false}: they are only in view once the menu is opened, and the
 // phone shouldn't spend data on every destination on every load.
 
+/** Why Urja has its own top bar (final/why.html): no Ask trigger or fleet chip, a "Start the demo" button. */
+export const WHY_HREF = "/why";
+
 /** Top-bar pills (technical-plan §3; final/index.html lines 20–23). */
 export const NAV_PILLS: readonly NavPill[] = [
   { href: "/", label: "Today", icon: "today" },
   { href: "/#trucks", label: "Trucks", icon: "truck" },
   { href: "/trips", label: "Trips", icon: "route" },
-  { href: "/why", label: "Why Urja", icon: "book" },
+  { href: WHY_HREF, label: "Why Urja", icon: "book" },
 ];
 
 /** The ≤760px menu adds Morning brief; Ask Urja is appended by MobileMenu. */
@@ -26,4 +29,9 @@ export function isCurrent(href: string, pathname: string): boolean {
   if (href.includes("#")) return false;
   if (href === "/") return pathname === "/";
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+/** Whether `pathname` is the Why Urja page. */
+export function isWhyRoute(pathname: string): boolean {
+  return isCurrent(WHY_HREF, pathname);
 }

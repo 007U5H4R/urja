@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AskTrigger } from "./AskTrigger";
 import { MobileMenu } from "./MobileMenu";
 import { NavPills } from "./NavPills";
+import { RouteVariant } from "./RouteVariant";
 
 type TopBarProps = { fleetName: string; truckCount: number };
 
@@ -15,7 +16,11 @@ function initials(name: string): string {
     .join("");
 }
 
-/** The top bar on every route: a port of final/index.html lines 15–30. */
+/**
+ * The top bar on every route: a port of final/index.html lines 15–30. On /why
+ * it follows final/why.html lines 125–137 instead: no Ask trigger or fleet
+ * chip, and a "Start the demo" button before the menu.
+ */
 export function TopBar({ fleetName, truckCount }: TopBarProps) {
   return (
     <header className="topbar">
@@ -28,17 +33,28 @@ export function TopBar({ fleetName, truckCount }: TopBarProps) {
           </span>
           Urja
         </Link>
-        <AskTrigger />
+        <RouteVariant why={null}>
+          <AskTrigger />
+        </RouteVariant>
         <NavPills />
         <div className="spacer"></div>
-        <span className="fleet">
-          <span className="name">
-            {fleetName} · {truckCount} trucks
+        <RouteVariant
+          why={
+            // /message ships with TKT-06; no prefetch until then, so no 404 fetch on load.
+            <Link className="btn btn-line" href="/message" prefetch={false}>
+              Start the demo
+            </Link>
+          }
+        >
+          <span className="fleet">
+            <span className="name">
+              {fleetName} · {truckCount} trucks
+            </span>
+            <span className="avatar" aria-hidden="true">
+              {initials(fleetName)}
+            </span>
           </span>
-          <span className="avatar" aria-hidden="true">
-            {initials(fleetName)}
-          </span>
-        </span>
+        </RouteVariant>
         <MobileMenu />
       </div>
     </header>

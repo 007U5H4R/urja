@@ -220,3 +220,45 @@ describe("AskTrigger", () => {
     window.removeEventListener(ASK_OPEN_EVENT, heard);
   });
 });
+
+describe("TopBar on /why (final/why.html lines 125–137)", () => {
+  beforeEach(() => {
+    pathname = "/why";
+  });
+
+  it("swaps the ask trigger and fleet chip for the Start the demo button", () => {
+    const { container } = renderBar();
+    const wrap = container.querySelector("header.topbar > .wrap")!;
+    expect([...wrap.children].map((el) => `${el.tagName.toLowerCase()}.${el.className}`)).toEqual([
+      "a.wordmark",
+      "nav.navpills",
+      "div.spacer",
+      "a.btn btn-line",
+      "details.m-menu",
+    ]);
+    const demo = screen.getByRole("link", { name: "Start the demo" });
+    expect(demo.getAttribute("href")).toBe("/message");
+    expect(container.querySelector(".askbar, .fleet")).toBeNull();
+  });
+
+  it("marks Why Urja current, in the pills and the menu, and leaves Ask out of the menu", () => {
+    renderBar();
+    const pills = screen.getByRole("navigation", { name: "Main" });
+    expect(within(pills).getByRole("link", { current: "page" }).getAttribute("aria-label")).toBe("Why Urja");
+    const nav = screen.getByRole("navigation", { name: "Main (mobile)", hidden: true });
+    const links = within(nav).getAllByRole("link", { hidden: true });
+    expect(links.map((a) => a.textContent)).toEqual(["Morning brief", "Today", "Trucks", "Trips", "Why Urja"]);
+    expect(links.map((a) => a.getAttribute("aria-current"))).toEqual([null, null, null, null, "page"]);
+  });
+
+  it("keeps the default bar on every other route", () => {
+    for (const p of ["/", "/brief", "/trips/0926-04", "/whyx"]) {
+      pathname = p;
+      const { container, unmount } = renderBar();
+      expect(container.querySelector(".askbar")).not.toBeNull();
+      expect(container.querySelector(".fleet")).not.toBeNull();
+      expect(container.querySelector(".wrap > a.btn")).toBeNull();
+      unmount();
+    }
+  });
+});

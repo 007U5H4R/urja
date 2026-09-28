@@ -585,3 +585,11 @@
 
   .scene-tag small { font-size: var(--t-xs); color: var(--fg-subtle); }
 }
+
+/* Accessibility fixes on top of the verbatim port (Design Freeze: allowed without review).
+   A second block of the same layer, so the port above stays byte-comparable to lamp.css.
+   TC-023: on coarse pointers the phone menu toggle and the top-bar and hero buttons are 44 px touch targets. */
+@layer components {
+  @media (pointer: coarse) { .m-menu summary { width: 44px; height: 44px; } }
+  @media (pointer: coarse) { .topbar .btn, .w-hero .actions .btn { height: 44px; } }
+}

@@ -5,12 +5,13 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { openAsk } from "@/lib/ask-events";
-import { MENU_LINKS, isCurrent } from "./nav";
+import { MENU_LINKS, isCurrent, isWhyRoute } from "./nav";
 
 /**
  * The ≤760px menu: a native disclosure (final/index.html lines 27–28).
  * While open it closes on Escape (anywhere), on a pointerdown outside it,
  * when a destination is chosen, and when the route changes.
+ * On /why there is no Ask item, as in final/why.html line 136.
  */
 export function MobileMenu({ onAskOpen = openAsk }: { onAskOpen?: () => void }) {
   const pathname = usePathname() ?? "/";
@@ -73,9 +74,11 @@ export function MobileMenu({ onAskOpen = openAsk }: { onAskOpen?: () => void }) 
             {l.label}
           </Link>
         ))}
-        <Link href="/?ask" prefetch={false} aria-haspopup="dialog" onClick={onAsk}>
-          Ask Urja
-        </Link>
+        {isWhyRoute(pathname) ? null : (
+          <Link href="/?ask" prefetch={false} aria-haspopup="dialog" onClick={onAsk}>
+            Ask Urja
+          </Link>
+        )}
       </nav>
     </details>
   );
