@@ -1,21 +1,46 @@
 # HANDOFF — Urja (Bytebeam PM interview prototype)
 
-**Stage just completed:** 4 · UI/UX Design. Approved 2026-09-28 ("Approved go ahead"). Ticket TASK-2.
-**Next stage:** 5 + 6 combined (Problem Breakdown + Technical Planning), per compressed Full tier S9. Model **Fable 5.1 / Medium**.
-**Repo:** https://github.com/007U5H4R/urja (private), branch `main`. Local path: `/Volumes/E Drive/Dev/Code/Claude/ByteBeam Dashboard`.
-**Interview:** 2026-10-07. Build window 2026-09-30 → 10-03; QA + deploy 10-04.
+**Stage just completed:** 5 + 6 · Problem Breakdown + Technical Planning (compressed Full tier, S9).
+- Produced 2026-09-28. **Approved 2026-09-29** ("use chrome and do it").
+- Ticket **TASK-4** is Done.
 
-## What is approved (read these first)
-1. `Solution-PRD.md`: problem, scope, rules R1–R5, AI design, acceptance criteria #1–#6.
-2. `Design.md`: direction B "Lamplight" (TerraFlux-inspired) with the **Design Freeze** block at the top, and **§26 Spatial 3D** (the Today hero truck scene).
-3. `decisions.md`: S1–S9 (solution) and D1–D6 (design). D3 records that the user explicitly overrode the 3D necessity gate.
-4. `.design/exploration/final/`: **the visual truth.**
-   - `index.html` (Today, with `?map`, `?fleet`, `?ask`)
-   - `trip.html`, `brief.html` (`?lang=en`), `message.html`, `states.html`, `why.html`, `scene.html`
-   - shared: `lamp.css` (tokens + components), `charts.js`, `map.js`, `truck3d.js`, `icons.js`, `assets/truck-scene.png`
-   - OG mockup: `.design/exploration/og/`
-   - Direction A (superseded) is kept in `option-a/`.
-5. The gallery: `.design/exploration/index.html`.
+**Next stage:** 7 · Execution.
+- Runs in a **claude.ai/code cloud session** on `007U5H4R/urja`, branch `build/stage7` (TP10).
+- Stage-table default is **Opus 5.5 / Standard**. Confirm it at the gate.
+
+**Repo:** https://github.com/007U5H4R/urja (private), branch `main`. Local path: `/Volumes/E Drive/Dev/Code/Claude/ByteBeam Dashboard`.
+
+**Dates:** interview 2026-10-07. Build window 2026-09-30 → 10-03. QA and deploy 10-04.
+
+## Approved and unchanged
+- `Solution-PRD.md`
+- `Design.md` (the Design Freeze block, §26)
+- `decisions.md` S1–S10 and D1–D6
+- `.design/exploration/final/` (the visual truth)
+- TASK-1 to TASK-3 (untouched)
+
+## What Stage 5 + 6 produced (read in this order)
+1. `milestones.md`: M-001 to M-005, each with objectives, entry and exit criteria, DoD and risks.
+2. `tickets.md`: TKT-01..16 → **TASK-5..TASK-20**, with the dependency DAG, AC, DoD, sp, TC-/EVAL- links and granularity notes.
+3. `technical-plan.md`:
+   - §1 global constraints;
+   - §4 the data spec: every anchor, rules R1–R5, balancing, and the 4 resolved inconsistencies;
+   - §6 Ask Urja;
+   - §7 the 3D decisions;
+   - §16 the **cloud runbook**, including the pre-flight and the prompt that starts Stage 7;
+   - §17 the atomic tasks for each ticket.
+4. `test-cases.md`: TC-001 to TC-061, plus a coverage map to acceptance criteria #1–#6.
+5. `evals/evaluation-plan.md` and `evals/eval-dataset.json`: the Ask Urja eval (10 prepared questions + 3 off-topic ones), the spec for a deterministic number-accuracy scorer, and the release gates.
+6. `decisions.md` **TP1–TP10**: marked `proposed` until the sign-off, then `accepted`.
+
+**Campfire (project `urja`):**
+- Milestones m-0..m-4 are M-001..M-005.
+- Tickets TASK-5..TASK-20 carry dependencies, P-labels, `sp:`, a topic label and `ready-for-agent`, plus AC and DoD. The build tickets are assigned to @claude-cloud; TKT-15 and TKT-16 to @claude.
+- `sp` means **agent-hours**, because Campfire's Gantt axis is elapsed hours. The build totals 82 h, and the critical path is 38 h.
+- Calendar targets live in the milestone and ticket due dates (09-30 → 10-04).
+- TASK-4 is `sp:2`.
+- `backlog doctor` reports no duplicates and no cycles.
+- The Campfire server was **restarted on 2026-09-28 at 21:44**. It had loaded `projects.json` before Urja was registered, so Urja was missing from the project dropdown.
 
 ## Fixed numbers (simulated fleet; must stay consistent everywhere)
 - **Yesterday (Sun 27 Sep):** earned ₹1,86,400; freight ₹4,12,000 − diesel ₹1,58,300 − tolls ₹38,900 − other ₹28,400. Unaccounted ₹11,430 = ₹3,420 + ₹4,500 + ₹3,510 (127 L at ₹90/L).
@@ -28,33 +53,62 @@
 - **Anil, all of September:** 125 L = ₹11,250 (Trips 0926-11, 0917-06, 0909-03).
 - **Ask fallback (21–27 Sep):** 217 L (₹19,530) on 5 trips.
 
-## What Stage 5 + 6 must produce
-- `milestones.md` + `tickets.md` as vertical slices, each with `TC-`/`EVAL-` links, created in **Campfire**. The CLI is `"/Volumes/E Drive/Dev/Code/Claude/PM Tools/backlog-md-fork/dist/backlog"`. Never hand-pick IDs; use types and P-labels.
-- `technical-plan.md`: Next.js (App Router) + TypeScript + Tailwind + shadcn/ui, MapLibre, three.js. The simulated data generator must reproduce the numbers above exactly. It also covers:
-  - the rules engine R1–R5;
-  - the brief template;
-  - the Gemini `gemini-3.5-flash` Ask route with a rate limit, daily cap, timeout and deterministic fallback;
-  - OG/Twitter tags with a 1200×630 image;
-  - Vercel.
-- `test-cases.md` + a small **Ask Urja eval**: 10 prepared questions plus 3 off-topic ones (Solution-PRD acceptance #3), and a scorer for number accuracy.
-- Port the 3D scene to the app: a dynamically imported client component; poster fallback; software-GPU guard; dispose on route change.
+Everything these numbers imply is specified in `technical-plan.md` §4.3: 24 trucks, 9 diesel incidents, 14 other flags, weekly recovery, route history, the 14-day series and the clean days.
 
-## How Stage 7 should run (user preference: cloud)
-- The user wants the remaining work in the cloud.
-  - The Agent tool's `isolation: remote` **fell back to a local git worktree**.
-  - For a real cloud run, use **a claude.ai/code session on this repo**, started with RemoteTrigger or by the user.
-- **Gates stay with the user:** every stage ends with a sign-off.
-- Campfire and Obsidian are local-only; sync them from the local session when the cloud reports back.
-- **Secrets (S10):** the user chose to **keep the existing Gemini key** (accepted risk). It stays in the local `.env` only (gitignored). At deploy it goes into Vercel's encrypted env; for a cloud build session, the user adds it to that environment, or the build uses the deterministic Ask fallback and a mocked client. Never in the repo, prompts, logs or chat.
+## Planning findings (covered in the gate summary)
+Four contradictions were resolved **without changing any fixed number** (§4.9, TP2, TP3):
+1. 0917-06 becomes a same-day trip.
+2. The speed trace is derived from distance.
+3. R3 reads as "≥ 12% more litres".
+4. Litres are stored in centilitres, because ₹1,58,300 isn't a multiple of ₹90.
+
+Two small content changes follow from acceptance #2:
+- The empty-state counts become computed values (11 / 13).
+- The WhatsApp preview shows the real host instead of "urja.app".
+
+## Sign-off decisions (2026-09-29)
+The user answered "use chrome and do it". I read that as approval of the plan with every recommended option; the user can still correct any of these:
+1. **Granularity:** 16 tickets, tracked at ticket level.
+2. **TP3 accepted:** R3 fires on ≥ 12% more litres.
+3. **Gemini key path A:** a claude.ai/code API credential, falling back to path B.
+4. **A1:** treated as evidence for Why Urja, not as a build gate.
+5. **Stage 7 model:** Opus 5.5.
+
+TP1–TP10 are now marked `accepted`.
+
+## Sign-off steps (2026-09-29)
+- **Done:**
+  - The project `CLAUDE.md` was written (the §16.2 rules).
+  - TP1–TP10 were marked `accepted` and the plan docs marked approved.
+  - The Stage 5–6 artifacts were committed on `main` with TASK-4 and pushed.
+- **In progress, via Chrome:** the §16.1 pre-flight:
+  - GitHub access;
+  - the "urja" environment (network allowlist, setup script);
+  - the Vercel project and its non-secret env;
+  - starting the cloud session with the §16.4 prompt.
+- **The user's own step:** enter the Gemini key as the environment's API credential and in Vercel. Claude may not type keys into web forms.
+
+## How Stage 7 runs and reports back
+- The cloud session follows `technical-plan.md` §16.2: one implementer subagent per task, TDD, two reviews, and at most 2 fix rounds.
+- Gates:
+  - end of M-001 (09-30);
+  - end of M-002, M-003 and M-004 (10-02 → 10-03);
+  - Stages 8–11 (10-04).
+- The cloud session writes `docs/exec/ledger.md`. It never edits `backlog/` and never prints secrets.
+- At each gate, the local session pulls `build/stage7`, syncs Campfire through the CLI, and updates Obsidian and memory (§16.3).
+- **Secrets (S10):** the key lives in the local `.env` (gitignored), in Vercel's encrypted env and, optionally, as a cloud API credential. Never in the repo, prompts, logs or chat.
 
 ## Open items (user)
-- Optional, recommended: a quota or budget cap on the Gemini key; rotate it after 2026-10-07.
-- Field conversations by 2026-10-01 ("Tell me about the last trip where you lost money").
-- Confirm the byline "Tushar Pathak" on Why Urja; arrange a native Hindi review of the copy.
-- The E Drive is 95% full (about 6.4 GB free). Keep build output lean, or build in the cloud.
+- Optional, recommended: a quota or budget cap on the Gemini key; rotate the key after 2026-10-07.
+- Field conversations by 2026-10-01 ("Tell me about the last trip where you lost money"). Their quotes go into `content/field-notes.ts`.
+- Confirm the byline "Tushar Pathak" on Why Urja.
+- Arrange a native Hindi review; TKT-06 generates `docs/exec/hindi-review.md` for it.
+- Disk: the E Drive has 9.6 GB free and the internal disk 2.8 GB. Nothing is built locally; all builds run in the cloud, GitHub Actions or Vercel.
 
 ## Tooling notes
-- Mockup screenshots: `/Volumes/E Drive/Dev/.scratch/urja-shots/`.
-  - `shoot.mjs` and `scene-shot.mjs`; use `GPU=1`, because the three.js bloom scene hangs SwiftShader.
-  - Scripts self-timeout (`MAXMS`), so Chrome is never orphaned.
-- Contrast: `contrast-b.mjs`, 23 of 23 pass. Detector: `npx impeccable detect .design/exploration/final` gives 48 findings, all justified in Design.md §24.
+- **Campfire:**
+  - CLI: `"/Volumes/E Drive/Dev/Code/Claude/PM Tools/backlog-md-fork/dist/backlog"`.
+  - Board: http://127.0.0.1:6480.
+  - If a newly registered project is missing from the dropdown, restart the server: kill it, then run `campfire`.
+- **Planning scripts:** `/Volumes/E Drive/Dev/.scratch/urja-plan/`. `campfire-sync.mjs` created m-1..m-4 and TASK-5..20; the mapping is in `campfire-map.json`.
+- **Mockup screenshots:** `/Volumes/E Drive/Dev/.scratch/urja-shots/`. Use `GPU=1`, because SwiftShader hangs the bloom scene.

@@ -79,3 +79,114 @@
 **Context.** The Gemini key was pasted in chat, so it is exposed; the default is to rotate. The user decided: "no worries use that old API key, I am fine with that".
 **Decision.** Keep the key. It lives only in the local `.env` (gitignored; verified absent from tracked files) and, at deploy, in Vercel's encrypted env. It is never written to the repo, prompts, logs or chat. Mitigations: the app's own rate limit + daily cap (S6); recommended quota/budget cap on the key in Google AI Studio; rotate after the interview.
 **Rejected.** Rotating now (user declined).
+
+## TP1 · Break the build into 16 vertical-slice tickets across 5 milestones; the board tracks tickets, not steps — accepted 2026-09-29
+**Context.** Stages 5 and 6 are combined (S9). There are 4 build days, and the cloud executor can't write to Campfire.
+**Decision.**
+- Five milestones: M-001 data truth and foundation, M-002 demo path, M-003 Ask, M-004 3D and the public surface, M-005 release.
+- Tickets TKT-01..16 map to TASK-5..20. Each has a type, a P-label, `sp:`, dependencies, acceptance criteria and a definition of done.
+- The ~60 atomic tasks live in `technical-plan.md` §17, not as Campfire subtasks.
+- TKT-15 and TKT-16 wrap Stages 8–11, so the Gantt shows the real finish date.
+**Rejected.**
+- Campfire subtasks for every step: sync overhead while the cloud can't write to the board.
+- Layer tickets (all data, then all UI): nothing demoable until late.
+
+## TP2 · Build the data from a committed scenario, a seeded simulator and one balancing pass; store litres as centilitres — accepted 2026-09-29
+**Context.** Acceptance #2 requires every ₹ to be computed and to agree across screens. The fixed numbers were authored for the mockup, and planning found hidden contradictions in them.
+**Decision.**
+- A one-off `scripts/generate-scenario.ts` writes a committed `scenario.json`: trips, commercial inputs, injected anomalies, resolutions and current positions.
+- A seeded simulator expands it into per-minute telemetry. The rules detect flags from that telemetry and never read the injections.
+- Balancing trips make the fixed day and truck totals exact.
+- Litres are stored as integer centilitres, and ₹ = round(cL × 90 / 100).
+- The fixes for the contradictions are recorded in `technical-plan.md` §4.9:
+  - 0917-06 becomes a same-day trip.
+  - Speed is derived from distance, so the speed bars for 0926-04 are shorter.
+  - Yesterday's balancer trip carries fractional litres.
+  - The empty-state specimen and the WhatsApp preview host use computed or real values.
+**Rejected.**
+- Hard-coding numbers in the UI: breaks acceptance #2 and the claim on the Why Urja page.
+- A summary-only simulation without telemetry: the rules wouldn't really run.
+- Changing any fixed number: the user wants them kept unchanged.
+
+## TP3 · R3 fires on ≥ 12% more litres than the truck's usual for the route; a heavier load lowers confidence — accepted 2026-09-29
+**Context.** The Solution-PRD writes R3 as "km/L > 12% worse than the baseline for that route and load". Flag 3 (364 vs 325 L) is exactly 12.0% more litres, which is only 10.7% worse km/L, so the rule as written would not fire. Yet the approved copy says "Used 39 L (12%) more diesel", and it cites load as the reason for Check.
+**Decision.**
+- R3 fires when litres used ≥ 1.12 × this truck's baseline for the route (inclusive).
+- The baseline doesn't adjust for load. A load above the truck's usual caps confidence at Check.
+**Rejected.**
+- Keeping the km/L wording: flag 3, a fixed number, would disappear.
+- Moving the baseline to 324 L: that changes a fixed number.
+
+## TP4 · Port `lamp.css` verbatim inside Tailwind v4; shadcn/ui only for the Ask sheet — accepted 2026-09-29
+**Context.** S8 chose Tailwind and shadcn/ui. The approved visual truth is 43 KB of hand-tuned `lamp.css` plus the markup in `final/*.html`.
+**Decision.**
+- Tokens go into `@theme`, and component CSS is copied with its class names.
+- Components emit the mockup's markup. Tailwind utilities are used only as glue for new layout.
+- shadcn/ui supplies the Radix Dialog behind the Ask sheet: focus trap, inert page, Esc and focus return.
+**Rejected.** Rewriting every component in Tailwind utilities or restyled shadcn: high risk of visual drift, and slower.
+
+## TP5 · Call Gemini over REST with a JSON schema; verify the model ID before building on it — accepted 2026-09-29 (probe result pending, TSK-07.1)
+**Context.** S6 names `gemini-3.5-flash`, but the exact model ID, thinking options and latency can't be verified during planning.
+**Decision.**
+- Call `generativelanguage.googleapis.com` with `fetch`, passing the key in the `x-goog-api-key` header.
+- Request `responseMimeType: application/json` with a `responseSchema`, temperature 0.2, and an 8 s AbortController.
+- Run `scripts/probe-gemini.ts` first. If the ID or config differs, use the closest available Flash model and record the change as an EXE decision.
+**Rejected.**
+- An SDK dependency for a single call: less control over the timeout and headers.
+- Free-text output: citations and refusals couldn't be validated.
+
+## TP6 · Rate-limit in memory per instance, with a Google-side quota as the real backstop — accepted 2026-09-29
+**Context.** S6 requires a per-IP rate limit and a daily cap, and S10 keeps using an exposed key. This is a one-week demo.
+**Decision.**
+- A per-IP token bucket (5 per minute, 40 per day) and a global cap of 300 per day, held in memory on each Vercel instance.
+- The user sets a quota or budget cap on the key in Google AI Studio, as S10 recommends.
+- Counts of rate-limited and capped requests go to the logs.
+**Rejected.** Upstash/Redis: an account, env vars and a new failure mode for a demo. Revisit if the link spreads widely.
+
+## TP7 · 3D: vanilla three.js r169 in a client component, WebGL, poster first, dispose on unmount — accepted 2026-09-29
+**Context.** Design.md §26 leaves the choice between R3F and vanilla three.js to Stage 6. The approved scene is a 17 KB imperative module, tuned on r169 with UnrealBloom.
+**Decision.**
+- Port `truck3d.js` almost line for line into a `next/dynamic` client component (`ssr: false`), using WebGLRenderer and procedural geometry only. Pin three@0.169.0.
+- Show the poster first. A guard falls back to it when the import or WebGL fails, when the renderer is software, and on context loss.
+- Render only while the scene is visible. Under reduced motion, render once and stay static.
+- `dispose()` releases everything and forces context loss.
+- Rotate and reset buttons give keyboard access.
+**Rejected.**
+- React Three Fiber: a rewrite plus a different postprocessing stack, which means visual drift and extra weight.
+- WebGPURenderer: nothing here needs it.
+- A GLTF pipeline: the geometry is procedural.
+
+## TP8 · Maps: MapLibre 4.7.1 in an imperative client component; selection lives in React state — accepted 2026-09-29
+**Context.** D4 links the list and the map. Carto tiles may be blocked in the cloud sandbox, or unreachable if the interview room is offline.
+**Decision.**
+- Port the mockup's `map.js` into a dynamically imported client component.
+- HeroCard owns the selected flag and the current view; the map only subscribes.
+- If tiles fail, the rows, glass card and rail keep working, and the map shows "Map unavailable; every event is in the timeline".
+**Rejected.**
+- react-map-gl: an extra abstraction over code that already works.
+- Keeping the selection inside the map: selection would break whenever the map fails to load.
+
+## TP9 · Render the OG image as a static PNG from an `/og-card` route with Playwright — accepted 2026-09-29
+**Context.** The approved OG mockup uses a glass card (backdrop-filter), a masked poster, OKLCH colours and glow. `next/og`/Satori supports none of backdrop-filter, mask-image or OKLCH.
+**Decision.**
+- `/og-card` (noindex) ports `og/index.html` using real trip data.
+- `scripts/render-og.ts` screenshots it at 1200×630 to `public/og.png`, under 500 KB.
+- The metadata points to the image with absolute URLs.
+**Rejected.**
+- `next/og`: drifts visually from the approved OG mockup.
+- A hand-exported image: it could drift from the data.
+
+## TP10 · Run Stage 7 in a claude.ai/code cloud session with an embedded runbook — accepted 2026-09-29
+**Context.** The user wants execution in the cloud. The Agent tool's remote isolation fell back to a local worktree. Cloud VMs don't have the user's personal skills, Campfire or Obsidian.
+**Decision.**
+- The cloud session works on `build/stage7`. It follows `technical-plan.md` §16.2 and the project `CLAUDE.md`:
+  - one implementer subagent per task, with TDD, two reviews and at most 2 fix rounds;
+  - it stops at every milestone gate;
+  - it records status in `docs/exec/ledger.md` and never edits `backlog/`.
+- The local session syncs Campfire and Obsidian at each gate.
+- Gemini key, path A (recommended): an environment API credential, so the key never reaches the VM. Path B: live evals run against the Vercel preview.
+- `main` changes only at Stage 11.
+**Rejected.**
+- Copying the user's personal skills into the repo: they carry local paths and would confuse the cloud session.
+- Building locally: breaks the machine rule and the E Drive disk limit.
+- A plain environment variable for the key: anyone who uses the environment can see it.
