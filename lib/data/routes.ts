@@ -74,6 +74,9 @@ export function isOnStretch(stretchId: StretchId, p: LngLat): boolean {
 }
 
 // ── Intercity routes ─────────────────────────────────────────────────────
+// Tariffs (EXE7): the 0926-04 plazas are anchors (₹705 / ₹725 / ₹710). The others are
+// a 5-axle truck's rate, about ₹6.5 per km on the Udaipur corridor, so that
+// yesterday's tolls (₹38,900 across 17 trips, §4.3) come out at plausible rates.
 const plaza = (placeId: string, atKm: number, tariffInr: number): Plaza => ({ placeId, atKm, tariffInr });
 
 const FORWARD: Route[] = [
@@ -93,23 +96,23 @@ const FORWARD: Route[] = [
   },
   {
     id: "JAI-AHM", from: "jaipur-tn", to: "ahmedabad", plannedKm: 662, path: JAI_AHM,
-    plazas: [plaza("bagru-plaza", 31, 420), plaza("beawar-plaza", 215, 610), plaza("udaipur-plaza", 405, 655), plaza("himmatnagar-plaza", 594, 590)],
+    plazas: [plaza("bagru-plaza", 31, 790), plaza("beawar-plaza", 215, 1150), plaza("udaipur-plaza", 405, 1180), plaza("himmatnagar-plaza", 594, 1170)],
     pumps: ["kishangarh-pump", "beawar-pump", "udaipur-pump", "himmatnagar-pump"],
     stretches: ["udaipur"],
   },
   {
     id: "JAI-BHW", from: "jaipur-tn", to: "bhiwandi", plannedKm: 1150, path: JAI_BHW,
     plazas: [
-      plaza("bagru-plaza", 30, 420), plaza("beawar-plaza", 210, 610), plaza("udaipur-plaza", 395, 655),
-      plaza("himmatnagar-plaza", 580, 590), plaza("vadodara-plaza", 780, 540), plaza("bharuch-plaza", 880, 680),
-      plaza("vapi-plaza", 1000, 720),
+      plaza("bagru-plaza", 30, 790), plaza("beawar-plaza", 210, 1150), plaza("udaipur-plaza", 395, 1180),
+      plaza("himmatnagar-plaza", 580, 1170), plaza("vadodara-plaza", 780, 1020), plaza("bharuch-plaza", 880, 1060),
+      plaza("vapi-plaza", 1000, 1030),
     ],
     pumps: ["kishangarh-pump", "beawar-pump", "udaipur-pump", "himmatnagar-pump", "vadodara-pump", "surat-pump"],
     stretches: ["udaipur"],
   },
   {
     id: "JAI-KSG", from: "jaipur-tn", to: "kishangarh", plannedKm: 105, path: JAI_KSG,
-    plazas: [plaza("bagru-plaza", 28, 420)],
+    plazas: [plaza("bagru-plaza", 28, 790)],
     pumps: ["kishangarh-pump"],
     stretches: [],
   },

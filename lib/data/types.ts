@@ -16,12 +16,20 @@ export interface Route { id: string; from: string; to: string; plannedKm: number
 export interface Driver { name: Bilingual; since: number }
 export interface Truck { plate: Plate; driver: Driver; baselineCl: Record<string, number> /* routeId → centilitres per trip */; usualLoadT: Record<string, number> }
 export interface Sample { t: Min; lngLat: LngLat; speedKmh: number; fuelCl: number; ignition: boolean }
-export interface RefuelBill { t: Min; placeId: string; billedCl: number; billedInr: number }
+export interface RefuelBill { t: Min; placeId: string; billedCl: number; billedInr: number; /** The sensor's settled tank rise for this refuel (see TankReadings). */ tankRiseCl: number }
+/**
+ * Settled tank readings (EXE6): the fuel sensor's level averaged while
+ * the truck stands with the ignition on at departure and at arrival. They are
+ * noise-free, so the ledger's diesel is exact (§4.5), while the rules still
+ * detect from the noisy per-minute samples.
+ */
+export interface TankReadings { startCl: number; endCl: number }
 export interface TollEvent { t: Min; placeId: string; inr: number }            // FASTag deduction
 export interface Claims { tollsInr: number; allowanceInr: number; otherInr: number }
 export interface Trip {
   id: TripId; plate: Plate; routeId: string; start: Min; end: Min; loadT: number; cargo: Bilingual;
   freightInr: number; claims: Claims; samples: Sample[]; refuels: RefuelBill[]; fastag: TollEvent[]; actualKm: number;
+  tank: TankReadings;
 }
 export interface Evidence { text: Bilingual; source: 'Fuel sensor' | 'GPS · ignition' | 'Geofence' | 'Fleet history' | 'Fuel bill' | 'FASTag' | 'Trip plan' }
 export interface Flag {

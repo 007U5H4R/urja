@@ -6,6 +6,12 @@
 /** Diesel is valued at ₹90 per litre. Litres are stored as integer centilitres. */
 export const DIESEL_INR_PER_L = 90;
 
+/** Every truck's tank holds 400 L. */
+export const TANK_CL = 40_000;
+
+/** Trucks refuel at the next route pump once the tank falls below 35% (§4.7 step 2). */
+export const REFUEL_BELOW_CL = 14_000;
+
 /** R1 · Stationary fuel drop. */
 export const R1 = { minDropL: 15, windowMin: 30, pumpGeofenceM: 300, minStopMin: 5 } as const;
 
