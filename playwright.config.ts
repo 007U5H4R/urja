@@ -1,6 +1,7 @@
 import { defineConfig } from "@playwright/test";
 
-const PORT = 3000;
+// E2E_PORT lets parallel worktrees run their own servers side by side.
+const PORT = Number(process.env.E2E_PORT ?? 3000);
 // Optional escape hatch for sandboxes whose preinstalled Chromium does not
 // match this Playwright version. Unset in CI.
 const executablePath = process.env.PW_CHROMIUM_PATH;
