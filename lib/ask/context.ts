@@ -28,14 +28,12 @@ import {
 } from "@/lib/data/aggregates";
 import { truckByPlate } from "@/lib/data/fleet";
 import { INTERCITY_ROUTE_IDS, routeName } from "@/lib/data/routes";
-import { DIESEL_INR_PER_L } from "@/lib/data/constants";
+import { DIESEL_INR_PER_L, WRONG_FLAG_LIMIT_PCT } from "@/lib/data/constants";
 import { formatDateIST, formatTimeIST, minToISTParts } from "@/lib/format";
 import { RULE_LABEL, confidenceWord, dayLabel, flagPlace, flagWhen } from "./labels";
 
 export const FLEET_NAME = "Sharma Roadlines";
 export const FLEET_BASE = "Jaipur";
-/** Urja's guardrail: at most 10% of flags may turn out wrong (§4.3 "limit 10%"). Mirrors WRONG_FLAG_LIMIT_PCT in lib/data/constants.ts. */
-export const WRONG_FLAG_LIMIT_PCT = 10;
 
 type Cell = string | number;
 

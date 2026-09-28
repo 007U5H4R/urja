@@ -14,7 +14,7 @@ import { STRETCHES, routeName } from "@/lib/data/routes";
 import type { Lang, Plate } from "@/lib/data/types";
 import { DEMO_NOW, MIN_PER_DAY, dayKey } from "@/lib/clock";
 import { formatDateIST, formatINR, minToISTParts } from "@/lib/format";
-import { WRONG_FLAG_LIMIT_PCT } from "./context";
+import { WRONG_FLAG_LIMIT_PCT } from "@/lib/data/constants";
 import { detectLang, matchIntent, type IntentId } from "./intents";
 import { RULE_LABEL, STATUS_LABEL, confidenceWord, dayLabel, flagPlace } from "./labels";
 
