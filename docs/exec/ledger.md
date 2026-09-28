@@ -12,8 +12,8 @@ Vercel: previews may be missing or auth-protected from the VM, so each row recor
 | TASK-6 | TSK-02.1–02.2 | done | f8bd27d | 74 unit tests pass (types verbatim, PRNG, clock, geo 1.6 km / 3.1 km, fleet 24/24 rows vs §4.3) | pushed | Unit A. Spec PASS; quality PASS + 1 fix round (integer R2/R3/R4 comparators, frozen routes). Invented plaza/pump names off NH48 and all Hindi place names go to the Hindi review. |
 | TASK-6 | TSK-02.3–02.5 (+ledger) | doing | — | — | — | Unit B: generator, simulator, rules, ledger |
 | TASK-6 | TSK-02.6–02.8 | todo | — | — | — | Unit C: aggregates, views, golden tests, Today head |
-| TASK-7 | TSK-03.1–03.3 | review | — | — | — | Unit A (worktree wip/stream-b): tokens, CSS port, fonts, icons, shell |
-| TASK-7 | TSK-03.4–03.5 | todo | — | — | — | Unit B: primitives, charts + parity |
+| TASK-7 | TSK-03.1–03.3 | done | c6b0673 | 67 unit (tokens vs Design.md §12, lamp.css port parity, icons, shell); e2e 21 pass / 6 project-skipped (TC-022 shell at 375/768/1440, TC-023 menu 6 destinations, .kbd hidden on coarse) | pushed; screenshots 1440/375 vs final/index.html match (fonts aside) | Unit A. Spec PASS; quality PASS + 1 fix round (menu Escape/outside/route close, hydration-safe e2e, prefetch on pills, not-found + placeholder routes, lib/ask-events.ts). Port substitutions: no Tailwind preflight, next/font owns --font/--font-hi, poster url → /truck-scene.png, .proto-banner dropped (§5.2). |
+| TASK-7 | TSK-03.4–03.5 | doing | — | — | — | Unit B (worktree): primitives, charts + parity |
 | TASK-8 | TSK-04.1–04.5 | todo | — | — | — | TKT-04 Today lower half |
 | TASK-9 | TSK-05.1–05.5 | todo | — | — | — | TKT-05 Trip evidence |
 | TASK-10 | TSK-06.1–06.4 | todo | — | — | — | TKT-06 Message and brief |
