@@ -45,6 +45,8 @@ const eslintConfig = defineConfig([
     "playwright-report/**",
     "test-results/**",
     "coverage/**",
+    // Verbatim copies of mockup scripts (e.g. charts.mockup.js), run only as parity-test input.
+    "tests/fixtures/*.mockup.js",
   ]),
 ]);
 
