@@ -44,3 +44,38 @@
 **Context.** UI work is Full tier by default, but the full 12-stage chain would consume most of the 9 days.
 **Decision.** Discovery (done via grilling) → Solution PRD → Design (Design.md + mockup) → build → one critique pass → one code-review/QA pass → deploy. Human sign-off after PRD and design.
 **Rejected.** Full 12 stages with a fresh session each (too slow for the deadline); no process (risks building the wrong thing).
+
+## D1 · Visual direction "Lamplight" (TerraFlux-inspired) replaces "The Munshi's Ledger" — accepted 2026-09-28
+**Context.** At the Stage 4 gate the user asked for a UI/UX like TerraFlux (FocoTik, Muzli + Behance) to get a "million dollar app" feeling. Direction A was flat and editorial.
+**Decision.** Near-black warm canvas, amber lamp light under a semantic **rule of light** (only what needs attention glows), focus-and-context bar charts (lit/dim/hatched/brick/mirrored), pill navigation, glass cards only over imagery, tick rails, Inter + Anek Devanagari. Urja's verdict-first IA, plates, lakh grouping and driver-neutral wording are kept.
+**Rejected.** Copying TerraFlux's structure wholesale (a generic KPI home with no verdict); keeping A unchanged.
+
+## D2 · Dark theme on the phone too — accepted 2026-09-28
+**Context.** Q13 had a light phone ("morning paper"); the reference and the user's direction are dark everywhere.
+**Decision.** One dark theme on every surface. A "day" theme is the first fallback if field conversations show owners reading outdoors in sunlight.
+**Rejected.** Light phone with dark desktop (breaks cohesion with the new direction).
+
+## D3 · Today hero = 3D truck scene with Scene | Map | Fleet — accepted 2026-09-28 (user override)
+**Context.** User: "I want 3d object like trucks … This will be a delighter", then "supersede all the rules and include the 3D truck" and "It will bypass all rules". The 3D necessity gate was explicitly overridden.
+**Decision.** Procedural three.js scene reconstructing flag 1 (RJ14 GB 4521 parked off NH48, fuel tank lit red), labelled "Reconstruction from GPS + fuel sensor". Real map and fleet map one click away; poster fallback; software-GPU guard; reduced motion = static.
+**Rejected.** Downloaded truck models (licensing, weight); a fake "live map" render (dishonest); 3D on every screen (cost, distraction).
+
+## D4 · List ↔ map linking on Today — accepted 2026-09-28
+**Context.** The hero and "Needs your eyes" showed the same three flags without connecting them.
+**Decision.** Selecting a row or a numbered marker lights the row, updates the glass card and the tick rail, and flies the map to the trip.
+**Rejected.** A separate fleet-map section (duplicated the hero).
+
+## D5 · Guardrail shown to the owner: "When Urja was wrong" — accepted 2026-09-28
+**Context.** The false-accusation guardrail (S7) was only in the pitch.
+**Decision.** A first-class card on Today: 2 of 23 flags (9%), limit 10%, cleared by the driver's side.
+**Rejected.** Keeping the guardrail PM-only (hides the trust story from the user it protects).
+
+## D6 · Fuel evidence as mirrored bars: fuel above, speed below — accepted 2026-09-28
+**Context.** TerraFlux uses decorative mirrored bars; the stationary-drop rule needs "fuel fell while not moving".
+**Decision.** Fuel-in-tank bars above the axis, speed bars below; the drop window and refuel lit; a dashed "without the drop" line.
+**Rejected.** A separate moving/stopped strip (A), which needed a legend to read.
+
+## S10 · Keep the existing Gemini key (user-accepted risk) — accepted 2026-09-28
+**Context.** The Gemini key was pasted in chat, so it is exposed; the default is to rotate. The user decided: "no worries use that old API key, I am fine with that".
+**Decision.** Keep the key. It lives only in the local `.env` (gitignored; verified absent from tracked files) and, at deploy, in Vercel's encrypted env. It is never written to the repo, prompts, logs or chat. Mitigations: the app's own rate limit + daily cap (S6); recommended quota/budget cap on the key in Google AI Studio; rotate after the interview.
+**Rejected.** Rotating now (user declined).

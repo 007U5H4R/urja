@@ -19,6 +19,12 @@ window.truckScene = async function truckScene(el, opts = {}) {
   let renderer;
   try { renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' }); }
   catch (e) { el.classList.add('fallback'); return null; }
+  // guard: software WebGL (SwiftShader, llvmpipe, VMs) can freeze the page on this scene, so show the poster instead
+  try {
+    const gl = renderer.getContext(), dbg = gl.getExtension('WEBGL_debug_renderer_info');
+    const name = dbg ? String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)) : '';
+    if (/swiftshader|llvmpipe|software|basic render/i.test(name) && !opts.forceSoftware) { renderer.dispose(); el.classList.add('fallback'); return null; }
+  } catch (e) { /* no debug info: assume hardware */ }
   const W = () => Math.max(1, el.clientWidth), H = () => Math.max(1, el.clientHeight);
   renderer.setPixelRatio(Math.min(devicePixelRatio, coarse ? 1.25 : 1.5));
   renderer.setSize(W(), H());

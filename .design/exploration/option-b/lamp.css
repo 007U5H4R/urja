@@ -64,7 +64,7 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .num, table { font-variant-numeric: tabular-nums; }
 
-.proto-banner { background: var(--surface-2); color: var(--fg-muted); text-align: center; font-size: 12px; letter-spacing: .06em; padding: 5px 8px; border-bottom: 1px solid var(--line-soft); }
+.proto-banner { background: var(--surface-2); color: var(--fg-muted); text-align: center; font-size: 12px; letter-spacing: .04em; padding: 5px 8px; border-bottom: 1px solid var(--line-soft); }
 .wrap { max-width: 1440px; margin: 0 auto; padding: 0 clamp(16px, 2.4vw, 32px); }
 
 /* ---------- top bar ---------- */
@@ -102,7 +102,7 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
 
 /* ---------- buttons ---------- */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: var(--r-md); font-size: var(--t-sm); font-weight: 560; white-space: nowrap; }
-.btn-lamp { color: var(--lamp-ink); background: linear-gradient(180deg, oklch(0.82 0.13 70), var(--lamp) 58%, oklch(0.62 0.15 52));
+.btn-lamp { color: var(--lamp-ink); background-color: var(--lamp); background-image: linear-gradient(180deg, oklch(0.82 0.13 70), var(--lamp) 58%, oklch(0.62 0.15 52));
   box-shadow: 0 0 0 1px oklch(0.86 0.10 75 / .55) inset, 0 8px 22px -10px var(--glow); }
 .btn-lamp:hover { filter: brightness(1.06); }
 .btn-line { color: var(--fg); background: var(--surface-1); border: 1px solid var(--lamp-line); }
@@ -246,7 +246,7 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
 .kpi header svg { color: var(--fg-muted); filter: drop-shadow(0 0 6px oklch(1 0 0 / .25)); }
 .kpi .vrow { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-top: 10px; }
 .kpi .v { font-size: var(--t-num-lg); font-weight: 400; letter-spacing: -0.025em; line-height: 1.1; white-space: nowrap; }
-.kpi .v small { font-size: .5em; color: var(--fg-muted); letter-spacing: 0; margin-left: 3px; }
+.kpi .v small { font-size: .8125rem; color: var(--fg-muted); letter-spacing: 0; margin-left: 4px; }
 .kpi .chart { margin-top: 14px; height: 96px; }
 .kpi .chart svg { width: 100%; height: 100%; display: block; overflow: visible; }
 .kpi footer { margin-top: auto; padding-top: 10px; border-top: 1px solid var(--line-soft); font-size: var(--t-xs); color: var(--fg-subtle); display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
@@ -263,7 +263,7 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: var(--t-sm); }
 .tbl .r { text-align: right; }
 .tbl .rank { width: 44px; }
 .tbl .rk { width: 26px; height: 26px; border-radius: 50%; display: inline-grid; place-items: center; font-size: 11.5px; background: var(--surface-2); color: var(--fg-muted); }
-.tbl .rk.top { color: var(--lamp-ink); background: linear-gradient(150deg, var(--cream), var(--lamp)); box-shadow: 0 0 14px var(--glow); }
+.tbl .rk.top { color: var(--lamp-ink); background-color: var(--lamp); background-image: linear-gradient(150deg, var(--cream), var(--lamp)); box-shadow: 0 0 14px var(--glow); }
 .tbl .rk.low { color: var(--loss); background: var(--loss-bg); }
 .tbl .gap td { text-align: center; color: var(--fg-subtle); font-size: var(--t-xs); padding: 8px; }
 .minibar { display: inline-block; width: 90px; height: 6px; border-radius: 3px; background: var(--surface-2); vertical-align: middle; overflow: hidden; }
@@ -363,7 +363,7 @@ body.ask-open .drawer { transform: none; }
 .triphead .meta { color: var(--fg-muted); font-size: var(--t-sm); margin-top: 10px; }
 .triphead .result { text-align: right; }
 .triphead .big { font-size: clamp(1.8rem, 1.3rem + 1.4vw, 2.6rem); font-weight: 400; letter-spacing: -0.025em; line-height: 1.05; }
-.triphead .big small { font-size: .42em; color: var(--fg-muted); letter-spacing: 0; margin-left: 4px; }
+.triphead .big small { font-size: .875rem; color: var(--fg-muted); letter-spacing: 0; margin-left: 6px; }
 .triphead .vs { margin-top: 8px; font-size: var(--t-sm); color: var(--fg-muted); display: flex; gap: 8px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
 .trip-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(380px, 5fr); grid-template-areas: "map flag"; gap: 16px; }
 .trip-grid .flagcard { grid-area: flag; }
@@ -525,3 +525,8 @@ body.ask-open .drawer { transform: none; }
 .scene-tag b { font-weight: 560; font-size: var(--t-sm); }
 @media (max-width: 760px) { .scene-tag { display: none; } }
 @media (max-width: 760px) { .maplegend { top: 54px; bottom: auto; } }
+/* the poster shows immediately (loading), stays if WebGL is weak or fails; the live scene covers it when ready */
+.scene { background: #0b0a09 url(assets/truck-scene.png) 30% center / cover no-repeat; }
+.scene:not(.ready) .scene-tag { display: none; }
+
+.scene-tag small { font-size: var(--t-xs); color: var(--fg-subtle); }
