@@ -4,8 +4,10 @@
  * through UTC getters, never through the host's local-time APIs.
  */
 
-/** Minutes since EPOCH (2026-08-29T00:00+05:30). */
-export type Min = number;
+import type { Min } from "@/lib/data/types";
+
+/** Minutes since EPOCH (2026-08-29T00:00+05:30); owned by lib/data/types.ts. */
+export type { Min };
 
 /** 2026-08-29T00:00+05:30 as a UTC timestamp. */
 export const EPOCH_UTC_MS = Date.UTC(2026, 7, 28, 18, 30);
