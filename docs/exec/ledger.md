@@ -81,6 +81,18 @@ _(one section per milestone, newest last)_
 - **Open issues (low):** the server sends `<html lang="en">` on the Hindi /brief (`<main lang="hi">` is right; html is fixed after hydration); the message preview host needs checking on the preview; state copy, the phone menu and the drawer are English on the Hindi brief; a focus ring shows on the trip h1 in `?state=error`.
 - **Decision:** all exit criteria pass. Continuing to the M-004 gate.
 
+### Gate M-004 · Delighter and public surface — attempt 1: FAIL → gate fix round 1 (2026-09-29)
+- **Commit:** 0f6ab03 (code). `pnpm verify` 969 pass; `pnpm test:e2e` 342 pass / 63 skipped / 0 fail; `check:bundle` clean on a flagless build.
+- **Independent QA:**
+  - TC-029: **PASS** (poster, 0 errors, no canvas under SwiftShader, debug hooks absent, forced flag ignored).
+  - TC-030 automated: **PASS** (13/13). The manual Mac GPU part is **PENDING**.
+  - TC-050: **PASS** (13 tags on 5 routes; https on a VERCEL_URL build; og.png 200, 1200×630, 151,669 B; og-card noindex).
+  - TKT-08 /why: **PASS** (axe 0 violations).
+  - TC-031: **PASS**.
+  - TC-055 bundle: **PASS** (no three or maplibre in initial JS; / 188.8 KiB gzip incl. the noModule polyfill; three loads after FCP on / only).
+- **FAIL (DoD performance block):** Lighthouse mobile (simulated) LCP is 7.8 s on / and 7.6 s on /why, against 2.5 s. With DevTools throttling: / 2.0 s, /why 4.1 s, /why CLS 0.101. Causes: a 726 KB Anek Devanagari woff2 preloaded on every route, and the /why poster lazy-loaded while it sits inside the phone viewport.
+- **Action:** gate fix round 1 dispatched. Performance fixes only (font preload and subsets, image formats, eager /why poster, maplibre CSS only with the map). No threshold or Design Freeze change.
+
 ## Decisions and scope log
 
 _(EXE# entries are mirrored in `decisions.md`)_
