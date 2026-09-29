@@ -1,5 +1,85 @@
 # Stage 7 execution ledger — Urja
 
+## Stage 7 summary (final, 2026-09-29)
+**Status: Stage 7 is complete on `build/stage7`** (PR [007U5H4R/urja#1](https://github.com/007U5H4R/urja/pull/1), not merged; `main` untouched). TKT-15 and TKT-16 (Stages 8–11) are out of scope.
+
+**Done: all 14 build tickets (TKT-01..14 = TASK-5..18).** Each unit had one implementer (TDD), a fresh spec review and a fresh code-quality review, at most 2 fix rounds, and one commit per unit, pushed. Main code commits:
+
+| Ticket | TASK | Commits |
+|---|---|---|
+| TKT-01 scaffold, CI, secret scan | TASK-5 | 38eda87, 05bb86f |
+| TKT-02 data engine and verdict | TASK-6 | f8bd27d, ba6bea2, d04f4f4 |
+| TKT-03 Lamplight foundation | TASK-7 | c6b0673, e1ba025 |
+| TKT-04 Today lower half | TASK-8 | c4ddb91 |
+| TKT-05 Trip evidence | TASK-9 | b38035c |
+| TKT-06 Message and brief | TASK-10 | 3b5c6be |
+| TKT-07 Ask API | TASK-11 | 8b1642a, ddfb752 |
+| TKT-08 Why Urja | TASK-12 | abc2620 |
+| TKT-09 Link preview | TASK-13 | bf082f6 |
+| TKT-10 Maps | TASK-14 | 9d04764 |
+| TKT-11 Screen states | TASK-15 | fb383cc |
+| TKT-12 Ask UI | TASK-16 | 6e9c710 |
+| TKT-13 Ask eval | TASK-17 | 42a5e92, 63bb068 |
+| TKT-14 3D scene + M-004 performance fixes | TASK-18 | 0f6ab03, 2ec07f9, 9845a7b |
+
+**Final checks on 9845a7b:**
+- `pnpm verify`: 81 files / 983 tests pass (1 skipped).
+- `pnpm test:e2e`: 366 pass / 63 skipped by viewport project / 0 fail. One known flaky test ([phone] maps.spec reduced-motion) failed once under full-suite load elsewhere and passes on rerun.
+- `pnpm check:bundle` (flagless build): no key material, no debug hooks.
+
+**Gates** (details under "Gates" below):
+- M-001: **PASS**.
+- M-002: **PASS**.
+- M-003: **PASS** on every criterion that doesn't need the key.
+- M-004: **PASS** except TC-055 LCP on `/` (**BLOCKED**).
+
+**TCs passed** (automated, locally):
+- Data and rules: TC-001–TC-014, TC-015.
+- Screens and flows: TC-020 (steps 1–4), TC-021, TC-022, TC-023, TC-024, TC-025, TC-026, TC-027, TC-028, TC-029, TC-031.
+- Ask: TC-040–TC-046.
+- Link preview and quality: TC-050 (local and a VERCEL_URL build), TC-055 (bundle; LCP on /why), TC-061.
+- TC-030's automated part.
+- TC-060 passes locally only (see blocked item 5).
+
+**BLOCKED:**
+1. **BLOCKED-pending-key** (no `GEMINI_API_KEY` here, EXE3; never faked):
+   - TSK-07.1 probe and the TP5 model/thinking check. Run `pnpm tsx --conditions=react-server scripts/probe-gemini.ts` first.
+   - TKT-07 AC6: a live answer in under 4 s.
+   - TSK-13.3 baseline: `pnpm eval --base-url <preview or localhost with key> --label baseline-v1`, then commit `evals/results/ask-baseline-v1-<sha>.json`.
+   - The final eval gate numbers (TKT-15).
+2. **TC-055 LCP on `/`:** Lighthouse mobile with simulated throttling, locally, is 2.65 s against 2.5 s after the 2 allowed fix rounds (it was 7.8 s). /why is at 2.44 s. The threshold is unchanged. §13 measures on the preview (HTTP/2 + CDN): measure there first, and if it still fails, restructure Today's client islands.
+3. **Pending (the VM can't reach Vercel previews):**
+   - preview 200;
+   - og:image 200 on the preview (TKT-09 AC3);
+   - TC-051 unfurl;
+   - Lighthouse on the preview.
+4. **Pending, manual (local session):** TC-030 on the Mac GPU (`docs/exec/tc-030-manual.md`) and the native Hindi review (`docs/exec/hindi-review.md`, 245 strings).
+5. **CI (TC-060) on GitHub:** every Actions run fails in about 3 s with no steps or logs. This is an account-side block (billing or minutes on the private repo). The same steps pass locally. **User action:** GitHub → Settings → Billing and plans / Actions.
+
+**Open user decisions:**
+- **EXE13:** should the Ask eval's "≥ 9/10 prepared" count only model answers? Today fallback answers pass too; the runner reports `preparedByModel`. Recommended: count model answers only.
+- **EXE16:** the scene tag shows on the fallback poster (TC-029), whereas the mockup hides it until a live frame. One CSS rule reverts it.
+- **EXE12:** /brief and /message hide the global top bar and use their own `.m-top` menu, following the phone mockups rather than TKT-03 AC2's "every route".
+- **EXE11:** /why's phone menu has no "Ask Urja", matching why.html.
+- **EXE15:** no route `loading.tsx` on prerendered pages; `?state=loading` shows the skeleton instead.
+- The byline "Tushar Pathak" (`content/why.ts`); field quotes (`content/field-notes.ts`, empty, placeholder shown).
+- English-only state copy, drawer labels and phone menu on the Hindi brief.
+
+**DES/CR candidates for Stage 8–9:**
+- Balancer-trip outliers in long-route normals (EXE9).
+- Self-written R2–R5 variant copy (EXE10).
+- Fallback provenance shows "answered in 0.00 s".
+- Server `<html lang="en">` on the Hindi /brief (`<main lang="hi">` is correct).
+- Hero cameras fitted to the data vs map.js framing.
+- Fleet card says "updated just now".
+- OG mini chart has 2 red bars (data-true) vs the mockup's 4.
+- Moderate axe findings: `region` on /brief, `heading-order` on /message.
+- /trips/0926-04 CLS 0.115 at 412 px with a 1.2 s font delay.
+- `poster-img.ts` depends on a Next internal (pinned 16.3.6, parity-tested).
+- Wave/Meter/Rail degenerate-input nits (TASK-7).
+
+**Decisions logged:** EXE1–EXE18 in `decisions.md`.
+
 Branch: `build/stage7` (never `main`). Protocol: `CLAUDE.md` + `technical-plan.md` §16.2.
 Status values: todo | doing | review | done | blocked. `BLOCKED-pending-key` = needs `GEMINI_API_KEY`, which this cloud environment does not have (§16.1 path B).
 Vercel: previews may be missing or auth-protected from the VM, so each row records the pushed SHA; preview checks are **pending** for the local session (§16.3).
@@ -27,9 +107,10 @@ Vercel: previews may be missing or auth-protected from the VM, so each row recor
 | TASK-17 | TSK-13.1–13.2 | done | 42a5e92 | 678 unit in unit: scorer per evaluation-plan §4 (24 fixtures: 13 passing, 11 failing incl. all AC1 cases), runner with mocked fetch (pacing, 429 retry, timeouts, provenance, baseline delta, §7 gate + §2 blockers enforced separately, key-shape gate, redaction); smoke run vs next start (no key): 10/10 prepared via fallback, 0/3 off-topic (saved), gate FAIL as expected — not committed | pushed | Spec: 1 gap (§2 blockers) fixed; quality: 2 blocking fixed in round 1; re-review found a comma-grouping false pass → fixed in round 2. Dataset and plan untouched. EXE13 (fallback vs model in the gate) is an OPEN user decision. |
 | TASK-17 | follow-up | done | 63bb068 | 7 new runner tests: `--out <dir>` validated before any request | pushed | Found at the M-003 gate (EISDIR after a full run). |
 | TASK-17 | TSK-13.3 | **BLOCKED-pending-key** | — | — | — | Run once `GEMINI_API_KEY` exists: `pnpm eval --base-url <preview or localhost with key> --label baseline-v1`, commit `evals/results/ask-baseline-v1-<sha>.json`, then later runs pass `--baseline <that file>`. |
-| TASK-18 | TSK-14.1–14.4 | done | 0f6ab03 | 969 unit in unit (guard regex, §7 dispose order + registry, isLive, mid-load unmount, bundle-debug scanner); e2e scene: TC-029 poster + 0 errors on 3 viewports, TC-055 no three in initial JS of / or trips (loads after FCP on / only), TC-030 automated: ≤ 1 live WebGL context after 10 Today ↔ Trip navigations counted by wrapping getContext, drag limits, no zoom, keyboard rotate/reset, context loss → poster; full suite 342 pass / 63 project-skipped / 0 fail; `check:bundle` clean on a flagless build | pushed | Spec: 1 blocking (production guard bypass via runtime env lookup) fixed by inlining NEXT_PUBLIC_DEBUG_GL in next.config.ts + a bundle check; quality: 2 blocking (tablet hero overlap hid "Open the evidence"; a test that couldn't fail) + 6 minor fixed in round 1; re-review reproduced the old attack → blocked. three@0.169.0 exact. EXE16 (scene tag on the fallback poster, flagged for the user). **TC-030 manual (Mac GPU) pending:** `docs/exec/tc-030-manual.md`. |
-| TASK-19 | TSK-15.* | todo | — | — | — | TKT-15: not in this session's scope (local @claude) |
-| TASK-20 | TSK-16.* | todo | — | — | — | TKT-16: not in this session's scope (local @claude) |
+| TASK-18 | TSK-14.1–14.4 | done | 0f6ab03 | 969 unit in unit (guard regex, §7 dispose order + registry, isLive, mid-load unmount, bundle-debug scanner); e2e scene: TC-029 poster + 0 errors on 3 viewports, TC-055 no three in initial JS of / or trips (loads after FCP on / only), TC-030 automated: ≤ 1 live WebGL context after 10 Today ↔ Trip navigations counted by wrapping getContext, drag limits, no zoom, keyboard rotate/reset, context loss → poster; full suite 342 pass / 63 project-skipped / 0 fail; `check:bundle` clean on a flagless build | pushed | Spec: 1 blocking (production guard bypass via runtime env lookup) fixed by inlining NEXT_PUBLIC_DEBUG_GL in next.config.ts + a bundle check; quality: 2 blocking (tablet hero overlap hid "Open the evidence"; a test that couldn't fail) + 6 minor fixed in round 1; re-review reproduced the old attack → blocked. three@0.169.0 exact. EXE16 (scene tag on the fallback poster, flagged for the user). **TC-030 manual (Mac GPU) pending:** `docs/exec/tc-030-manual.md`. M-004 gate fixes: 2ec07f9 (EXE17) and 9845a7b (EXE18). |
+| TASK-18 | TC-055 LCP on / | **BLOCKED** | 9845a7b | Lighthouse mobile, simulated, local: / LCP 2.65 s (budget 2.5 s; was 7.8 s), /why 2.44 s, CLS ≤ 0.001 | local Lighthouse JSON in the session scratchpad (not in the repo) | Still over budget after the 2 allowed gate fix rounds; threshold unchanged. Remaining cost: ~125 KB gzip React/Next runtime evaluated before the first frame, plus HTTP/1.1 round trips locally. §13 measures on the preview (HTTP/2 + CDN), which the VM can't reach: **measure on the preview first**. If it still fails there, restructure Today's client islands (Stage 9/10). |
+| TASK-19 | TSK-15.* | todo (out of Stage 7 scope) | — | — | — | TKT-15 Stages 8–10 (local @claude) |
+| TASK-20 | TSK-16.* | todo (out of Stage 7 scope) | — | — | — | TKT-16 Stage 11 (local @claude) |
 
 ## Gates
 
@@ -81,7 +162,8 @@ _(one section per milestone, newest last)_
 - **Open issues (low):** the server sends `<html lang="en">` on the Hindi /brief (`<main lang="hi">` is right; html is fixed after hydration); the message preview host needs checking on the preview; state copy, the phone menu and the drawer are English on the Hindi brief; a focus ring shows on the trip h1 in `?state=error`.
 - **Decision:** all exit criteria pass. Continuing to the M-004 gate.
 
-### Gate M-004 · Delighter and public surface — attempt 1: FAIL → gate fix round 1 (2026-09-29)
+### Gate M-004 · Delighter and public surface — BLOCKED on TC-055 LCP for / only; everything else PASS (2026-09-29)
+- **Attempt 1: FAIL → gate fix round 1.**
 - **Commit:** 0f6ab03 (code). `pnpm verify` 969 pass; `pnpm test:e2e` 342 pass / 63 skipped / 0 fail; `check:bundle` clean on a flagless build.
 - **Independent QA:**
   - TC-029: **PASS** (poster, 0 errors, no canvas under SwiftShader, debug hooks absent, forced flag ignored).
@@ -97,6 +179,22 @@ _(one section per milestone, newest last)_
   - DevTools throttling: / 1.05 s, /why 0.99 s (CLS 0.078).
   - Everything else passes again: TC-029, TC-050, TC-055 bundle (/ 189.0 KB gzip incl. the noModule polyfill), /brief in Anek, /why axe, verify 969, check:bundle. e2e: 353 pass / 1 flaky (phone maps reduced-motion; passes 48/48 on rerun).
   - **Action:** gate fix round 2 (the last): font subsetting and preloading, the inlineCss trade-off, legacy JS, lazy state specimens.
+- **Attempt 3 (after gate fix round 2, 9845a7b): BLOCKED on one criterion; every other criterion passes.**
+  - Fix round 2 (EXE18): self-hosted font subsets with identical rendering (pixel-diffed; OFL licences shipped), one stylesheet, server-rendered posters. Transfer on /: 640 → 346 KB. First-load JS on /: 145 KB gzip.
+  - **Lighthouse mobile, simulated throttling, local** (implementer median of 9): / LCP **2.65 s** (FCP 1.07 s, CLS 0.001); /why LCP **2.44 s** (CLS 0). Both are about 1 s under DevTools throttling.
+  - A fresh reviewer re-checked round 2:
+    - pixel parity 0–28 px of anti-aliasing noise on 14 page × width pairs;
+    - ₹ paints from Inter; Devanagari paints in Anek on /brief and /message;
+    - posters and preload markup identical;
+    - `pnpm verify` 983 pass; e2e 366 pass / 63 skipped / 0 fail; `check:bundle` clean on a flagless build.
+  - **Final M-004 criteria:**
+    - TC-029: **PASS**.
+    - TC-050: **PASS** (local and a VERCEL_URL build; og:image 200 on the preview is **pending**).
+    - TC-055 bundle: **PASS**. TC-055 LCP on /why: **PASS locally** (2.44 s).
+    - TC-055 LCP on /: **BLOCKED** (2.65 s > 2.5 s after 2 fix rounds; see the TASK-18 row).
+    - TC-030 automated: **PASS**. TC-030 manual (Mac GPU): **PENDING** (local session).
+    - TKT-08 /why and TC-031 axe: **PASS**.
+  - **Decision (user instruction, 2026-09-29):** marked BLOCKED, continuing; no threshold changed.
 
 ## Decisions and scope log
 
