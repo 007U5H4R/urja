@@ -8,7 +8,7 @@ import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { getAskContext } from "@/lib/ask/context";
 import type { AskResponseLike, EvalDataset } from "./scorers/ask-scorer";
-import { cli, parseArgs, runEval, type RunDeps, type RunOptions } from "./run-ask-eval";
+import { cli, parseArgs, runEval, USAGE, type RunDeps, type RunOptions } from "./run-ask-eval";
 
 const DATASET_PATH = join(__dirname, "eval-dataset.json");
 const dataset = JSON.parse(readFileSync(DATASET_PATH, "utf8")) as EvalDataset;
@@ -67,6 +67,7 @@ function harness(answer: Answerer = (id) => ({ status: 200, body: { ...good.get(
       writes.push({ path, text });
     },
     mkdir: () => {},
+    pathKind: () => null,
     log: (l) => {
       lines.push(l);
     },
@@ -129,6 +130,77 @@ describe("cli", () => {
     expect(h.lines.join("\n")).toMatch(/baseline[\s\S]*missing\.json/);
     expect(await cli(base, h.deps)).toBe(0);
     expect(h.fetchMock).toHaveBeenCalledTimes(13);
+  });
+});
+
+describe("--out and --out-dir", () => {
+  const base = ["--base-url", "http://localhost:3200", "--pace-ms", "0", "--label", "gate", "--dataset", DATASET_PATH];
+  const withDirs = (h: ReturnType<typeof harness>, dirs: string[], files: string[] = []) => {
+    const made: string[] = [];
+    h.deps.pathKind = (p) => (dirs.includes(p) ? "dir" : files.includes(p) ? "file" : null);
+    h.deps.mkdir = (p) => {
+      made.push(p);
+    };
+    return made;
+  };
+
+  it("treats an existing directory given to --out as the output directory", async () => {
+    const h = harness();
+    withDirs(h, ["/scratch/evals"]);
+    expect(await cli([...base, "--out", "/scratch/evals"], h.deps)).toBe(0);
+    expect(h.writes.map((w) => w.path)).toEqual([join("/scratch/evals", "ask-gate-abc2620.json")]);
+    expect(h.lines.join("\n")).toContain(`Results: ${join("/scratch/evals", "ask-gate-abc2620.json")}`);
+  });
+
+  it("treats an --out ending in a slash as a directory to create", async () => {
+    const h = harness();
+    const made = withDirs(h, []);
+    const { path } = await runEval({ ...opts(), out: "/scratch/new/" }, h.deps);
+    expect(path).toBe(join("/scratch/new", "ask-test-abc2620.json"));
+    expect(made).toContain(join("/scratch/new"));
+  });
+
+  it("still writes a plain file path given to --out", async () => {
+    const h = harness();
+    withDirs(h, ["/scratch"], ["/scratch/old.json"]);
+    const { path } = await runEval({ ...opts(), out: "/scratch/old.json" }, h.deps);
+    expect(path).toBe("/scratch/old.json");
+    expect(h.writes.map((w) => w.path)).toEqual(["/scratch/old.json"]);
+  });
+
+  it("exits 2 before any request when --out-dir is an existing file or --out's folder is a file", async () => {
+    const h = harness();
+    withDirs(h, [], ["/scratch/a-file"]);
+    expect(await cli([...base, "--out-dir", "/scratch/a-file"], h.deps)).toBe(2);
+    expect(await cli([...base, "--out", "/scratch/a-file/x.json"], h.deps)).toBe(2);
+    expect(await cli([...base, "--out", "/scratch/a-file/"], h.deps)).toBe(2);
+    expect(h.fetchMock).not.toHaveBeenCalled();
+    expect(h.writes).toEqual([]);
+    expect(h.lines.join("\n")).toMatch(/--out-dir \/scratch\/a-file is a file/);
+    expect(h.lines).toContain(USAGE);
+  });
+
+  it("exits 2 before any request when the output folder can't be created", async () => {
+    const h = harness();
+    h.deps.mkdir = () => {
+      throw new Error("EACCES: permission denied");
+    };
+    expect(await cli([...base, "--out-dir", "/root-only/results"], h.deps)).toBe(2);
+    expect(h.fetchMock).not.toHaveBeenCalled();
+    expect(h.lines.join("\n")).toMatch(/can't be created: EACCES/);
+  });
+
+  it("documents a directory --out in the usage line", () => {
+    expect(USAGE).toMatch(/--out <file\|dir>/);
+  });
+
+  it("prints the report even when writing the results file fails, then fails loudly", async () => {
+    const h = harness();
+    h.deps.writeFile = () => {
+      throw new Error("EISDIR: illegal operation on a directory");
+    };
+    await expect(runEval(opts(), h.deps)).rejects.toThrow(/results file[\s\S]*EISDIR/);
+    expect(h.lines.join("\n")).toMatch(/Gate: PASS/);
   });
 });
 

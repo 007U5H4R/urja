@@ -3,13 +3,15 @@
  *
  *   pnpm eval --base-url <url> [--label <name>] [--baseline <results.json>]
  *             [--pace-ms <ms>] [--timeout-ms <ms>] [--dataset <file>]
- *             [--out-dir <dir> | --out <file>] [--note <text>]
+ *             [--out-dir <dir> | --out <file|dir>] [--note <text>]
  *
  * Posts every case of evals/eval-dataset.json to <base-url>/api/ask, one
  * request every 12 s (under the route's 5-per-minute limit), scores each
  * answer with evals/scorers/ask-scorer.ts, prints a results table, and writes
  * evals/results/ask-{label}-{shortsha}.json from the real responses. Failed
- * cases stay in the file. Exits 1 when the gate (§7, plus the §2 blockers)
+ * cases stay in the file. --out names the file, or, when it is an existing
+ * directory or ends in '/', the directory that file goes in; the output folder
+ * is checked (and created) before any request. Exits 1 when the gate (§7, plus the §2 blockers)
  * fails, 2 on a usage error or an unreadable --baseline (before any request).
  *
  * No key is read here: the server holds GEMINI_API_KEY. A Vercel preview behind
@@ -18,7 +20,7 @@
  * and any key-shaped string replaced by "[redacted]".
  */
 import { execFileSync } from "node:child_process";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { getAskContext } from "@/lib/ask/context";
@@ -27,7 +29,7 @@ import { scoreCase, scoringContext, type AskResponseLike, type CaseScore, type E
 
 export const USAGE =
   "usage: pnpm eval --base-url <url> [--label <name>] [--baseline <results.json>] [--pace-ms <ms>] [--timeout-ms <ms>] " +
-  "[--dataset <file>] [--out-dir <dir> | --out <file>] [--note <text>]";
+  "[--dataset <file>] [--out-dir <dir> | --out <file|dir>] [--note <text>]";
 
 /** A bad invocation: the CLI exits 2 before sending any request. */
 export class UsageError extends Error {}
@@ -108,6 +110,8 @@ export interface RunDeps {
   readFile: (path: string) => string;
   writeFile: (path: string, text: string) => void;
   mkdir: (path: string) => void;
+  /** What is at a path: a directory, a file, or nothing. */
+  pathKind: (path: string) => "dir" | "file" | null;
   log: (line: string) => void;
   bundle: () => { allowed: ReadonlySet<number>; tripIds: ReadonlySet<string>; hash: string };
 }
@@ -122,6 +126,13 @@ export const realDeps: RunDeps = {
   readFile: (p) => readFileSync(p, "utf8"),
   writeFile: (p, t) => writeFileSync(p, t),
   mkdir: (p) => mkdirSync(p, { recursive: true }),
+  pathKind: (p) => {
+    try {
+      return statSync(p).isDirectory() ? "dir" : "file";
+    } catch {
+      return null;
+    }
+  },
   log: (l) => console.log(l),
   bundle: getAskContext,
 };
@@ -258,6 +269,38 @@ export function loadBaseline(file: string, deps: Pick<RunDeps, "readFile">): Bas
   return b as Baseline;
 }
 
+/**
+ * Where the results go, settled before any request: `file` when --out names a
+ * file, otherwise the standard name inside `dir`. The folder is created here, so
+ * a bad --out or --out-dir costs no request. Throws UsageError.
+ */
+export function resolveOutput(opts: Pick<RunOptions, "out" | "outDir">, deps: Pick<RunDeps, "pathKind" | "mkdir">): { dir: string; file?: string } {
+  let dir: string;
+  let file: string | undefined;
+  let what: string;
+  if (opts.out === undefined) {
+    dir = opts.outDir;
+    what = `--out-dir ${dir}`;
+  } else if (/[\\/]$/.test(opts.out) || deps.pathKind(opts.out) === "dir") {
+    dir = opts.out.replace(/[\\/]+$/, "") || opts.out;
+    what = `--out ${opts.out}`;
+  } else {
+    file = opts.out;
+    dir = dirname(file);
+    what = `--out ${file}: its folder ${dir}`;
+  }
+  const kind = deps.pathKind(dir);
+  if (kind === "file") throw new UsageError(`${what} is a file, not a directory`);
+  if (kind === null) {
+    try {
+      deps.mkdir(dir);
+    } catch (e) {
+      throw new UsageError(`${what} can't be created: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
+  return file === undefined ? { dir } : { dir, file };
+}
+
 function isAskResponse(body: unknown): body is AskResponseLike & { provenance?: { ms?: number; model?: string | null; promptVersion?: string; datasetHash?: string } } {
   if (!body || typeof body !== "object") return false;
   const b = body as Record<string, unknown>;
@@ -267,6 +310,7 @@ function isAskResponse(body: unknown): body is AskResponseLike & { provenance?: 
 // ── The run ─────────────────────────────────────────────────────────────
 export async function runEval(opts: RunOptions, deps: RunDeps = realDeps): Promise<{ result: EvalResult; path: string; exitCode: number }> {
   const baseline = opts.baseline ? loadBaseline(opts.baseline, deps) : undefined;
+  const output = resolveOutput(opts, deps);
   const dataset = JSON.parse(deps.readFile(opts.datasetPath)) as EvalDataset;
   const bundle = deps.bundle();
   const ctx = scoringContext(dataset, bundle);
@@ -342,11 +386,23 @@ export async function runEval(opts: RunOptions, deps: RunDeps = realDeps): Promi
   if (opts.baseline && baseline) summary.vsBaseline = compare(opts.baseline, baseline, cases, summary);
 
   const result: EvalResult = { provenance, cases, summary };
-  const path = opts.out ?? join(opts.outDir, `ask-${opts.label}-${provenance.commit.slice(0, 7)}.json`);
-  deps.mkdir(dirname(path));
-  deps.writeFile(path, `${JSON.stringify(result, null, 2)}\n`);
+  const path = output.file ?? join(output.dir, `ask-${opts.label}-${provenance.commit.slice(0, 7)}.json`);
+  const json = `${JSON.stringify(result, null, 2)}\n`;
+  // Write first; if that fails, still print the report and the JSON so a paid run isn't lost.
+  let writeError: unknown;
+  try {
+    deps.mkdir(dirname(path));
+    deps.writeFile(path, json);
+  } catch (e) {
+    writeError = e;
+  }
 
   for (const line of report(result)) deps.log(line);
+  if (writeError !== undefined) {
+    deps.log("Results JSON (the file could not be written):");
+    deps.log(json);
+    throw new Error(`couldn't write the results file ${path}: ${writeError instanceof Error ? writeError.message : String(writeError)}`);
+  }
   deps.log(`Results: ${path}`);
   return { result, path, exitCode: summary.gate === "PASS" ? 0 : 1 };
 }
