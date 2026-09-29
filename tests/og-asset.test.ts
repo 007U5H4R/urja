@@ -2,7 +2,7 @@
  * TC-050 (asset part), TKT-09 AC2: public/og.png, rendered by scripts/render-og.ts from
  * /og-card, is a 1200 × 630 PNG under 500 KB. Dimensions come from the IHDR chunk.
  *
- * og.png is a committed, static render: whenever app/og-card, lib/og.ts or the 0926-04 data
+ * og.png is a committed, static render: whenever app/(site)/og-card, lib/og.ts or the 0926-04 data
  * it reads changes, re-render it with `pnpm build && pnpm tsx scripts/render-og.ts` and commit
  * the new public/og.png. This test cannot tell a stale image from a fresh one.
  */

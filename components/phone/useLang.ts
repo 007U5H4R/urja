@@ -4,9 +4,13 @@ import { useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import type { Lang } from "@/lib/data/types";
 
-/** `?lang=` → the page language: English only when asked for (Hindi first). */
-export const langOf = (params: { get(name: string): string | null } | null): Lang =>
-  params?.get("lang") === "en" ? "en" : "hi";
+/**
+ * `?lang=` → the page language: English only when asked for (Hindi first). A repeated `lang`
+ * counts by its last value, like the server's langParam and next.config.ts's rewrite, which
+ * picks the root layout and so <html lang> (EXE23).
+ */
+export const langOf = (params: { getAll(name: string): string[] } | null): Lang =>
+  params?.getAll("lang").at(-1) === "en" ? "en" : "hi";
 
 /**
  * The phone screens' language (TSK-06.2), read from `?lang=`: the server

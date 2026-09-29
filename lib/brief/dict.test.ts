@@ -6,7 +6,10 @@ describe("lib/brief/dict", () => {
     expect(langParam(undefined)).toBe("hi");
     expect(langParam("hi")).toBe("hi");
     expect(langParam("en")).toBe("en");
-    expect(langParam(["en", "hi"])).toBe("en");
+    // A repeated ?lang= counts by its last value, as next.config.ts's rewrite (and so <html lang>) does.
+    expect(langParam(["en", "hi"])).toBe("hi");
+    expect(langParam(["hi", "en"])).toBe("en");
+    expect(langParam([])).toBe("hi");
     expect(langParam("fr")).toBe("hi");
   });
 

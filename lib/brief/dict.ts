@@ -74,7 +74,11 @@ export function driverFirstName(plate: Plate, lang: Lang): string {
   return truckByPlate(plate).driver.name[lang].split(/\s+/)[0];
 }
 
-/** `?lang=` → the page language: English only when asked for, Hindi otherwise (Hindi first). */
+/**
+ * `?lang=` → the page language: English only when asked for, Hindi otherwise (Hindi first). A
+ * repeated `lang` counts by its last value, as next.config.ts's rewrite matches it, so the page's
+ * copy and its <html lang> (EXE23) never disagree. useLang's langOf reads the URL the same way.
+ */
 export function langParam(v: string | string[] | undefined): Lang {
-  return (Array.isArray(v) ? v[0] : v) === "en" ? "en" : "hi";
+  return (Array.isArray(v) ? v.at(-1) : v) === "en" ? "en" : "hi";
 }

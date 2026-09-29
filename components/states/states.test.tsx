@@ -10,7 +10,7 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(window.location.search),
 }));
 
-import RouteError from "@/app/error";
+import RouteError from "@/app/(site)/error";
 import { stateSpecimens } from "@/lib/data/views/states";
 import { formatINR } from "@/lib/format";
 import { BriefState } from "./BriefState";

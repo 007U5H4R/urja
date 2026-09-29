@@ -23,7 +23,8 @@ export function WhyHero({ byline }: { byline: string }) {
         WhatsApp, with the driver’s side attached.
       </p>
       <div className="actions">
-        <Link className="btn btn-lamp" href="/message">
+        {/* /message has the phone screens' root layout (EXE23): a full page load, not prefetched. */}
+        <Link className="btn btn-lamp" href="/message" prefetch={false}>
           See the 7 AM brief
           <Icon name="right" />
         </Link>

@@ -43,7 +43,8 @@ export function TopBar({ fleetName, truckCount }: TopBarProps) {
           <div className="spacer"></div>
           <RouteVariant
             why={
-              <Link className="btn btn-line" href="/message">
+              // /message has the phone screens' root layout (EXE23): a full page load, not prefetched.
+              <Link className="btn btn-line" href="/message" prefetch={false}>
                 Start the demo
               </Link>
             }

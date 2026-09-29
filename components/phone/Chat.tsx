@@ -64,7 +64,9 @@ export function Chat({ copy, host }: { copy: Record<Lang, MessageCopy>; host: st
         </div>
         <div className="replies">
           {c.replies.map((r) => (
-            <Link key={r.href} href={r.href}>
+            // A reply to a trip page crosses into the site's root layout (EXE23): a full page load,
+            // so it isn't prefetched. The brief's own links stay within the phone screens.
+            <Link key={r.href} href={r.href} prefetch={r.href.startsWith("/brief") ? undefined : false}>
               {r.text}
             </Link>
           ))}

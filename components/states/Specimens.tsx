@@ -26,16 +26,22 @@ export function LoadingSpecimenCard({ s }: { s: LoadingSpecimen }) {
 }
 
 /** Empty: no trips finished yesterday; where the trucks are, and when the next brief lands. */
-export function EmptySpecimenCard({ s }: { s: EmptySpecimen }) {
+/**
+ * `prefetch={false}` where the card sits on a page whose root layout differs from its links'
+ * (the brief's states link to Today and a trip, EXE23): following them is a full page load.
+ */
+type CrossLayout = { prefetch?: false };
+
+export function EmptySpecimenCard({ s, prefetch }: { s: EmptySpecimen } & CrossLayout) {
   return (
     <StateCard id="st-empty" chip="Empty" tag={s.tag}>
       <h1 id="st-empty">{s.title}</h1>
       <p className="copy">{s.copy}</p>
       <div className="actions">
-        <Link className="btn btn-line" href={s.fleet.href}>
+        <Link className="btn btn-line" href={s.fleet.href} prefetch={prefetch}>
           {s.fleet.text}
         </Link>
-        <Link className="btn btn-quiet" href={s.september.href}>
+        <Link className="btn btn-quiet" href={s.september.href} prefetch={prefetch}>
           {s.september.text}
         </Link>
       </div>
@@ -44,7 +50,7 @@ export function EmptySpecimenCard({ s }: { s: EmptySpecimen }) {
 }
 
 /** Working, a clean day: the peak gets the lamp. */
-export function CleanSpecimenCard({ s }: { s: CleanSpecimen }) {
+export function CleanSpecimenCard({ s, prefetch }: { s: CleanSpecimen } & CrossLayout) {
   return (
     <StateCard id="st-clean" chip="Working" tone="ok" tag={s.tag} className="clean">
       <h1 id="st-clean">
@@ -61,7 +67,7 @@ export function CleanSpecimenCard({ s }: { s: CleanSpecimen }) {
         </div>
       </div>
       <div className="actions">
-        <Link className="btn btn-line" href={s.ledger.href}>
+        <Link className="btn btn-line" href={s.ledger.href} prefetch={prefetch}>
           {s.ledger.text}
         </Link>
       </div>

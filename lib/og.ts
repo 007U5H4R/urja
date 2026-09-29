@@ -150,7 +150,7 @@ export function getOgCard(): OgCardView {
 const OG_BASE = { type: "website", siteName: SITE_NAME } as const;
 const TWITTER_BASE = { card: "summary_large_image" } as const;
 
-/** app/layout.tsx: metadataBase, the title template and the site-wide defaults. */
+/** The root layouts (app/(site), app/(phone), app/(phone-en)) and the global 404: metadataBase, the title template and the site-wide defaults. */
 export function rootMetadata(): Metadata {
   return {
     metadataBase: new URL(siteUrl),

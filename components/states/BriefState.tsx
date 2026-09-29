@@ -12,8 +12,9 @@ import { CleanSpecimenCard, EmptySpecimenCard, ErrorSpecimenCard, LoadingSpecime
 export function BriefState({ state, s, greet, date }: { state: ScreenState; s: StateSpecimens; greet: string; date: string }) {
   const card: Record<ScreenState, ReactNode> = {
     loading: <LoadingSpecimenCard s={s.loading} />,
-    empty: <EmptySpecimenCard s={s.empty} />,
-    clean: <CleanSpecimenCard s={s.clean} />,
+    // Their links open Today and a trip, the site's root layout (EXE23): not prefetched.
+    empty: <EmptySpecimenCard s={s.empty} prefetch={false} />,
+    clean: <CleanSpecimenCard s={s.clean} prefetch={false} />,
     error: <ErrorSpecimenCard s={s.error} />,
   };
   return (

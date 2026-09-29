@@ -106,7 +106,7 @@ describe("Lamplight tokens (TKT-03 AC1)", () => {
     for (const name of FONT_OWNED) expect(tokens.has(name), name).toBe(false);
     // M-004 (EXE18): Google's Inter and Anek Devanagari files, self-hosted through next/font/local
     // (app/fonts.ts; tests/fonts.test.ts checks the faces, their axes and their ranges).
-    const layout = read("app/layout.tsx");
+    const layout = read("app/root-document.tsx");
     const fonts = read("app/fonts.ts");
     expect(layout).toMatch(/import \{ anekLatin, anekPlate, interCore \} from "\.\/fonts";/);
     expect(layout).toMatch(/className=\{`\$\{interCore\.variable\} \$\{anekLatin\.variable\} \$\{anekPlate\.variable\}`\}/);
