@@ -3,7 +3,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { quotes, type Quote } from "@/content/field-notes";
-import { getWhyView, METRICS, PIPELINE, WHY_TITLE } from "@/content/why";
+import { BYLINE, getWhyView, METRICS, PIPELINE, WHY_TITLE } from "@/content/why";
 import { getDataset } from "@/lib/data";
 import { dayKey } from "@/lib/clock";
 import { FLEET } from "@/lib/data/fleet";
@@ -35,7 +35,8 @@ describe("content", () => {
 
   it("names the page as the brand line says", () => {
     expect(WHY_TITLE).toBe("Why Urja · a concept for Bytebeam");
-    expect(view.byline).toBe("A concept for Bytebeam · Tushar Pathak · September 2026");
+    expect(view.byline).toBe("A concept for Bytebeam · Tushar Pathak · Product Manager · September 2026");
+    expect(BYLINE).toMatchObject({ author: "Tushar Pathak", role: "Product Manager" });
   });
 });
 

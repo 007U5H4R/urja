@@ -10,8 +10,8 @@ import { SHELL } from "@/lib/site-shell";
 /** The page title (Design.md §25 seo_intent; the brand line in technical-plan §1). */
 export const WHY_TITLE = "Why Urja · a concept for Bytebeam";
 
-/** The hero byline. The author's name is still to be confirmed (HANDOFF open items). */
-export const BYLINE = { concept: "A concept for Bytebeam", author: "Tushar Pathak", date: "September 2026" } as const;
+/** The hero byline (EXE19: the author line confirmed by the user). */
+export const BYLINE = { concept: "A concept for Bytebeam", author: "Tushar Pathak", role: "Product Manager", date: "September 2026" } as const;
 
 export interface WhyView {
   byline: string;
@@ -25,7 +25,7 @@ export interface WhyView {
 export function getWhyView(): WhyView {
   const tripDays = new Set(getDataset().trips.map((t) => dayKey(t.end))).size;
   return {
-    byline: `${BYLINE.concept} · ${BYLINE.author} · ${BYLINE.date}`,
+    byline: `${BYLINE.concept} · ${BYLINE.author} · ${BYLINE.role} · ${BYLINE.date}`,
     fleetName: SHELL.fleetName,
     truckCount: FLEET.length,
     tripDays,
