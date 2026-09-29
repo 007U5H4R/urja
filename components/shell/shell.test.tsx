@@ -8,7 +8,7 @@ vi.mock("next/navigation", () => ({ usePathname: () => pathname }));
 import { ASK_OPEN_EVENT } from "@/lib/ask-events";
 import { AskTrigger } from "./AskTrigger";
 import { MobileMenu } from "./MobileMenu";
-import { MENU_LINKS, NAV_PILLS, PHONE_ROUTES, isCurrent, isPhoneRoute } from "./nav";
+import { MENU_COPY, MENU_HREFS, MENU_LINKS, NAV_PILLS, PHONE_ROUTES, isCurrent, isPhoneRoute, menuLinks } from "./nav";
 import { TopBar } from "./TopBar";
 
 afterEach(cleanup);
@@ -123,6 +123,28 @@ describe("TopBar (TKT-03 AC2)", () => {
     ]);
     expect(links.map((a) => a.getAttribute("aria-current"))).toEqual(["page", null, null, null, null, null]);
     expect(links[5].getAttribute("aria-haspopup")).toBe("dialog");
+  });
+
+  it("EXE23: in Hindi the menu's items, its toggle and its list are Hindi, with the same destinations", () => {
+    pathname = "/brief";
+    const { container } = render(<MobileMenu lang="hi" />);
+    const summary = container.querySelector("details.m-menu > summary.iconbtn")!;
+    expect(summary.getAttribute("aria-label")).toBe("मेनू");
+    const nav = screen.getByRole("navigation", { name: MENU_COPY.hi.nav, hidden: true });
+    expect(nav.getAttribute("lang")).toBe("hi");
+    const links = within(nav).getAllByRole("link", { hidden: true });
+    expect(links.map((a) => a.textContent)).toEqual(["सुबह का हिसाब", "आज", "ट्रक", "ट्रिप", "Urja क्यों", "Urja से पूछें"]);
+    expect(links.map((a) => a.getAttribute("href"))).toEqual(["/brief", "/", "/#trucks", "/trips", "/why", "/?ask"]);
+    expect(links[0].getAttribute("aria-current")).toBe("page");
+    expect(menuLinks("hi").map((l) => l.href)).toEqual(MENU_LINKS.map((l) => l.href));
+    expect(menuLinks("en")).toBe(MENU_LINKS);
+    expect(MENU_LINKS.map((l) => l.href)).toEqual([...MENU_HREFS]);
+  });
+
+  it("is English, with no lang of its own, unless told otherwise", () => {
+    const { container } = render(<MobileMenu />);
+    expect(container.querySelector("details.m-menu nav")!.hasAttribute("lang")).toBe(false);
+    expect(MENU_COPY.en).toEqual({ toggle: "Menu", nav: "Main (mobile)", ask: "Ask Urja" });
   });
 
   it("closes the menu after a destination is chosen", () => {

@@ -31,10 +31,10 @@ export function Chat({ copy, host }: { copy: Record<Lang, MessageCopy>; host: st
           <b>Urja</b>
           <small>{c.account}</small>
         </div>
-        {/* EXE12: no global top bar here; the chat header carries the menu (English, like the shell). */}
+        {/* EXE12: no global top bar here; the chat header carries the menu, in the screen's language (EXE23). */}
         <div className="m-top-end" lang="en">
           <LangToggle lang={lang} onChange={setLang} />
-          <MobileMenu />
+          <MobileMenu lang={lang} />
         </div>
       </div>
 

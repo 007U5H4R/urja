@@ -5,15 +5,19 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { openAsk } from "@/lib/ask-events";
-import { MENU_LINKS, isCurrent, isWhyRoute } from "./nav";
+import type { Lang } from "@/lib/data/types";
+import { MENU_COPY, isCurrent, isWhyRoute, menuLinks } from "./nav";
 
 /**
  * The ≤760px menu: a native disclosure (final/index.html lines 27–28).
  * While open it closes on Escape (anywhere), on a pointerdown outside it,
  * when a destination is chosen, and when the route changes.
  * On /why there is no Ask item, as in final/why.html line 136.
+ * `lang` is set only by the phone screens (EXE23): Hindi items on a Hindi
+ * screen, with `lang` on the list; the shell's menu is English.
  */
-export function MobileMenu({ onAskOpen = openAsk }: { onAskOpen?: () => void }) {
+export function MobileMenu({ onAskOpen = openAsk, lang }: { onAskOpen?: () => void; lang?: Lang }) {
+  const copy = MENU_COPY[lang ?? "en"];
   const pathname = usePathname() ?? "/";
   const ref = useRef<HTMLDetailsElement>(null);
   const [open, setOpen] = useState(false);
@@ -59,11 +63,11 @@ export function MobileMenu({ onAskOpen = openAsk }: { onAskOpen?: () => void }) 
       ref={ref}
       onToggle={(e) => setOpen(e.currentTarget.open)}
     >
-      <summary className="iconbtn" aria-label="Menu">
+      <summary className="iconbtn" aria-label={copy.toggle} lang={lang}>
         <Icon name="menu" />
       </summary>
-      <nav aria-label="Main (mobile)">
-        {MENU_LINKS.map((l) => (
+      <nav aria-label={copy.nav} lang={lang}>
+        {menuLinks(lang ?? "en").map((l) => (
           <Link
             key={l.href}
             href={l.href}
@@ -76,7 +80,7 @@ export function MobileMenu({ onAskOpen = openAsk }: { onAskOpen?: () => void }) 
         ))}
         {isWhyRoute(pathname) ? null : (
           <Link href="/?ask" prefetch={false} aria-haspopup="dialog" onClick={onAsk}>
-            Ask Urja
+            {copy.ask}
           </Link>
         )}
       </nav>

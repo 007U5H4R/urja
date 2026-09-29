@@ -210,29 +210,45 @@ test.describe("the 7 AM message", () => {
   });
 });
 
-test.describe("EXE12 · the phone screens keep their own top bar", () => {
-  for (const [path, bar] of [["/brief", ".m-top"], ["/message", ".chat-top"]] as const) {
-    test(`${path} has no global top bar, and its own menu reaches every destination and Ask`, async ({ page }) => {
+test.describe("EXE12 · the phone screens keep their own top bar (its menu in the screen's language, EXE23)", () => {
+  const MENU = {
+    hi: { toggle: "मेनू", nav: "मुख्य मेनू", items: ["सुबह का हिसाब", "आज", "ट्रक", "ट्रिप", "Urja क्यों", "Urja से पूछें"], today: "आज" },
+    en: { toggle: "Menu", nav: "Main (mobile)", items: ["Morning brief", "Today", "Trucks", "Trips", "Why Urja", "Ask Urja"], today: "Today" },
+  } as const;
+  const cases = [
+    ["/brief", ".m-top", "hi"],
+    ["/message", ".chat-top", "hi"],
+    ["/brief?lang=en", ".m-top", "en"],
+    ["/message?lang=en", ".chat-top", "en"],
+  ] as const;
+  for (const [path, bar, lang] of cases) {
+    test(`${path} has no global top bar, and its own menu (${lang}) reaches every destination and Ask`, async ({ page }) => {
       const errors = collectErrors(page);
+      const m = MENU[lang];
       await page.goto(path);
       await expect(page.locator("header.topbar")).toHaveCount(0);
-      const toggle = page.locator(`${bar} details.m-menu > summary[aria-label="Menu"]`);
+      const toggle = page.locator(`${bar} details.m-menu > summary[aria-label="${m.toggle}"]`);
       await expect(toggle).toBeVisible();
-      const menu = page.getByRole("navigation", { name: "Main (mobile)" });
+      const menu = page.getByRole("navigation", { name: m.nav });
       await expect(async () => {
         if (!(await menu.isVisible())) await toggle.click();
         await expect(menu).toBeVisible({ timeout: 500 });
       }).toPass();
-      await expect(menu.getByRole("link")).toHaveText(["Morning brief", "Today", "Trucks", "Trips", "Why Urja", "Ask Urja"]);
+      await expect(menu).toHaveAttribute("lang", lang);
+      await expect(menu.getByRole("link")).toHaveText([...m.items]);
       const { scrollWidth, innerWidth } = await page.evaluate(() => ({
         scrollWidth: document.documentElement.scrollWidth,
         innerWidth: window.innerWidth,
       }));
       expect(scrollWidth).toBeLessThanOrEqual(innerWidth);
-      await menu.getByRole("link", { name: "Today" }).click();
+      const axe = await new AxeBuilder({ page }).include(`${bar} details.m-menu`).analyze();
+      expect(axe.violations.filter((v) => v.impact === "serious" || v.impact === "critical").map((v) => v.id)).toEqual([]);
+      await menu.getByRole("link", { name: m.today, exact: true }).click();
       await expect(page).toHaveURL(/\/$/);
       await expect(page.locator("header.topbar")).toHaveCount(1);
       await expect(page.locator("html")).toHaveAttribute("lang", "en");
+      // Everywhere else the menu is English.
+      await expect(page.locator("header.topbar details.m-menu > summary")).toHaveAttribute("aria-label", "Menu");
       expect(errors).toEqual([]);
     });
   }

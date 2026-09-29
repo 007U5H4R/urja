@@ -152,18 +152,34 @@ describe("Brief", () => {
   });
 });
 
-describe("the phone screens' own menu (EXE12)", () => {
-  const destinations = ["Morning brief", "Today", "Trucks", "Trips", "Why Urja", "Ask Urja"];
+describe("the phone screens' own menu (EXE12), in the screen's language (EXE23)", () => {
+  const en = ["Morning brief", "Today", "Trucks", "Trips", "Why Urja", "Ask Urja"];
+  const hi = ["सुबह का हिसाब", "आज", "ट्रक", "ट्रिप", "Urja क्यों", "Urja से पूछें"];
+  const items = (menu: Element) =>
+    within(menu.querySelector("nav") as HTMLElement).getAllByRole("link", { hidden: true }).map((a) => a.textContent);
   it.each([
-    ["Brief", () => render(<Brief copy={brief()} />), ".m-top"],
-    ["Chat", () => render(<Chat copy={message()} host="localhost:3000" />), ".chat-top"],
-  ])("%s carries the menu in its own top bar, reaching every destination and Ask", (_, mount, bar) => {
+    ["Brief", "/brief", () => render(<Brief copy={brief()} />), ".m-top"],
+    ["Chat", "/message", () => render(<Chat copy={message()} host="localhost:3000" />), ".chat-top"],
+  ])("%s carries the menu in its own top bar: Hindi on the Hindi screen, English after the toggle", (_, path, mount, bar) => {
+    at(path);
     const { container } = mount();
     const menu = container.querySelector(`${bar} details.m-menu`)!;
     expect(menu).not.toBeNull();
-    const nav = within(menu as HTMLElement).getByRole("navigation", { name: "Main (mobile)", hidden: true });
-    expect(within(nav).getAllByRole("link", { hidden: true }).map((a) => a.textContent)).toEqual(destinations);
-    expect(menu.closest("[lang]")!.getAttribute("lang")).toBe("en");
+    expect(items(menu)).toEqual(hi);
+    expect(menu.querySelector("nav")!.getAttribute("lang")).toBe("hi");
+    expect(menu.querySelector("summary")!.getAttribute("aria-label")).toBe("मेनू");
+    fireEvent.click(screen.getByRole("button", { name: "EN" }));
+    expect(items(menu)).toEqual(en);
+    expect(menu.querySelector("nav")!.getAttribute("lang")).toBe("en");
+    expect(menu.querySelector("summary")!.getAttribute("aria-label")).toBe("Menu");
+    fireEvent.click(screen.getByRole("button", { name: "हिं" }));
+    expect(items(menu)).toEqual(hi);
+  });
+
+  it("is English on first paint with ?lang=en", () => {
+    at("/brief?lang=en");
+    const { container } = render(<Brief copy={brief()} />);
+    expect(items(container.querySelector(".m-top details.m-menu")!)).toEqual(en);
   });
 });
 

@@ -6,7 +6,7 @@ Every Hindi string Urja shows, beside its English, for a native speaker to check
   `UPDATE_HINDI_REVIEW=1 pnpm exec vitest run lib/brief/hindi-review.test.ts`.
 - **How to review:** write OK, or a better wording, in the Reviewer column. Keep numbers, `₹`, `L` and plates as they are.
 - **Wording rules:** say हिसाब नहीं मिल रहा (doesn't add up); never an accusation. Confidence words are पक्का / शायद / जाँचें.
-- **Strings:** 249.
+- **Strings:** 277.
 
 ## 1. Morning brief (/brief), 27 Sep
 
@@ -305,3 +305,45 @@ Built by lib/data/rules/* with the lib/data/rules/text.ts helpers; every distinc
 | 73 | R5 · 0914-03 · why this confidence | FASTag की कटौती पक्का रिकॉर्ड है, और दावा उससे ₹900 ज़्यादा है। अगर किसी प्लाज़ा पर टैग नहीं पढ़ा गया और नकद दिया गया, तो रसीद माँगें। | FASTag deductions are exact records, and the claim is ₹900 above them. A plaza that failed to read the tag and took cash would explain it; ask for the receipt. | |
 | 74 | R5 · 0917-05 · evidence (FASTag) | टोल के ₹5,010 माँगे; FASTag में 4 प्लाज़ा पर ₹4,290 | Claimed ₹5,010 for tolls; FASTag shows ₹4,290 at 4 plazas | |
 | 75 | R5 · 0917-05 · why this confidence | FASTag की कटौती पक्का रिकॉर्ड है, और दावा उससे ₹720 ज़्यादा है। अगर किसी प्लाज़ा पर टैग नहीं पढ़ा गया और नकद दिया गया, तो रसीद माँगें। | FASTag deductions are exact records, and the claim is ₹720 above them. A plaza that failed to read the tag and took cash would explain it; ask for the receipt. | |
+
+## 8. Phone menu
+
+components/shell/nav.ts `menuLinks`, `MENU_COPY`: the menu on the Hindi /brief and /message (EXE23).
+
+| # | Where | Hindi | English | Reviewer |
+|---|---|---|---|---|
+| 1 | item · /brief | सुबह का हिसाब | Morning brief | |
+| 2 | item · / | आज | Today | |
+| 3 | item · /#trucks | ट्रक | Trucks | |
+| 4 | item · /trips | ट्रिप | Trips | |
+| 5 | item · /why | Urja क्यों | Why Urja | |
+| 6 | item · Ask | Urja से पूछें | Ask Urja | |
+| 7 | menu button aria-label | मेनू | Menu | |
+| 8 | menu list aria-label | मुख्य मेनू | Main (mobile) | |
+
+## 9. Ask drawer
+
+components/ask/copy.ts `ASK_COPY`, `ASK_CHIPS`; components/ask/askScope.ts: the drawer on the Hindi /brief and /message (EXE23).
+
+| # | Where | Hindi | English | Reviewer |
+|---|---|---|---|---|
+| 1 | title (dialog name) | Urja से पूछें | Ask Urja | |
+| 2 | close button aria-label | Urja से पूछें बंद करें | Close Ask Urja | |
+| 3 | input label (screen readers) | आपका सवाल | Your question | |
+| 4 | input placeholder | हिंदी या अंग्रेज़ी में पूछें… | Ask in Hindi or English… | |
+| 5 | send button | पूछें | Ask | |
+| 6 | chips group aria-label | सुझाए गए सवाल | Suggested questions | |
+| 7 | chip 1 (the question it sends) | कौन-सा ट्रक प्रति किलोमीटर सबसे कम कमाता है, और क्यों? | Which truck earns least per km, and why? | |
+| 8 | chip 2 (the question it sends) | पिछले हफ़्ते कितना डीज़ल गायब हुआ? | पिछले हफ़्ते कितना डीज़ल गायब हुआ? | |
+| 9 | chip 3 (the question it sends) | बहरोड़ वाले हिस्से के सारे फ़्लैग दिखाएँ | Show every flag on the Behror stretch | |
+| 10 | answering | Gemini से पूछ रहे हैं… | Asking Gemini… | |
+| 11 | fallback banner | Urja का AI अभी जवाब नहीं दे पाया, इसलिए यह आँकड़ा सीधे आपके डेटा से है। | Urja’s AI couldn’t answer right now, so here is the number straight from your data. | |
+| 12 | saved banner (the fallback banner's first clause) | Urja का AI अभी जवाब नहीं दे पाया। | Urja’s AI couldn’t answer right now. | |
+| 13 | error line | Urja अपने सर्वर तक नहीं पहुँच पाया, इसलिए इस सवाल का जवाब अभी नहीं है। कुछ खोया नहीं है: आपका सवाल नीचे बॉक्स में ही है। | Urja couldn’t reach its server, so this question has no answer yet. Nothing is lost: your question is still in the box below. | |
+| 14 | 429 line (12 s) | आपने पिछले एक मिनट में बहुत सवाल पूछे हैं। 12 सेकंड बाद फिर पूछें। | You’ve asked a lot in the last minute. Ask again in 12 s. | |
+| 15 | try again button | फिर से कोशिश करें | Try again | |
+| 16 | cited trips aria-label | इस जवाब में इस्तेमाल हुई ट्रिप | Trips this answer used | |
+| 17 | cite chip (0926-04) | ट्रिप 0926-04 | Trip 0926-04 | |
+| 18 | provenance scope (from the data) | 212 ट्रिप, 24 ट्रक, 1–27 सितंबर | 212 trips across 24 trucks, 1–27 Sep | |
+| 19 | provenance line · model answer | 212 ट्रिप, 24 ट्रक, 1–27 सितंबर के डेटा से · Gemini 3.5 Flash · 1.8 सेकंड में जवाब · Urja ग़लत हो सकता है, इसलिए कार्रवाई से पहले ट्रिप खोलें। | From 212 trips across 24 trucks, 1–27 Sep · Gemini 3.5 Flash · answered in 1.8 s · Urja can be wrong, so open the trips before acting. | |
+| 20 | provenance line · fallback answer | 212 ट्रिप, 24 ट्रक, 1–27 सितंबर के डेटा से · सीधे आपके डेटा से, AI के बिना · 0.04 सेकंड में जवाब · Urja ग़लत हो सकता है, इसलिए कार्रवाई से पहले ट्रिप खोलें। | From 212 trips across 24 trucks, 1–27 Sep · straight from your data, no AI · answered in 0.04 s · Urja can be wrong, so open the trips before acting. | |

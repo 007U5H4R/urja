@@ -7,6 +7,10 @@
  * Regenerate after changing any Hindi string:
  *   UPDATE_HINDI_REVIEW=1 pnpm exec vitest run lib/brief/hindi-review.test.ts
  */
+import { askShellData } from "@/components/ask/askScope";
+import { ASK_CHIPS, ASK_COPY } from "@/components/ask/copy";
+import { provenanceLine } from "@/components/ask/format";
+import { MENU_COPY, menuLinks } from "@/components/shell/nav";
 import { istMin } from "@/lib/clock";
 import { YESTERDAY_DAY } from "@/lib/data/aggregates";
 import { FLEET } from "@/lib/data/fleet";
@@ -186,6 +190,46 @@ function evidenceRows(): Row[] {
   return rows;
 }
 
+function menuRows(): Row[] {
+  const en = menuLinks("en");
+  return [
+    ...menuLinks("hi").map((l, i): Row => [`item · ${l.href}`, l.label, en[i].label]),
+    ["item · Ask", MENU_COPY.hi.ask, MENU_COPY.en.ask],
+    ["menu button aria-label", MENU_COPY.hi.toggle, MENU_COPY.en.toggle],
+    ["menu list aria-label", MENU_COPY.hi.nav, MENU_COPY.en.nav],
+  ];
+}
+
+function askRows(): Row[] {
+  const hi = ASK_COPY.hi;
+  const en = ASK_COPY.en;
+  const { scope } = askShellData();
+  const prov = (model: string | null, ms: number) =>
+    [provenanceLine({ scope: scope.hi, model, ms }, "hi"), provenanceLine({ scope: scope.en, model, ms }, "en")] as const;
+  const withModel = prov("gemini-3.5-flash", 1800);
+  const noModel = prov(null, 40);
+  return [
+    ["title (dialog name)", hi.title, en.title],
+    ["close button aria-label", hi.close, en.close],
+    ["input label (screen readers)", hi.inputLabel, en.inputLabel],
+    ["input placeholder", hi.placeholder, en.placeholder],
+    ["send button", hi.submit, en.submit],
+    ["chips group aria-label", hi.suggestedLabel, en.suggestedLabel],
+    ...ASK_CHIPS.hi.map((c, i): Row => [`chip ${i + 1} (the question it sends)`, c.text, ASK_CHIPS.en[i].text]),
+    ["answering", hi.answering, en.answering],
+    ["fallback banner", hi.fallbackBanner, en.fallbackBanner],
+    ["saved banner (the fallback banner's first clause)", hi.savedBanner, en.savedBanner],
+    ["error line", hi.error, en.error],
+    ["429 line (12 s)", hi.retryAfter(12), en.retryAfter(12)],
+    ["try again button", hi.retry, en.retry],
+    ["cited trips aria-label", hi.citesLabel, en.citesLabel],
+    ["cite chip (0926-04)", hi.citeChip("0926-04"), en.citeChip("0926-04")],
+    ["provenance scope (from the data)", scope.hi, scope.en],
+    ["provenance line · model answer", withModel[0], withModel[1]],
+    ["provenance line · fallback answer", noModel[0], noModel[1]],
+  ];
+}
+
 /** The whole review document. */
 export function hindiReviewMarkdown(): string {
   const day = YESTERDAY_DAY;
@@ -197,6 +241,8 @@ export function hindiReviewMarkdown(): string {
     ["5. Dictionary", "lib/brief/dict.ts.", dictionaryRows()],
     ["6. Place, stretch and driver names", "lib/data/places.ts, lib/data/routes.ts, lib/data/fleet.ts.", nameRows()],
     ["7. Evidence lines on the flags", "Built by lib/data/rules/* with the lib/data/rules/text.ts helpers; every distinct line in the dataset.", evidenceRows()],
+    ["8. Phone menu", "components/shell/nav.ts `menuLinks`, `MENU_COPY`: the menu on the Hindi /brief and /message (EXE23).", menuRows()],
+    ["9. Ask drawer", "components/ask/copy.ts `ASK_COPY`, `ASK_CHIPS`; components/ask/askScope.ts: the drawer on the Hindi /brief and /message (EXE23).", askRows()],
   ];
   const total = sections.reduce((a, [, , r]) => a + r.length, 0);
   return [

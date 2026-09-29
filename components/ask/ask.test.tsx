@@ -19,6 +19,8 @@ beforeAll(() => {
 afterEach(cleanup);
 
 const SCOPE = "212 trips across 24 trucks, 1–27 Sep";
+const SCOPE_HI = "212 ट्रिप, 24 ट्रक, 1–27 सितंबर";
+const SHELL_SCOPE = { en: SCOPE, hi: SCOPE_HI };
 const SAVED = {
   en: "Your question is saved. Try again in a minute for a written answer.",
   hi: "आपका सवाल सहेज लिया गया है। लिखित जवाब के लिए एक मिनट बाद फिर पूछें।",
@@ -45,7 +47,7 @@ function mount(
 ) {
   const f = vi.fn(fetchImpl);
   const utils = render(
-    <AskProvider scope={SCOPE} saved={SAVED} fetchImpl={f as unknown as typeof fetch} loadSheet={loadSheet}>
+    <AskProvider scope={SHELL_SCOPE} saved={SAVED} fetchImpl={f as unknown as typeof fetch} loadSheet={loadSheet}>
       <main>
         <button type="button" id="askBtn" onClick={() => openAsk()}>
           Ask about any truck
@@ -85,6 +87,14 @@ describe("format", () => {
       "From 212 trips across 24 trucks, 1–27 Sep · straight from your data, no AI · answered in 0.1 s · Urja can be wrong, so open the trips before acting.",
     );
   });
+  it("builds the provenance line in Hindi (EXE23)", () => {
+    expect(provenanceLine({ scope: SCOPE_HI, model: "gemini-3.5-flash", ms: 1800 }, "hi")).toBe(
+      "212 ट्रिप, 24 ट्रक, 1–27 सितंबर के डेटा से · Gemini 3.5 Flash · 1.8 सेकंड में जवाब · Urja ग़लत हो सकता है, इसलिए कार्रवाई से पहले ट्रिप खोलें।",
+    );
+    expect(provenanceLine({ scope: SCOPE_HI, model: null, ms: 40 }, "hi")).toBe(
+      "212 ट्रिप, 24 ट्रक, 1–27 सितंबर के डेटा से · सीधे आपके डेटा से, AI के बिना · 0.04 सेकंड में जवाब · Urja ग़लत हो सकता है, इसलिए कार्रवाई से पहले ट्रिप खोलें।",
+    );
+  });
 });
 
 describe("AskProvider + AskSheet: opening, focus, inert (TC-026)", () => {
@@ -120,7 +130,7 @@ describe("AskProvider + AskSheet: opening, focus, inert (TC-026)", () => {
     fireEvent.keyDown(window, { key: "k", ctrlKey: true });
     await waitFor(() => expect(container.hasAttribute("inert")).toBe(true));
     expect(dialog().closest("[inert]")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: ASK_COPY.close }));
+    fireEvent.click(screen.getByRole("button", { name: ASK_COPY.en.close }));
     await waitFor(() => expect(container.hasAttribute("inert")).toBe(false));
   });
 
@@ -128,7 +138,7 @@ describe("AskProvider + AskSheet: opening, focus, inert (TC-026)", () => {
     mount();
     fireEvent.keyDown(window, { key: "k", metaKey: true });
     await waitFor(() => expect(document.activeElement).toBe(input()));
-    screen.getByRole("button", { name: ASK_COPY.close }).focus();
+    screen.getByRole("button", { name: ASK_COPY.en.close }).focus();
     fireEvent.keyDown(window, { key: "k", metaKey: true });
     expect(document.activeElement).toBe(input());
   });
@@ -243,8 +253,8 @@ describe("Ask states (TC-024)", () => {
     const { fetchImpl } = mount();
     act(() => openAsk());
     await waitFor(dialog);
-    fireEvent.click(screen.getByRole("button", { name: ASK_CHIPS[1].text }));
-    expect(sent(fetchImpl)).toEqual({ question: ASK_CHIPS[1].text });
+    fireEvent.click(screen.getByRole("button", { name: ASK_CHIPS.en[1].text }));
+    expect(sent(fetchImpl)).toEqual({ question: ASK_CHIPS.en[1].text });
   });
 
   it("shows 'Asking Gemini…' while answering", async () => {
@@ -267,6 +277,7 @@ describe("Ask states (TC-024)", () => {
       return el;
     });
     const cite = within(d).getByRole("link", { name: "Trip 0926-04" });
+    expect(cite.getAttribute("lang")).toBe("en");
     expect(cite.getAttribute("href")).toBe("/trips/0926-04");
     expect(cite.classList.contains("cite")).toBe(true);
     expect(cite.closest("li")!.textContent).toBe("RJ14 GB 4521 · Jaipur → Okhla, Delhi" + "Trip 0926-04");
@@ -312,7 +323,7 @@ describe("Ask states (TC-024)", () => {
     await askQuestion("How much diesel last week?");
     const d = await waitFor(() => {
       const el = dialog();
-      expect(within(el).getByRole("heading", { level: 3, name: ASK_COPY.fallbackBanner })).toBeTruthy();
+      expect(within(el).getByRole("heading", { level: 3, name: ASK_COPY.en.fallbackBanner })).toBeTruthy();
       return el;
     });
     expect(within(d).getByText("21–27 Sep: 217 L diesel unaccounted on 5 trips.")).toBeTruthy();
@@ -340,7 +351,7 @@ describe("Ask states (TC-024)", () => {
     await waitFor(dialog);
     await askQuestion("Will it rain in Behror?");
     await waitFor(() => expect(within(dialog()).getByText(SAVED.en)).toBeTruthy());
-    expect(within(dialog()).getByRole("heading", { level: 3 }).textContent).toBe(ASK_COPY.savedBanner);
+    expect(within(dialog()).getByRole("heading", { level: 3 }).textContent).toBe(ASK_COPY.en.savedBanner);
     expect(within(dialog()).getByRole("button", { name: "Try again" })).toBeTruthy();
     expect((input() as HTMLInputElement).value).toBe("Will it rain in Behror?");
   });
@@ -350,8 +361,8 @@ describe("Ask states (TC-024)", () => {
     act(() => openAsk());
     await waitFor(dialog);
     await askQuestion("q");
-    await waitFor(() => expect(within(dialog()).getByText(ASK_COPY.retryAfter(12))).toBeTruthy());
-    expect(within(dialog()).getByRole("heading", { level: 3, name: ASK_COPY.fallbackBanner })).toBeTruthy();
+    await waitFor(() => expect(within(dialog()).getByText(ASK_COPY.en.retryAfter(12))).toBeTruthy());
+    expect(within(dialog()).getByRole("heading", { level: 3, name: ASK_COPY.en.fallbackBanner })).toBeTruthy();
   });
 
   it("error: says what happened, keeps the question and offers Try again", async () => {
@@ -359,7 +370,7 @@ describe("Ask states (TC-024)", () => {
     act(() => openAsk());
     await waitFor(dialog);
     await askQuestion("Which truck?");
-    await waitFor(() => expect(within(dialog()).getByText(ASK_COPY.error)).toBeTruthy());
+    await waitFor(() => expect(within(dialog()).getByText(ASK_COPY.en.error)).toBeTruthy());
     expect((input() as HTMLInputElement).value).toBe("Which truck?");
     expect(within(dialog()).getByRole("button", { name: "Try again" })).toBeTruthy();
   });
@@ -404,5 +415,106 @@ describe("AskDock (TSK-12.3)", () => {
     fireEvent.click(screen.getByRole("button", { name: copy.button }));
     await waitFor(() => expect(dialog()).toBeTruthy());
     expect(fetchImpl).not.toHaveBeenCalled();
+  });
+});
+
+describe("the drawer on a Hindi screen (EXE23): its labels follow <html lang>", () => {
+  const hi = ASK_COPY.hi;
+  const hiDialog = () => screen.getByRole("dialog", { name: hi.title });
+  const hiInput = () => screen.getByRole("textbox", { name: hi.inputLabel });
+  const setLang = (l: string) => act(() => void (document.documentElement.lang = l));
+  afterEach(() => setLang("en"));
+
+  async function openHi(fetchImpl?: (...a: unknown[]) => Promise<Response>) {
+    setLang("hi");
+    const m = mount(fetchImpl);
+    act(() => openAsk());
+    await waitFor(() => expect(hiDialog()).toBeTruthy());
+    return m;
+  }
+
+  it("titles, labels, placeholder, buttons and the three chips are Hindi", async () => {
+    await openHi();
+    const d = hiDialog();
+    expect(d.getAttribute("lang")).toBe("hi");
+    expect(within(d).getByRole("heading", { level: 2 }).textContent).toBe("Urja से पूछें");
+    expect(hiInput().getAttribute("placeholder")).toBe(hi.placeholder);
+    expect(within(d).getByRole("button", { name: hi.close })).toBeTruthy();
+    expect(within(d).getByRole("button", { name: hi.submit })).toBeTruthy();
+    const chips = within(within(d).getByRole("group", { name: hi.suggestedLabel })).getAllByRole("button");
+    expect(chips.map((c) => c.textContent)).toEqual(ASK_CHIPS.hi.map((c) => c.text));
+    expect(chips.every((c) => c.getAttribute("lang") === "hi" && c.classList.contains("hi"))).toBe(true);
+    // Every visible label is Devanagari (the brand and model names aside).
+    for (const s of [hi.title, hi.inputLabel, hi.placeholder, hi.submit, hi.close, hi.suggestedLabel]) expect(s).toMatch(/[ऀ-ॿ]/);
+  });
+
+  it("a chip sends its Hindi question, so the answer comes back in Hindi", async () => {
+    const { fetchImpl } = await openHi();
+    fireEvent.click(screen.getByRole("button", { name: ASK_CHIPS.hi[0].text }));
+    expect(sent(fetchImpl)).toEqual({ question: ASK_CHIPS.hi[0].text });
+    expect(ASK_CHIPS.hi[0].text).toMatch(/[ऀ-ॿ]/);
+  });
+
+  it("answering and the answer's provenance line are Hindi, with the Hindi scope", async () => {
+    let release: (r: Response) => void = () => {};
+    await openHi(() => new Promise<Response>((r) => (release = r)));
+    fireEvent.change(hiInput(), { target: { value: "सबसे कम कौन कमाता है?" } });
+    fireEvent.submit(hiInput().closest("form")!);
+    await waitFor(() => expect(within(hiDialog()).getByText(hi.answering)).toBeTruthy());
+    await act(async () => release(new Response(JSON.stringify(resp({ lang: "hi" })), { status: 200 })));
+    const prov = await waitFor(() => hiDialog().querySelector(".prov")!);
+    expect(prov.getAttribute("lang")).toBe("hi");
+    expect(prov.textContent).toBe(provenanceLine({ scope: SCOPE_HI, model: "gemini-3.5-flash", ms: 1800 }, "hi"));
+    const list = within(hiDialog()).getByRole("list", { name: hi.citesLabel });
+    const cite = within(list).getByRole("link", { name: "ट्रिप 0926-04" });
+    expect(cite.getAttribute("lang")).toBe("hi");
+    expect(cite.getAttribute("href")).toBe("/trips/0926-04");
+    expect(within(list).queryByText(/^Trip /)).toBeNull();
+  });
+
+  it("fallback: both banner clauses, the saved line and Try again are Hindi", async () => {
+    const { fetchImpl } = await openHi(reply(resp({ mode: "fallback", lang: "hi", answer: "21–27 सितंबर: 217 L डीज़ल का हिसाब नहीं।", provenance: { ...provenance, model: null } })));
+    fireEvent.change(hiInput(), { target: { value: "पिछले हफ़्ते?" } });
+    fireEvent.submit(hiInput().closest("form")!);
+    const banner = await waitFor(() => within(hiDialog()).getByRole("heading", { level: 3 }));
+    expect(banner.textContent).toBe(hi.fallbackBanner);
+    expect(banner.getAttribute("lang")).toBe("hi");
+    expect(within(hiDialog()).getByText(SAVED.hi)).toBeTruthy();
+    expect(hiDialog().querySelector(".prov")!.textContent).toContain(hi.noModel);
+    fireEvent.click(within(hiDialog()).getByRole("button", { name: hi.retry }));
+    await waitFor(() => expect(fetchImpl).toHaveBeenCalledTimes(2));
+  });
+
+  it("saved, 429 and error lines are Hindi", async () => {
+    await openHi(reply({ ...resp({ mode: "saved", lang: "hi", answer: SAVED.hi, cites: [] }), retryAfterS: 9 }, 429));
+    fireEvent.change(hiInput(), { target: { value: "कल बारिश होगी?" } });
+    fireEvent.submit(hiInput().closest("form")!);
+    await waitFor(() => expect(within(hiDialog()).getByRole("heading", { level: 3 }).textContent).toBe(hi.savedBanner));
+    expect(within(hiDialog()).getByText(hi.retryAfter(9))).toBeTruthy();
+    cleanup();
+    await openHi(() => Promise.reject(new TypeError("offline")));
+    fireEvent.change(hiInput(), { target: { value: "कल?" } });
+    fireEvent.submit(hiInput().closest("form")!);
+    const err = await waitFor(() => within(hiDialog()).getByText(hi.error));
+    expect(err.closest("[lang]")!.getAttribute("lang")).toBe("hi");
+    expect(within(hiDialog()).getByRole("button", { name: hi.retry })).toBeTruthy();
+  });
+
+  it("follows the language toggle while mounted: hi → en → hi", async () => {
+    await openHi();
+    setLang("en");
+    await waitFor(() => expect(dialog()).toBeTruthy());
+    expect(input().getAttribute("placeholder")).toBe(ASK_COPY.en.placeholder);
+    expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual(expect.arrayContaining(ASK_CHIPS.en.map((c) => c.text)));
+    setLang("hi");
+    await waitFor(() => expect(hiDialog()).toBeTruthy());
+  });
+
+  it("stays English everywhere else", async () => {
+    mount();
+    act(() => openAsk());
+    await waitFor(() => expect(dialog()).toBeTruthy());
+    expect(dialog().getAttribute("lang")).toBe("en");
+    expect(within(dialog()).getByRole("heading", { level: 2 }).textContent).toBe("Ask Urja");
   });
 });

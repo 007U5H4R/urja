@@ -23,4 +23,11 @@ describe("docs/exec/hindi-review.md (TKT-06 DoD)", () => {
     expect(md).toContain("26 मिनट में फ़्यूल 168 → 130 लीटर गिरा");
     expect(md).not.toMatch(/चोर|चुरा|\b(theft|stolen|thief)\b/i);
   });
+
+  it("lists the Hindi phone menu and Ask drawer (EXE23)", () => {
+    expect(md).toContain("## 8. Phone menu");
+    expect(md).toContain("## 9. Ask drawer");
+    for (const w of ["सुबह का हिसाब", "Urja क्यों", "मेनू", "Urja से पूछें", "आपका सवाल", "Gemini से पूछ रहे हैं…", "बहरोड़ वाले हिस्से के सारे फ़्लैग दिखाएँ"]) expect(md).toContain(w);
+    expect(md).toContain("212 ट्रिप, 24 ट्रक, 1–27 सितंबर के डेटा से · Gemini 3.5 Flash · 1.8 सेकंड में जवाब · Urja ग़लत हो सकता है, इसलिए कार्रवाई से पहले ट्रिप खोलें।");
+  });
 });

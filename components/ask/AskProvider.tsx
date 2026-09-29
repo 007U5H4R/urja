@@ -13,6 +13,7 @@ import {
   type ReactNode,
 } from "react";
 import { ASK_OPEN_EVENT } from "@/lib/ask-events";
+import type { Bilingual } from "@/lib/data/types";
 import type { AskSheetProps } from "./AskSheet";
 import { useAsk, type UseAskOptions } from "./useAsk";
 
@@ -69,8 +70,8 @@ export function useAskOpener(): AskOpener | null {
 
 export interface AskProviderProps extends UseAskOptions {
   children?: ReactNode;
-  /** '212 trips across 24 trucks, 1–27 Sep', computed on the server (components/ask/askScope.ts). */
-  scope: string;
+  /** '212 trips across 24 trucks, 1–27 Sep' in English and Hindi, computed on the server (components/ask/askScope.ts). */
+  scope: Bilingual;
   saved: { hi: string; en: string };
   /** Loads the drawer; injected in tests. */
   loadSheet?: () => Promise<SheetComponent>;

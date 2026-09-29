@@ -3,8 +3,10 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Icon } from "@/components/ui/Icon";
+import type { Bilingual } from "@/lib/data/types";
 import { AskAnswer } from "./AskAnswer";
 import { ASK_CHIPS, ASK_COPY } from "./copy";
+import { usePageLang } from "./usePageLang";
 import { ASK_MAX_CHARS, type UseAsk } from "./useAsk";
 import "./ask.css";
 
@@ -14,12 +16,15 @@ import "./ask.css";
  * right edge, 240 ms in and out, a 180 ms scrim, focus trapped, Esc closes.
  * At ≤760px lamp.css's `width: min(460px, 100vw)` makes it the full-height
  * phone chat view. While it is open everything else in <body> is `inert`.
+ * Its labels follow the screen's language (<html lang>, EXE23): Hindi on the
+ * Hindi brief and message, English everywhere else.
  */
 export interface AskSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   ask: UseAsk;
-  scope: string;
+  /** The provenance scope, computed on the server, in both languages. */
+  scope: Bilingual;
   saved: { hi: string; en: string };
   /** Where focus goes when the sheet closes (the trigger that opened it). */
   returnFocus: () => HTMLElement | null;
@@ -44,6 +49,8 @@ function InertOutside({ active, within }: { active: boolean; within: React.RefOb
 
 export function AskSheet({ open, onOpenChange, ask, scope, saved, returnFocus }: AskSheetProps) {
   const { state } = ask;
+  const lang = usePageLang();
+  const copy = ASK_COPY[lang];
   const inputRef = useRef<HTMLInputElement>(null);
   const contentRef = useRef<HTMLElement>(null);
   const [value, setValue] = useState("");
@@ -77,7 +84,7 @@ export function AskSheet({ open, onOpenChange, ask, scope, saved, returnFocus }:
             returnFocus()?.focus();
           }}
         >
-          <aside className="drawer" id="ask-drawer" role="dialog" aria-modal="true" ref={contentRef}>
+          <aside className="drawer" id="ask-drawer" role="dialog" aria-modal="true" lang={lang} ref={contentRef}>
             <InertOutside active={open} within={contentRef} />
             <header>
               <span className="mark">
@@ -86,20 +93,20 @@ export function AskSheet({ open, onOpenChange, ask, scope, saved, returnFocus }:
                 </svg>
               </span>
               <Dialog.Title asChild>
-                <h2>{ASK_COPY.title}</h2>
+                <h2>{copy.title}</h2>
               </Dialog.Title>
-              <Dialog.Close className="iconbtn" aria-label={ASK_COPY.close}>
+              <Dialog.Close className="iconbtn" aria-label={copy.close}>
                 <Icon name="x" />
               </Dialog.Close>
             </header>
             <div className="body">
               <div className="convo" aria-live="polite">
                 {state.status !== "idle" && (
-                  <AskAnswer state={state} scope={scope} saved={saved} onRetry={ask.retry} onCite={() => onOpenChange(false)} />
+                  <AskAnswer state={state} lang={lang} scope={scope} saved={saved} onRetry={ask.retry} onCite={() => onOpenChange(false)} />
                 )}
               </div>
-              <div className="sugg" role="group" aria-label={ASK_COPY.suggestedLabel}>
-                {ASK_CHIPS.map((c) => (
+              <div className="sugg" role="group" aria-label={copy.suggestedLabel}>
+                {ASK_CHIPS[lang].map((c) => (
                   <button
                     key={c.text}
                     type="button"
@@ -114,7 +121,7 @@ export function AskSheet({ open, onOpenChange, ask, scope, saved, returnFocus }:
             </div>
             <form className="composer" onSubmit={submit}>
               <label className="sr" htmlFor="askIn">
-                {ASK_COPY.inputLabel}
+                {copy.inputLabel}
               </label>
               <input
                 id="askIn"
@@ -122,12 +129,12 @@ export function AskSheet({ open, onOpenChange, ask, scope, saved, returnFocus }:
                 name="q"
                 autoComplete="off"
                 maxLength={ASK_MAX_CHARS}
-                placeholder={ASK_COPY.placeholder}
+                placeholder={copy.placeholder}
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
               />
               <button type="submit" className="btn btn-lamp">
-                {ASK_COPY.submit}
+                {copy.submit}
               </button>
             </form>
           </aside>

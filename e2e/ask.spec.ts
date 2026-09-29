@@ -47,8 +47,41 @@ async function mockAsk(page: Page, body: unknown, status = 200): Promise<{ quest
   return sent;
 }
 
-const drawer = (page: Page) => page.getByRole("dialog", { name: "Ask Urja" });
-const input = (page: Page) => drawer(page).getByRole("textbox", { name: "Your question" });
+type Lang = "hi" | "en";
+/** The drawer's labels in each language (EXE23: Hindi on the Hindi brief and message). */
+const L = {
+  en: {
+    title: "Ask Urja",
+    input: "Your question",
+    placeholder: "Ask in Hindi or English…",
+    send: "Ask",
+    close: "Close Ask Urja",
+    chipsGroup: "Suggested questions",
+    chips: ["Which truck earns least per km, and why?", "पिछले हफ़्ते कितना डीज़ल गायब हुआ?", "Show every flag on the Behror stretch"],
+    answering: "Asking Gemini…",
+    banner: BANNER,
+    retry: "Try again",
+    menuAsk: "Ask Urja",
+    canBeWrong: "Urja can be wrong",
+  },
+  hi: {
+    title: "Urja से पूछें",
+    input: "आपका सवाल",
+    placeholder: "हिंदी या अंग्रेज़ी में पूछें…",
+    send: "पूछें",
+    close: "Urja से पूछें बंद करें",
+    chipsGroup: "सुझाए गए सवाल",
+    chips: ["कौन-सा ट्रक प्रति किलोमीटर सबसे कम कमाता है, और क्यों?", "पिछले हफ़्ते कितना डीज़ल गायब हुआ?", "बहरोड़ वाले हिस्से के सारे फ़्लैग दिखाएँ"],
+    answering: "Gemini से पूछ रहे हैं…",
+    banner: "Urja का AI अभी जवाब नहीं दे पाया, इसलिए यह आँकड़ा सीधे आपके डेटा से है।",
+    retry: "फिर से कोशिश करें",
+    menuAsk: "Urja से पूछें",
+    canBeWrong: "Urja ग़लत हो सकता है",
+  },
+} as const;
+
+const drawer = (page: Page, lang: Lang = "en") => page.getByRole("dialog", { name: L[lang].title });
+const input = (page: Page, lang: Lang = "en") => drawer(page, lang).getByRole("textbox", { name: L[lang].input });
 
 /** ⌘K / Ctrl+K until hydration has attached the listener. */
 async function openWithShortcut(page: Page) {
@@ -63,9 +96,24 @@ async function settled(page: Page) {
   await expect.poll(() => page.locator("#ask-drawer").evaluate((el) => getComputedStyle(el).transform)).toBe("none");
 }
 
-async function ask(page: Page, q: string) {
-  await input(page).fill(q);
-  await input(page).press("Enter");
+async function ask(page: Page, q: string, lang: Lang = "en") {
+  await input(page, lang).fill(q);
+  await input(page, lang).press("Enter");
+}
+
+/** Every visible label of the idle drawer, in `lang`. */
+async function expectDrawerIn(page: Page, lang: Lang) {
+  const d = drawer(page, lang);
+  await expect(d).toHaveAttribute("lang", lang);
+  await expect(d.getByRole("heading", { level: 2 })).toHaveText(L[lang].title);
+  await expect(input(page, lang)).toHaveAttribute("placeholder", L[lang].placeholder);
+  await expect(d.getByRole("button", { name: L[lang].send, exact: true })).toBeVisible();
+  await expect(d.getByRole("button", { name: L[lang].close })).toBeVisible();
+  await expect(d.getByRole("group", { name: L[lang].chipsGroup }).getByRole("button")).toHaveText([...L[lang].chips]);
+}
+
+function expectNoSeriousAxe(violations: { id: string; impact?: string | null }[]) {
+  expect(violations.filter((v) => v.impact === "serious" || v.impact === "critical").map((v) => v.id)).toEqual([]);
 }
 
 test.describe("desktop and tablet: the ⌘K drawer (TC-026)", () => {
@@ -298,13 +346,20 @@ test.describe("phone at 375: the dock and the chat view", () => {
     await expect(async () => {
       await dockInput.fill("सबसे कम कौन कमाता है?");
       await dockInput.press("Enter");
-      await expect(drawer(page)).toBeVisible({ timeout: 500 });
+      await expect(drawer(page, "hi")).toBeVisible({ timeout: 500 });
     }).toPass();
     expect(sent[0]).toEqual({ question: "सबसे कम कौन कमाता है?", lang: "hi" });
-    await expect(drawer(page).locator(".q")).toHaveText("सबसे कम कौन कमाता है?");
-    await expect(drawer(page).locator(".a p").first()).toHaveText(MODEL.answer);
+    await expect(drawer(page, "hi").locator(".q")).toHaveText("सबसे कम कौन कमाता है?");
+    await expect(drawer(page, "hi").locator(".a p").first()).toHaveText(MODEL.answer);
+    // EXE23: on the Hindi brief the drawer's own labels are Hindi, the provenance line too.
+    await expect(drawer(page, "hi").locator(".a .prov")).toHaveText(
+      "212 ट्रिप, 24 ट्रक, 1–27 सितंबर के डेटा से · Gemini 3.5 Flash · 1.8 सेकंड में जवाब · Urja ग़लत हो सकता है, इसलिए कार्रवाई से पहले ट्रिप खोलें।",
+    );
+    const hiCite = drawer(page, "hi").locator(".a").getByRole("link", { name: "ट्रिप 0926-04" });
+    await expect(hiCite).toHaveAttribute("href", "/trips/0926-04");
+    await expect(hiCite).toHaveAttribute("lang", "hi");
     await settled(page);
-    const box = (await drawer(page).boundingBox())!;
+    const box = (await drawer(page, "hi").boundingBox())!;
     expect(box).toEqual({ x: 0, y: 0, width: 375, height: 812 });
     const { scrollWidth, innerWidth } = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, innerWidth: window.innerWidth }));
     expect(scrollWidth).toBeLessThanOrEqual(innerWidth);
@@ -312,14 +367,14 @@ test.describe("phone at 375: the dock and the chat view", () => {
     const axe = await new AxeBuilder({ page }).include("#ask-drawer").analyze();
     expect(axe.violations.filter((v) => v.impact === "serious" || v.impact === "critical").map((v) => v.id)).toEqual([]);
 
-    await drawer(page).getByRole("button", { name: "Close Ask Urja" }).click();
-    await expect(drawer(page)).toBeHidden();
+    await drawer(page, "hi").getByRole("button", { name: L.hi.close }).click();
+    await expect(drawer(page, "hi")).toBeHidden();
     await expect(dockInput).toBeFocused();
     expect(errors).toEqual([]);
   });
 
-  for (const path of ["/brief", "/message", "/"]) {
-    test(`the menu's "Ask Urja" opens the chat view on ${path}, and Esc returns to the menu`, async ({ page }) => {
+  for (const [path, lang] of [["/brief", "hi"], ["/message", "hi"], ["/", "en"], ["/brief?lang=en", "en"]] as const) {
+    test(`the menu's "Ask Urja" opens the chat view on ${path}, in ${lang}, and Esc returns to the menu`, async ({ page }) => {
       const errors = collectErrors(page);
       await mockAsk(page, MODEL);
       await page.goto(path);
@@ -328,19 +383,90 @@ test.describe("phone at 375: the dock and the chat view", () => {
       const menu = page.locator("details.m-menu:visible");
       await expect(async () => {
         await menu.locator("summary").click();
-        await menu.getByRole("link", { name: "Ask Urja" }).click();
-        await expect(drawer(page)).toBeVisible({ timeout: 500 });
+        await menu.getByRole("link", { name: L[lang].menuAsk }).click();
+        await expect(drawer(page, lang)).toBeVisible({ timeout: 500 });
       }).toPass();
-      await expect(page).toHaveURL(new RegExp(`${path.replace("/", "\\/")}(\\?.*)?$`));
-      await expect(input(page)).toBeFocused();
+      await expect(page).toHaveURL(new RegExp(`${path.replace("/", "\\/").replace("?", "\\?")}(\\?.*)?$`));
+      await expect(input(page, lang)).toBeFocused();
       await settled(page);
-      expect((await drawer(page).boundingBox())!.width).toBe(375);
-      await ask(page, "Which truck?");
-      await expect(drawer(page).locator(".a .prov")).toContainText("Urja can be wrong");
+      expect((await drawer(page, lang).boundingBox())!.width).toBe(375);
+      await expectDrawerIn(page, lang);
+      expectNoSeriousAxe((await new AxeBuilder({ page }).include("#ask-drawer").analyze()).violations);
+      await ask(page, "Which truck?", lang);
+      await expect(drawer(page, lang).locator(".a .prov")).toContainText(L[lang].canBeWrong);
       await page.keyboard.press("Escape");
-      await expect(drawer(page)).toBeHidden();
+      await expect(drawer(page, lang)).toBeHidden();
       await expect(menu.locator("summary")).toBeFocused();
       expect(errors).toEqual([]);
+    });
+  }
+
+  test("EXE23: toggling हिं → EN on the brief switches the menu and the drawer to English, and back", async ({ page }) => {
+    const errors = collectErrors(page);
+    await page.goto("/brief");
+    await page.waitForLoadState("networkidle");
+    const menu = page.locator(".m-top details.m-menu");
+    const items = menu.locator("nav a");
+    await expect(items).toHaveText(["सुबह का हिसाब", "आज", "ट्रक", "ट्रिप", "Urja क्यों", "Urja से पूछें"]);
+    await expect(async () => {
+      await page.getByRole("button", { name: "EN", exact: true }).click();
+      await expect(page).toHaveURL(/\/brief\?lang=en$/, { timeout: 500 });
+    }).toPass();
+    await expect(items).toHaveText(["Morning brief", "Today", "Trucks", "Trips", "Why Urja", "Ask Urja"]);
+    await expect(page.locator("html")).toHaveAttribute("lang", "en");
+    await menu.locator("summary").click();
+    await menu.getByRole("link", { name: "Ask Urja" }).click();
+    await expect(drawer(page, "en")).toBeVisible();
+    await expectDrawerIn(page, "en");
+    await page.keyboard.press("Escape");
+    await expect(drawer(page, "en")).toBeHidden();
+
+    await page.getByRole("button", { name: "हिं", exact: true }).click();
+    await expect(items).toHaveText(["सुबह का हिसाब", "आज", "ट्रक", "ट्रिप", "Urja क्यों", "Urja से पूछें"]);
+    await menu.locator("summary").click();
+    await menu.getByRole("link", { name: "Urja से पूछें" }).click();
+    await expectDrawerIn(page, "hi");
+    expect(errors).toEqual([]);
+  });
+});
+
+test.describe("EXE23: the drawer on the Hindi brief, by keyboard (TC-026)", () => {
+  test.beforeEach(({}, info) => {
+    test.skip(info.project.name === "phone", "keyboard shortcut: pointer: fine");
+  });
+
+  test("⌘K on /brief opens the Hindi drawer: focus in the input, Tab stays inside, Esc closes; states are Hindi", async ({ page }) => {
+    const errors = collectErrors(page);
+    await mockAsk(page, FALLBACK);
+    await page.goto("/brief");
+    await expect(async () => {
+      await page.keyboard.press("ControlOrMeta+k");
+      await expect(drawer(page, "hi")).toBeVisible({ timeout: 500 });
+    }).toPass();
+    await expect(input(page, "hi")).toBeFocused();
+    await expectDrawerIn(page, "hi");
+    for (let i = 0; i < 12; i++) {
+      await page.keyboard.press("Tab");
+      expect(await page.evaluate(() => !!document.activeElement?.closest("#ask-drawer"))).toBe(true);
+    }
+    await ask(page, "पिछले हफ़्ते?", "hi");
+    await expect(drawer(page, "hi").getByRole("heading", { level: 3 })).toHaveText(L.hi.banner);
+    await expect(drawer(page, "hi").getByRole("button", { name: L.hi.retry })).toBeVisible();
+    await expect(drawer(page, "hi").locator(".prov")).toContainText("सीधे आपके डेटा से, AI के बिना");
+    expectNoSeriousAxe((await new AxeBuilder({ page }).include("#ask-drawer").analyze()).violations);
+    await page.keyboard.press("Escape");
+    await expect(drawer(page, "hi")).toBeHidden();
+    expect(errors).toEqual([]);
+  });
+
+  for (const path of ["/brief?lang=en", "/"]) {
+    test(`⌘K on ${path} opens the English drawer`, async ({ page }) => {
+      await page.goto(path);
+      await expect(async () => {
+        await page.keyboard.press("ControlOrMeta+k");
+        await expect(drawer(page, "en")).toBeVisible({ timeout: 500 });
+      }).toPass();
+      await expectDrawerIn(page, "en");
     });
   }
 });

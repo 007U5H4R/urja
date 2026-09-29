@@ -37,10 +37,10 @@ export function Brief({ copy }: { copy: Record<Lang, BriefCopy> }) {
             </span>
             Urja
           </span>
-          {/* EXE12: no global top bar here; the screen's own bar carries the menu (English, like the shell). */}
+          {/* EXE12: no global top bar here; the screen's own bar carries the menu, in the screen's language (EXE23). */}
           <div className="m-top-end" lang="en">
             <LangToggle lang={lang} onChange={setLang} />
-            <MobileMenu />
+            <MobileMenu lang={lang} />
           </div>
         </div>
 

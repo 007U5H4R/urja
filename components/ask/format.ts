@@ -1,3 +1,4 @@
+import type { Lang } from "@/lib/data/types";
 import { ASK_COPY } from "./copy";
 
 /** 'gemini-3.5-flash' → 'Gemini 3.5 Flash': the model id from provenance, as the owner reads it. */
@@ -18,14 +19,16 @@ export function seconds(ms: number): string {
 /**
  * "From 212 trips across 24 trucks, 1–27 Sep · Gemini 3.5 Flash · answered in 1.8 s ·
  * Urja can be wrong, so open the trips before acting." (§6.6). A fallback answer has
- * no model, and says it came straight from the data instead.
+ * no model, and says it came straight from the data instead. On a Hindi screen
+ * (EXE23) the line is Hindi; `scope` is then the Hindi scope.
  */
-export function provenanceLine(p: { scope: string; model: string | null; ms: number }): string {
+export function provenanceLine(p: { scope: string; model: string | null; ms: number }, lang: Lang = "en"): string {
+  const c = ASK_COPY[lang];
   const parts = [
-    p.scope ? `From ${p.scope}` : null,
-    p.model ? modelLabel(p.model) : ASK_COPY.noModel,
-    ASK_COPY.answeredIn(seconds(p.ms)),
-    ASK_COPY.canBeWrong,
+    p.scope ? c.from(p.scope) : null,
+    p.model ? modelLabel(p.model) : c.noModel,
+    c.answeredIn(seconds(p.ms)),
+    c.canBeWrong,
   ];
   return parts.filter(Boolean).join(" · ");
 }
