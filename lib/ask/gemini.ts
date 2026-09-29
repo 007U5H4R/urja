@@ -14,7 +14,7 @@ import { ModelAnswer, RESPONSE_SCHEMA } from "./schema";
 /** `network`: the request never got an HTTP response (DNS, TLS, connection reset). */
 export type GeminiFailure = "timeout" | "network" | "http_429" | "http_4xx" | "http_5xx" | "bad_json" | "schema";
 
-export type GeminiResult = { ok: true; answer: ModelAnswer; model: string } | { ok: false; outcome: GeminiFailure };
+export type GeminiResult = { ok: true; answer: ModelAnswer; model: string } | { ok: false; outcome: GeminiFailure; status?: number };
 
 export interface GeminiCall {
   apiKey: string;
@@ -78,7 +78,7 @@ export async function callGemini({ apiKey, context, question, config = askConfig
     if (!res.ok) {
       // Free the connection: the error body is never read.
       void res.body?.cancel().catch(() => undefined);
-      return { ok: false, outcome: res.status === 429 ? "http_429" : res.status >= 500 ? "http_5xx" : "http_4xx" };
+      return { ok: false, outcome: res.status === 429 ? "http_429" : res.status >= 500 ? "http_5xx" : "http_4xx", status: res.status };
     }
 
     let body: GenerateContentResponse;

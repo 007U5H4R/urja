@@ -117,7 +117,7 @@ describe("TSK-07.3 · Gemini REST client (mocked fetch)", () => {
     [403, "http_4xx"],
   ] as const)("maps HTTP %i to %s", async (status, outcome) => {
     const fetchMock = vi.fn(async () => new Response("{}", { status }));
-    await expect(callGemini({ apiKey: KEY, context: "{}", question: "q", fetchImpl: fetchMock })).resolves.toEqual({ ok: false, outcome });
+    await expect(callGemini({ apiKey: KEY, context: "{}", question: "q", fetchImpl: fetchMock })).resolves.toEqual({ ok: false, outcome, status });
   });
 
   it("maps a non-JSON body or non-JSON answer text to bad_json, and a wrong shape to schema", async () => {

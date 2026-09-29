@@ -381,3 +381,35 @@ describe("never 500", () => {
     expect(b).toMatchObject({ status: 200, body: { mode: "saved" } });
   });
 });
+
+describe("x-ask-outcome diagnostic header (EXE24)", () => {
+  it("says ok on a model answer", async () => {
+    const res = await POST(ask({ question: RECOGNISED }));
+    expect(res.headers.get("x-ask-outcome")).toBe("ok");
+  });
+
+  it.each([
+    [404, "http_4xx:404"],
+    [400, "http_4xx:400"],
+    [429, "http_429:429"],
+    [503, "http_5xx:503"],
+  ])("names the upstream status %i", async (code, expected) => {
+    fetchMock.mockImplementation(async () => new Response("{}", { status: code }));
+    const res = await POST(ask({ question: RECOGNISED }));
+    expect(res.headers.get("x-ask-outcome")).toBe(expected);
+  });
+
+  it("names the guard reason", async () => {
+    fetchMock.mockImplementation(async () => geminiJson({ ...MODEL_OK, cited_trips: ["0999-99"] }));
+    const res = await POST(ask({ question: RECOGNISED }));
+    expect(res.headers.get("x-ask-outcome")).toBe("guard:no_cites");
+  });
+
+  it("names a missing key, and never carries the key", async () => {
+    fetchMock.mockImplementation(async () => new Response("{}", { status: 500 }));
+    const res = await POST(ask({ question: RECOGNISED }));
+    for (const [, v] of res.headers) expect(v).not.toContain(KEY);
+    vi.stubEnv("GEMINI_API_KEY", "");
+    expect((await POST(ask({ question: RECOGNISED }))).headers.get("x-ask-outcome")).toBe("no_key");
+  });
+});

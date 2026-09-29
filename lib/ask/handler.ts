@@ -109,7 +109,7 @@ export function createAskHandler(deps: AskDeps = {}) {
     const qLang: AskLang = detectLang(question);
 
     // ── Answers that don't come from the model ───────────────────────────
-    const degrade = (outcome: AskOutcome, status = 200, extra: { retryAfterS?: number; guard?: string; model?: string | null } = {}) => {
+    const degrade = (outcome: AskOutcome, status = 200, extra: { retryAfterS?: number; guard?: string; model?: string | null; upstream?: number } = {}) => {
       let body: AskResponse;
       let cites: string[] = [];
       let scope = "";
@@ -137,7 +137,11 @@ export function createAskHandler(deps: AskDeps = {}) {
       }
       if (extra.retryAfterS) body.retryAfterS = extra.retryAfterS;
       log({ mode: body.mode, outcome, model: extra.model ?? null, question, lang: body.lang, cites, guard: extra.guard });
-      return json(status, body, extra.retryAfterS ? { "retry-after": String(extra.retryAfterS) } : {});
+      // EXE24: the outcome code (never the key or the question) in a header, so a
+      // preview's fallbacks can be diagnosed without its runtime logs.
+      const detail = extra.guard ?? (extra.upstream ? String(extra.upstream) : null);
+      const diag = { "x-ask-outcome": detail ? `${outcome}:${detail}` : outcome };
+      return json(status, body, extra.retryAfterS ? { ...diag, "retry-after": String(extra.retryAfterS) } : diag);
     };
 
     try {
@@ -154,7 +158,7 @@ export function createAskHandler(deps: AskDeps = {}) {
       if (!apiKey) return degrade("no_key");
 
       const result = await callGemini({ apiKey, context: bundle.json, question, config, fetchImpl: deps.fetchImpl ?? fetch });
-      if (!result.ok) return degrade(result.outcome, 200, { model: config.model });
+      if (!result.ok) return degrade(result.outcome, 200, { model: config.model, upstream: result.status });
 
       const g = guardAnswer(result.answer, { question, allowed: bundle.allowed, tripIds: bundle.tripIds });
       if (!g.ok) return degrade("guard", 200, { guard: g.reason, model: result.model });
@@ -169,7 +173,7 @@ export function createAskHandler(deps: AskDeps = {}) {
         provenance: { scope: bundle.scope, model: result.model, ms: elapsed(), promptVersion: PROMPT_VERSION, datasetHash: bundle.hash },
       };
       log({ mode: "model", outcome: "ok", model: result.model, question, lang, cites: g.cites, unsupported: g.unsupported });
-      return json(200, body);
+      return json(200, body, { "x-ask-outcome": "ok" });
     } catch {
       try {
         return degrade("error");
