@@ -1,14 +1,16 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Icon } from "@/components/ui/Icon";
+import { posterImg } from "@/components/ui/poster-img";
 
 /**
  * The hero (final/why.html lines 142–163): byline, the typographic statement,
  * the lede, the two CTAs (primary first) and the truck poster in its 16:9 slot.
  * The poster sits below the statement, but on a phone it is inside the first viewport (y≈610–820
- * at 412×823) and is the page's LCP element, so it is preloaded rather than lazy (M-004 perf; EXE17).
+ * at 412×823) and is the page's LCP element, so it is preloaded rather than lazy (M-004 perf; EXE17), as a
+ * plain <img> from posterImg so the page ships no client image code (EXE18).
  */
 export function WhyHero({ byline }: { byline: string }) {
+  const poster = posterImg("/truck-scene.png", "(max-width: 1120px) 100vw, 1056px", { fetchPriority: "high" });
   return (
     <section className="w-hero" aria-labelledby="w-h1">
       <p className="kicker">{byline}</p>
@@ -50,7 +52,8 @@ export function WhyHero({ byline }: { byline: string }) {
           <line x1="800" y1="900" x2="800" y2="584" style={{ stroke: "url(#why-fade)", strokeWidth: 3, strokeDasharray: "30 26" }} />
           <line x1="0" y1="576" x2="1600" y2="576" style={{ stroke: "oklch(0.705 0.166 53 / .40)", strokeWidth: 1.5 }} />
         </svg>
-        <Image src="/truck-scene.png" alt="" fill preload fetchPriority="high" sizes="(max-width: 1120px) 100vw, 1056px" />
+        {/* eslint-disable-next-line @next/next/no-img-element -- the optimised poster, from posterImg */}
+        <img alt="" {...poster} />
       </figure>
     </section>
   );

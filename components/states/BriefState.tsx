@@ -3,7 +3,6 @@ import { MobileMenu } from "@/components/shell/MobileMenu";
 import type { StateSpecimens } from "@/lib/data/views/states";
 import type { ScreenState } from "@/lib/state";
 import { CleanSpecimenCard, EmptySpecimenCard, ErrorSpecimenCard, LoadingSpecimenCard } from "./Specimens";
-import "./states.css";
 
 /**
  * The Morning brief in one of its states: the phone screen's own bar, the

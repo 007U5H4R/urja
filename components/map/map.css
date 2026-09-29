@@ -1,4 +1,4 @@
-/* TKT-10 map glue that lamp.css doesn't cover. Imported by HeroCard and TripMap
+/* TKT-10 map glue that lamp.css doesn't cover. Loaded on every route through app/site.css
    (not by the lazy MapLibre chunk), so the failure overlay is styled even when
    MapLibre never loads. Tokens come from app/globals.css. */
 

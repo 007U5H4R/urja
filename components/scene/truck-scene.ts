@@ -83,10 +83,12 @@ export async function createTruckScene(el: HTMLElement, opts: TruckSceneOptions)
     return null;
   };
 
-  // The plate's face (next/font's Anek Devanagari) before any GPU work, so an unmount during
-  // the wait holds nothing.
-  const fontHi = typeof getComputedStyle === "function" ? getComputedStyle(document.documentElement).getPropertyValue("--font-hi").trim() : "";
-  const plateFont = `700 78px ${fontHi ? `${fontHi}, ` : ""}"Anek Devanagari", "Arial Narrow", sans-serif`;
+  // The plate's face (Anek Devanagari: its plate-only face first, as .plate uses; app/fonts.ts)
+  // before any GPU work, so an unmount during the wait holds nothing.
+  const cssVar = (name: string) =>
+    typeof getComputedStyle === "function" ? getComputedStyle(document.documentElement).getPropertyValue(name).trim() : "";
+  const stack = [cssVar("--font-plate"), cssVar("--font-hi")].filter(Boolean).join(", ");
+  const plateFont = `700 78px ${stack ? `${stack}, ` : ""}"Anek Devanagari", "Arial Narrow", sans-serif`;
   if (document.fonts) {
     try {
       await document.fonts.load(plateFont, opts.plate);

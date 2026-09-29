@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import { StatusChip, type StatusTone } from "@/components/ui/StatusChip";
-import "./states.css";
 
 export interface StateCardProps {
   /** The heading id the section is labelled by. */

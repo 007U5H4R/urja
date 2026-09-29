@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getToday } from "@/lib/data/views/today";
 import { MAP_UNAVAILABLE } from "@/components/map/map-copy";
+import { posterImg } from "@/components/ui/poster-img";
 import { HeroCard } from "./HeroCard";
 
 // TSK-10.2 / 10.3 (+ Review focus #4): the hero card's switch, glass card, rail and the shared
@@ -31,10 +32,11 @@ vi.mock("@/components/map/map-client", () => ({
 
 const R = "₹";
 const t = getToday();
+const poster = posterImg(t.heroScene.poster, "(max-width: 1180px) 100vw, 60vw");
 const norm = (s: string | null | undefined) => (s ?? "").replace(/ /g, " ").replace(/’/g, "'");
 
 function renderHero(strict = false) {
-  const el = <HeroCard hero={t.hero} fleet={t.fleetNow} scene={t.heroScene} cities={t.mapCities} eyes={t.eyes} eyesHead={t.eyesHead} cleanLine={t.cleanLine} />;
+  const el = <HeroCard hero={t.hero} fleet={t.fleetNow} scene={t.heroScene} cities={t.mapCities} eyes={t.eyes} eyesHead={t.eyesHead} cleanLine={t.cleanLine} posterImg={poster} />;
   const r = render(strict ? <StrictMode>{el}</StrictMode> : el);
   const card = r.container.querySelector("article.mapcard") as HTMLElement;
   const eyes = r.container.querySelector("article.eyes") as HTMLElement;

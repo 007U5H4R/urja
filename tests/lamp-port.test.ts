@@ -32,8 +32,8 @@ function layerBody(css: string, name: string): string {
 
 // Every deviation from a verbatim copy, and why (see the header of globals.css).
 const SUBSTITUTIONS: [string, string][] = [
-  // next/font owns the face names.
-  ["font-family: 'Anek Devanagari', var(--font);", "font-family: var(--font-hi), var(--font);"],
+  // next/font owns the face names; the plates draw from Anek's plate-only face first (M-004, EXE18).
+  ["font-family: 'Anek Devanagari', var(--font);", "font-family: var(--font-plate), var(--font-hi), var(--font);"],
   // the poster lives in public/ (technical-plan §3.3).
   ["url(assets/truck-scene.png)", "url(/truck-scene.png)"],
 ];

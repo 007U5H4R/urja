@@ -9,8 +9,13 @@ import { todaySpecimens } from "@/components/states/TodayStates";
 import { stateSpecimens } from "@/lib/data/views/states";
 import { getToday, trucksTableView } from "@/lib/data/views/today";
 import { todayMetadata } from "@/lib/metadata";
+import { posterImg } from "@/components/ui/poster-img";
 
 export const metadata: Metadata = todayMetadata();
+
+// The scene poster in the hero card (was <Image fill preload> inside HeroCard).
+const HERO_POSTER_SIZES = "(max-width: 1180px) 100vw, 60vw";
+const HERO_POSTER_STYLE = { objectFit: "cover", objectPosition: "30% center" } as const;
 
 /**
  * Today (final/index.html). A static server component: the view model is
@@ -37,6 +42,7 @@ export default function Today() {
           eyes={today.eyes}
           eyesHead={today.eyesHead}
           cleanLine={today.cleanLine}
+          posterImg={posterImg(today.heroScene.poster, HERO_POSTER_SIZES, { style: HERO_POSTER_STYLE })}
         />
         <KpiCards september={today.september} />
         <TrucksTable trucks={trucksTableView(today.trucks)} />

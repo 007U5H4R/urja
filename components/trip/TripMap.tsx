@@ -1,7 +1,5 @@
 "use client";
 
-import "@/components/map/map.css";
-
 import { useEffect, useRef, useState } from "react";
 
 import type { TripMapHandle } from "@/components/map/map-client";

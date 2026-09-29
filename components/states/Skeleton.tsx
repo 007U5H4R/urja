@@ -1,5 +1,3 @@
-import "./states.css";
-
 /**
  * A static skeleton of Today (final/states.html, loading): a heading, the verdict,
  * the ledger bar and two eyes rows. No shimmer, no figures. Decorative only.

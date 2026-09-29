@@ -1,12 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  experimental: {
-    // M-004 perf: inline the route's CSS (≈15 KB, mostly globals) into the HTML so first paint no
-    // longer waits on a render-blocking stylesheet round trip (Lighthouse mobile: ~600 ms on /).
-    // MapLibre's stylesheet still arrives only with the lazy map chunk.
-    inlineCss: true,
-  },
+  // M-004 perf (EXE18): no experimental.inlineCss. Inlining put the whole stylesheet in the HTML
+  // three times (the <style>, and twice in the RSC payload: the root layout's and global-error's
+  // styles), 62 KB of gzip HTML on Today, a third data round trip on a phone. app/site.css now
+  // bundles the site's styles into one stylesheet request instead.
   env: {
     // The 3D scene's non-secret debug flag (components/scene/TruckScene.tsx), inlined at build
     // time: "1" only for the e2e build (playwright.config.ts), else "0". Left unset, Turbopack

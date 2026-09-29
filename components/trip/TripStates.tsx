@@ -1,6 +1,5 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
-import "@/components/states/states.css";
 
 /** A static skeleton block (states.html `.sk`: surface-2, no shimmer); size inline, as in the mockup. */
 function Sk({ w, h, style }: { w: string; h: number; style?: CSSProperties }) {

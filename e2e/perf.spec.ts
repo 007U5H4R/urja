@@ -90,3 +90,34 @@ test("the Inter and Anek stacks fall back to metric-matched faces, then sans-ser
   expect(stacks.font.trim()).toMatch(/sans-serif$/);
   expect(stacks.hi.trim()).toMatch(/sans-serif$/);
 });
+
+// M-004 perf (EXE18): what Today and Why Urja fetch before they can paint.
+const FIRST_LOAD = [
+  // Today's plates are drawn in the small Anek plate face; nothing else of Anek.
+  { path: "/", fonts: ["anek_plate", "inter_core", "inter_rupee"], stylesheets: 1 },
+  { path: "/why", fonts: ["inter_core", "inter_rupee"], stylesheets: 2 },
+];
+
+for (const { path, fonts, stylesheets } of FIRST_LOAD) {
+  test(`${path}: preloads only the Inter core and ₹ faces and downloads only ${fonts.join(" + ")}`, async ({ page }) => {
+    const got = await loadAndCollectFonts(page, path);
+    const preloads = await page.locator('head link[rel="preload"][as="font"]').evaluateAll((els) =>
+      els.map((e) => new URL((e as HTMLLinkElement).href).pathname),
+    );
+    expect(preloads.map((p) => /\/media\/([a-z_]+)[.-]/.exec(p)?.[1]).sort()).toEqual(["inter_core", "inter_rupee"]);
+    expect([...new Set(got.map((p) => /\/media\/([a-z_]+)[.-]/.exec(p)?.[1]))].sort()).toEqual(fonts);
+  });
+
+  test(`${path}: one site stylesheet, no inlined CSS, and no client image code`, async ({ page }) => {
+    // The server's HTML (lazy chunks, like the Ask drawer's, add their own stylesheets later).
+    const html = await (await page.request.get(path)).text();
+    expect(html.match(/<link rel="stylesheet"/g) ?? []).toHaveLength(stylesheets);
+    expect(html).not.toMatch(/<style[^>]*>[^<]*@layer/);
+    await page.goto(path);
+    const scripts = await page.locator("script[src]").evaluateAll((els) => els.map((e) => (e as HTMLScriptElement).src));
+    for (const src of scripts) {
+      const body = await (await page.request.get(src)).text();
+      expect(body, src).not.toContain("getImgProps");
+    }
+  });
+}

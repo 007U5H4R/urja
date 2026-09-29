@@ -51,7 +51,7 @@ const DESIGN_TOKENS: Record<string, string> = {
 };
 
 // next/font owns these two (TSK-03.1): they are set on <html> by the font loaders.
-const FONT_OWNED = new Set(["--font", "--font-hi"]);
+const FONT_OWNED = new Set(["--font", "--font-hi", "--font-plate"]);
 
 describe("Lamplight tokens (TKT-03 AC1)", () => {
   const tokens = rootProps(globals);
@@ -104,10 +104,17 @@ describe("Lamplight tokens (TKT-03 AC1)", () => {
     expect(globals).not.toMatch(/fonts\.googleapis\.com/);
     expect(globals).not.toMatch(/@import\s+url\(/);
     for (const name of FONT_OWNED) expect(tokens.has(name), name).toBe(false);
+    // M-004 (EXE18): Google's Inter and Anek Devanagari files, self-hosted through next/font/local
+    // (app/fonts.ts; tests/fonts.test.ts checks the faces, their axes and their ranges).
     const layout = read("app/layout.tsx");
-    expect(layout).toMatch(/from "next\/font\/google"/);
-    expect(layout).toMatch(/Inter\(\{[^)]*axes: \["opsz"\][^)]*variable: "--font"/);
-    expect(layout).toMatch(/Anek_Devanagari\(\{[^)]*subsets: \["devanagari", "latin"\][^)]*axes: \["wdth"\][^)]*variable: "--font-hi"/);
+    const fonts = read("app/fonts.ts");
+    expect(layout).toMatch(/import \{ anekLatin, anekPlate, interCore \} from "\.\/fonts";/);
+    expect(layout).toMatch(/className=\{`\$\{interCore\.variable\} \$\{anekLatin\.variable\} \$\{anekPlate\.variable\}`\}/);
+    expect(fonts).toMatch(/from "next\/font\/local"/);
+    expect(fonts).not.toMatch(/from "next\/font\/google"/);
+    expect(fonts).toMatch(/export const interCore = localFont\(\{[^)]*variable: "--font"/);
+    expect(fonts).toMatch(/export const anekLatin = localFont\(\{[^)]*variable: "--font-hi"/);
+    expect(fonts).toMatch(/export const anekPlate = localFont\(\{[^)]*variable: "--font-plate"/);
   });
 
   it("exposes the colour tokens to Tailwind through @theme", () => {

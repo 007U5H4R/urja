@@ -1,10 +1,6 @@
 "use client";
 
-import "@/components/map/map.css";
-import "@/components/scene/scene.css";
-
 import dynamic from "next/dynamic";
-import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { HeroMapData } from "@/components/map/hero-map";
@@ -13,6 +9,7 @@ import { MAP_UNAVAILABLE } from "@/components/map/map-copy";
 import { SceneBoundary } from "@/components/scene/SceneBoundary";
 import type { SceneState } from "@/components/scene/TruckScene";
 import { Icon } from "@/components/ui/Icon";
+import type { PosterImgProps } from "@/components/ui/poster-img";
 import type { CleanLine, EyeRow, EyesHead, HeroFlag, HeroFleet, HeroScene, MapCity } from "@/lib/data/views/today";
 import { EyesList } from "./EyesList";
 import { GlassCard } from "./GlassCard";
@@ -27,6 +24,8 @@ export interface HeroCardProps {
   eyes: EyeRow[];
   eyesHead: EyesHead;
   cleanLine: CleanLine;
+  /** The scene poster's <img> props, from `posterImg` on the server (M-004: no client image code). */
+  posterImg: PosterImgProps;
 }
 
 type MapStatus = "off" | "loading" | "ready" | "failed";
@@ -59,7 +58,7 @@ function fromUrl(search: string, flags: number): { view: HeroView; selected: num
  * TruckScene mounts the three.js canvas over it after its first frame, or leaves the poster on a
  * weak or missing GPU (`sceneState`).
  */
-export function HeroCard({ hero, fleet, scene, cities, eyes, eyesHead, cleanLine }: HeroCardProps) {
+export function HeroCard({ hero, fleet, scene, cities, eyes, eyesHead, cleanLine, posterImg }: HeroCardProps) {
   const [selected, setSelected] = useState(0);
   const [view, setView] = useState<HeroView>("scene");
   const [mapWanted, setMapWanted] = useState(false);
@@ -177,7 +176,8 @@ export function HeroCard({ hero, fleet, scene, cities, eyes, eyesHead, cleanLine
           data-scene={sceneState}
           style={{ backgroundImage: "none" }}
         >
-          <Image src={scene.poster} alt="" fill preload sizes="(max-width: 1180px) 100vw, 60vw" style={{ objectFit: "cover", objectPosition: "30% center" }} />
+          {/* eslint-disable-next-line @next/next/no-img-element -- the optimised poster, from posterImg */}
+          <img alt="" {...posterImg} />
           <div className="scene-tag glass" aria-hidden="true">
             <span className="plate">{scene.plate}</span>
             <span>{scene.status}</span>
