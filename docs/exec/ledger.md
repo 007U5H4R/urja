@@ -11,6 +11,7 @@ Preview access works now: the environment's API credential adds the Vercel bypas
 - **TASK-11 TSK-07.1 + AC6: BLOCKED (upstream Gemini 503).** The key is set in Vercel. 11 of 11 live calls to the preview's `/api/ask` fell back.
   - Round 1: diagnosis. There are no runtime logs from here, so eb097af adds an `x-ask-outcome` header (EXE24).
   - Round 2: re-probe. **9 of 11 calls got `http_5xx:503`** (Gemini unavailable) in about 0.3–0.7 s; the other 2 timed out at the 8 s abort. The pattern held after a 90 s pause.
+  - Re-check (2026-09-29, 15:00 UTC, on your request): of 7 calls, 4 got `http_429:429` from Gemini (quota exhausted; not our limiter, which would say `rate_limited`), 2 got `http_5xx:503` and 1 timed out. Still no model answer.
   - TP5 is partly verified. The model id (`gemini-3.5-flash`, the default; the Vercel `ASK_MODEL` value isn't visible from here) and `thinkingLevel: "minimal"` got neither 404 nor 400. But the model never returned an answer, so AC6 (a live answer under 4 s) is unmet.
   - **User action:** in Google AI Studio, check the key's project and the model's availability, or set `ASK_MODEL` in Vercel to an available Flash model. Then rerun the probe (`pnpm tsx --conditions=react-server scripts/probe-gemini.ts`, with the key) or `/api/ask` on the preview and read `x-ask-outcome`.
 - **TASK-17 TSK-13.3: BLOCKED (same cause).** `pnpm eval` ran against the preview (label `preview-attempt-1`, committed as `evals/results/ask-preview-attempt-1-eb097af.json`):
