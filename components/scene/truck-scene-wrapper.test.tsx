@@ -145,6 +145,9 @@ describe("TruckScene", () => {
   it("stops the loop and hides the buttons in the Map view, and restarts on return", async () => {
     const r = render(<Harness active onState={() => {}} />);
     await r.findByRole("button", { name: "Reset the scene view" });
+    // The buttons show on the first frame; the loop's first start() lands a tick later, once the
+    // scene is handed over. Wait for it before counting, or a slow runner counts it twice.
+    await waitFor(() => expect(scene.api.start).toHaveBeenCalled());
     scene.api.start.mockClear();
     r.rerender(<Harness active={false} onState={() => {}} />);
     expect(scene.api.stop).toHaveBeenCalled();
