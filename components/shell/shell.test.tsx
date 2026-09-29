@@ -8,7 +8,7 @@ vi.mock("next/navigation", () => ({ usePathname: () => pathname }));
 import { ASK_OPEN_EVENT } from "@/lib/ask-events";
 import { AskTrigger } from "./AskTrigger";
 import { MobileMenu } from "./MobileMenu";
-import { MENU_LINKS, NAV_PILLS, isCurrent } from "./nav";
+import { MENU_LINKS, NAV_PILLS, PHONE_ROUTES, isCurrent, isPhoneRoute } from "./nav";
 import { TopBar } from "./TopBar";
 
 afterEach(cleanup);
@@ -106,8 +106,9 @@ describe("TopBar (TKT-03 AC2)", () => {
   });
 
   it("lists the six destinations in the mobile menu, with the current one marked", () => {
+    // The menu as the phone screens carry it (EXE12: no top bar on /brief and /message).
     pathname = "/brief";
-    const { container } = renderBar();
+    const { container } = render(<MobileMenu />);
     const summary = container.querySelector("details.m-menu > summary.iconbtn")!;
     expect(summary.getAttribute("aria-label")).toBe("Menu");
     const nav = screen.getByRole("navigation", { name: "Main (mobile)", hidden: true });
@@ -252,12 +253,29 @@ describe("TopBar on /why (final/why.html lines 125–137)", () => {
   });
 
   it("keeps the default bar on every other route", () => {
-    for (const p of ["/", "/brief", "/trips/0926-04", "/whyx"]) {
+    for (const p of ["/", "/briefs", "/messages", "/trips/0926-04", "/whyx"]) {
       pathname = p;
       const { container, unmount } = renderBar();
       expect(container.querySelector(".askbar")).not.toBeNull();
       expect(container.querySelector(".fleet")).not.toBeNull();
       expect(container.querySelector(".wrap > a.btn")).toBeNull();
+      unmount();
+    }
+  });
+});
+
+describe("TopBar on the phone screens (EXE12)", () => {
+  it("lists /brief and /message as phone screens, and nothing else", () => {
+    expect(PHONE_ROUTES).toEqual(["/brief", "/message"]);
+    expect(["/brief", "/message", "/brief/", "/message/"].map(isPhoneRoute)).toEqual([true, true, true, true]);
+    expect(["/", "/briefs", "/messages", "/trips", "/why", "/brief/x"].map(isPhoneRoute)).toEqual([false, false, false, false, false, false]);
+  });
+
+  it("renders no top bar on /brief and /message: the screen carries its own bar and menu", () => {
+    for (const p of ["/brief", "/message"]) {
+      pathname = p;
+      const { container, unmount } = renderBar();
+      expect(container.querySelector("header.topbar")).toBeNull();
       unmount();
     }
   });

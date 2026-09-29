@@ -20,8 +20,7 @@ export function WhyHero({ byline }: { byline: string }) {
         WhatsApp, with the driver’s side attached.
       </p>
       <div className="actions">
-        {/* /message ships with TKT-06; no prefetch until then, so no 404 fetch on load. */}
-        <Link className="btn btn-lamp" href="/message" prefetch={false}>
+        <Link className="btn btn-lamp" href="/message">
           See the 7 AM brief
           <Icon name="right" />
         </Link>

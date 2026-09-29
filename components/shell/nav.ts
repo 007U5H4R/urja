@@ -35,3 +35,15 @@ export function isCurrent(href: string, pathname: string): boolean {
 export function isWhyRoute(pathname: string): boolean {
   return isCurrent(WHY_HREF, pathname);
 }
+
+/**
+ * EXE12: the phone screens (final/brief.html, final/message.html) carry their own
+ * top bar and menu, so the global TopBar is not rendered there.
+ */
+export const PHONE_ROUTES: readonly string[] = ["/brief", "/message"];
+
+/** Whether `pathname` is one of the phone screens (a trailing slash is allowed). */
+export function isPhoneRoute(pathname: string): boolean {
+  const p = pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
+  return PHONE_ROUTES.includes(p);
+}

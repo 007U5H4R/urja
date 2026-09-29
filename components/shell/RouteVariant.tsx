@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
-import { isWhyRoute } from "./nav";
+import { isPhoneRoute, isWhyRoute } from "./nav";
 
 /**
  * Renders `why` on the Why Urja page and `children` everywhere else, so the
@@ -11,4 +11,10 @@ import { isWhyRoute } from "./nav";
 export function RouteVariant({ why, children }: { why: ReactNode; children: ReactNode }) {
   const pathname = usePathname() ?? "/";
   return <>{isWhyRoute(pathname) ? why : children}</>;
+}
+
+/** Renders nothing on the phone screens (EXE12), `children` everywhere else. */
+export function HideOnPhoneScreens({ children }: { children: ReactNode }) {
+  const pathname = usePathname() ?? "/";
+  return <>{isPhoneRoute(pathname) ? null : children}</>;
 }

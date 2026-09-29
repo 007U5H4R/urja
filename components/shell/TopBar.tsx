@@ -2,7 +2,7 @@ import Link from "next/link";
 import { AskTrigger } from "./AskTrigger";
 import { MobileMenu } from "./MobileMenu";
 import { NavPills } from "./NavPills";
-import { RouteVariant } from "./RouteVariant";
+import { HideOnPhoneScreens, RouteVariant } from "./RouteVariant";
 
 type TopBarProps = { fleetName: string; truckCount: number };
 
@@ -19,44 +19,46 @@ function initials(name: string): string {
 /**
  * The top bar on every route: a port of final/index.html lines 15–30. On /why
  * it follows final/why.html lines 125–137 instead: no Ask trigger or fleet
- * chip, and a "Start the demo" button before the menu.
+ * chip, and a "Start the demo" button before the menu. On the phone screens
+ * (/brief, /message) it renders nothing: they carry their own bar and menu (EXE12).
  */
 export function TopBar({ fleetName, truckCount }: TopBarProps) {
   return (
-    <header className="topbar">
-      <div className="wrap">
-        <Link className="wordmark" href="/" aria-label="Urja, Today">
-          <span className="mark">
-            <svg viewBox="0 0 26 26" aria-hidden="true">
-              <use href="#i-mark" />
-            </svg>
-          </span>
-          Urja
-        </Link>
-        <RouteVariant why={null}>
-          <AskTrigger />
-        </RouteVariant>
-        <NavPills />
-        <div className="spacer"></div>
-        <RouteVariant
-          why={
-            // /message ships with TKT-06; no prefetch until then, so no 404 fetch on load.
-            <Link className="btn btn-line" href="/message" prefetch={false}>
-              Start the demo
-            </Link>
-          }
-        >
-          <span className="fleet">
-            <span className="name">
-              {fleetName} · {truckCount} trucks
+    <HideOnPhoneScreens>
+      <header className="topbar">
+        <div className="wrap">
+          <Link className="wordmark" href="/" aria-label="Urja, Today">
+            <span className="mark">
+              <svg viewBox="0 0 26 26" aria-hidden="true">
+                <use href="#i-mark" />
+              </svg>
             </span>
-            <span className="avatar" aria-hidden="true">
-              {initials(fleetName)}
+            Urja
+          </Link>
+          <RouteVariant why={null}>
+            <AskTrigger />
+          </RouteVariant>
+          <NavPills />
+          <div className="spacer"></div>
+          <RouteVariant
+            why={
+              <Link className="btn btn-line" href="/message">
+                Start the demo
+              </Link>
+            }
+          >
+            <span className="fleet">
+              <span className="name">
+                {fleetName} · {truckCount} trucks
+              </span>
+              <span className="avatar" aria-hidden="true">
+                {initials(fleetName)}
+              </span>
             </span>
-          </span>
-        </RouteVariant>
-        <MobileMenu />
-      </div>
-    </header>
+          </RouteVariant>
+          <MobileMenu />
+        </div>
+      </header>
+    </HideOnPhoneScreens>
   );
 }
