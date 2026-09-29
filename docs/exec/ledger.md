@@ -48,7 +48,7 @@
    - TSK-13.3 baseline: `pnpm eval --base-url <preview or localhost with key> --label baseline-v1`, then commit `evals/results/ask-baseline-v1-<sha>.json`.
    - The final eval gate numbers (TKT-15).
 2. **TC-055 LCP on `/`:** Lighthouse mobile with simulated throttling, locally, is 2.65 s against 2.5 s after the 2 allowed fix rounds (it was 7.8 s). /why is at 2.44 s. The threshold is unchanged. §13 measures on the preview (HTTP/2 + CDN): measure there first, and if it still fails, restructure Today's client islands.
-3. **Pending (the VM can't reach Vercel previews):**
+3. **Pending on the preview.** The Vercel preview builds and deploys: build/stage7 at 75ca01e is **Ready** (2026-09-29 10:35 UTC), at `urja-git-build-stage7-tushar-49a6.vercel.app`. But it sits behind Vercel Authentication, so the VM gets redirected to Vercel's login and can't run these checks:
    - preview 200;
    - og:image 200 on the preview (TKT-09 AC3);
    - TC-051 unfurl;
