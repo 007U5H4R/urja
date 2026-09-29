@@ -259,3 +259,8 @@
 - The drawer chunk loads lazily, warmed when the browser is idle and mounted on first open, to keep `/` under the 200 KB first-load budget.
 - A fallback answer's provenance reads "straight from your data, no AI" instead of a model name. Saved answers carry the banner's first clause ("Urja's AI couldn't answer right now."), because the second half promises a number a saved answer doesn't have.
 - The drawer's own labels stay English on the Hindi brief (no Hindi drawer copy is specified). This is a follow-up for Stage 8.
+
+## EXE15 · No route loading.tsx on prerendered pages; ?state= swaps on the client — accepted 2026-09-29
+- **Scope change (TKT-11 TSK-11.1; TKT-05 TSK-05.5):** `app/loading.tsx`, `app/brief/loading.tsx` and `app/trips/[tripId]/loading.tsx` are not shipped. On statically prerendered routes a loading boundary makes Next stream the skeleton first and hide the real page in `<div hidden>` until a script runs. That hides the content from no-JS readers, delays LCP, and broke TC-027's no-JS first paint and the `/trips` 307. The loading skeleton is still shown truthfully through `?state=loading` (TC-024), and nothing shows invented progress (TKT-11 AC3).
+- `?state=` on Today and Trip is read on the client after hydration, so `/` stays static (○). The cost: a hard load of `/?state=…` shows the working view until hydration, and the specimen payload ships with `/`. `/brief` reads `?state` on the server (it is already dynamic for `?lang`).
+- **Not a Design Freeze item:** a performance and no-JS fix; the states' copy and layout follow `final/states.html`. A cleaner alternative for later is query-based rewrites to prerendered specimen routes.
