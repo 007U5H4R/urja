@@ -1,0 +1,16 @@
+{
+  "name": "fail-eval-006-missing-cite",
+  "case": "EVAL-006",
+  "expect": {
+    "pass": false,
+    "failed": [
+      "cites"
+    ]
+  },
+  "response": {
+    "mode": "model",
+    "answer": "On trip 0926-04, RJ14 GB 4521 lost 38 L (₹3,420) near Behror at 2:14 AM while parked.",
+    "lang": "en",
+    "cites": []
+  }
+}

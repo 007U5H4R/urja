@@ -1,0 +1,27 @@
+{
+  "name": "pass-en-eval-003-least-per-km",
+  "case": "EVAL-003",
+  "expect": {
+    "pass": true,
+    "failed": []
+  },
+  "response": {
+    "mode": "model",
+    "answer": "RJ14 GC 3309, driven by Anil Bairwa, earns the least: ₹12.7 per km this month. Its three Check flags add 125 L of extra diesel (₹11,250), and it carried heavier loads.",
+    "lang": "en",
+    "cites": [
+      {
+        "tripId": "0926-11",
+        "label": "0926-11"
+      },
+      {
+        "tripId": "0917-06",
+        "label": "0917-06"
+      },
+      {
+        "tripId": "0909-03",
+        "label": "0909-03"
+      }
+    ]
+  }
+}

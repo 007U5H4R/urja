@@ -1,0 +1,29 @@
+/*
+ * The live scene over the hero poster (TKT-14; technical-plan §7). The poster (next/image) is the
+ * loading state and the fallback; the canvas fades in over it after its first frame, when HeroCard
+ * adds `.ready` (which also shows the scene tag: app/globals.css, from final/lamp.css).
+ */
+.truck3d > canvas { position: absolute; inset: 0; z-index: 1; opacity: 0; transition: opacity .6s ease-out; }
+.truck3d.ready > canvas { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .truck3d > canvas { transition: none; } }
+
+/*
+ * Fallback (software GPU, no WebGL, context lost): the poster stays and still says what it is
+ * (TC-029: "Reconstruction from GPS + fuel sensor"). With no truck to anchor to, the tag sits
+ * top-left, mirroring the glass card; phones hide it, as lamp.css does.
+ */
+@media (min-width: 761px) {
+  .truck3d.fallback .scene-tag { display: flex; left: 16px; top: 64px; transform: none !important; }
+  .truck3d.fallback .scene-tag::after { display: none; }
+}
+
+/*
+ * Rotate left / right and reset: the keyboard (and touch) equivalents of drag-to-orbit. On desktop,
+ * a row at the bottom left just above the rail box (bottom 14px + ~107px tall), where it never meets
+ * the scene tag or the glass card (the tag rides the truck in the upper left). e2e/scene.spec.ts
+ * checks the boxes at 1440, 1200 and 1024 px. On phones, a row at the top, where the tag is hidden.
+ */
+.scene-ctl { position: absolute; left: 16px; bottom: 134px; z-index: 3; display: flex; flex-direction: row; gap: 6px; }
+@media (max-width: 760px) { .scene-ctl { left: 12px; top: 64px; bottom: auto; } }
+.scene-ctl .iconbtn { background: oklch(0.130 0.003 60 / .7); }
+@media (pointer: coarse) { .scene-ctl .iconbtn { width: 44px; height: 44px; } }

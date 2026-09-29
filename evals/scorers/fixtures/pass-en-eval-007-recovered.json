@@ -1,0 +1,19 @@
+{
+  "name": "pass-en-eval-007-recovered",
+  "case": "EVAL-007",
+  "expect": {
+    "pass": true,
+    "failed": []
+  },
+  "response": {
+    "mode": "fallback",
+    "answer": "You have recovered ₹21,600 of the ₹58,240 flagged this month, which is 37%.",
+    "lang": "en",
+    "cites": [
+      {
+        "tripId": "0926-04",
+        "label": "0926-04"
+      }
+    ]
+  }
+}

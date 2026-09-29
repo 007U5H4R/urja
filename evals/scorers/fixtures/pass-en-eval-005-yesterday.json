@@ -1,0 +1,27 @@
+{
+  "name": "pass-en-eval-005-yesterday",
+  "case": "EVAL-005",
+  "expect": {
+    "pass": true,
+    "failed": []
+  },
+  "response": {
+    "mode": "model",
+    "answer": "Yesterday you earned ₹1,86,400. ₹11,430 doesn't add up, across 3 trips: 0926-04, 0927-02 and 0926-11.",
+    "lang": "en",
+    "cites": [
+      {
+        "tripId": "0926-04",
+        "label": "0926-04"
+      },
+      {
+        "tripId": "0927-02",
+        "label": "0927-02"
+      },
+      {
+        "tripId": "0926-11",
+        "label": "0926-11"
+      }
+    ]
+  }
+}

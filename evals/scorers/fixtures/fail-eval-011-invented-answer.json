@@ -1,0 +1,16 @@
+{
+  "name": "fail-eval-011-invented-answer",
+  "case": "EVAL-011",
+  "expect": {
+    "pass": false,
+    "failed": [
+      "refusal"
+    ]
+  },
+  "response": {
+    "mode": "model",
+    "answer": "Tomorrow in Jaipur will be sunny, around 34 degrees.",
+    "lang": "en",
+    "cites": []
+  }
+}

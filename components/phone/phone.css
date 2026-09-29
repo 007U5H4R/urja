@@ -1,0 +1,29 @@
+/* Phone screens (/brief, /message). The mockups' own styles are already ported into
+   app/globals.css ("phone: morning brief + message", values unchanged); final/brief.html
+   and final/message.html have no <style> block. This file only adds what the port needs:
+   layout glue for elements the mockups don't have, and accessibility fixes (Design Freeze:
+   allowed without review). Imported by app/brief/page.tsx and app/message/page.tsx, and
+   scoped under .p-brief / .p-message so nothing reaches other routes after client navigation. */
+@layer components {
+  /* ?only=high: what is filtered, and the way back to every item (new; no mockup element). */
+  .p-brief .filter { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: -2px 0 10px; font-size: var(--t-sm); color: var(--fg-muted); }
+  .p-brief .filter a { display: inline-flex; align-items: center; min-height: 24px; color: var(--lamp); }
+
+  /* EXE12: the phone screens have no global top bar; their own bar ends with the language
+     toggle and the menu, which shows at every width here (the shell shows it ≤760px only). */
+  .p-brief .m-top-end, .p-message .m-top-end { display: flex; align-items: center; gap: 8px; }
+  .p-message .chat-top .m-top-end { margin-left: auto; }
+  .p-message .chat-top .lang { margin-left: 0; }
+  .p-brief .m-menu, .p-message .m-menu { display: block; }
+
+  /* §5.5: the quick replies are links to /trips/…#driver and /brief?only=high, with the mockup's button look. */
+  .p-message .replies a { display: inline-flex; align-items: center; height: 40px; padding: 0 14px; border-radius: 20px; background: var(--surface-1); border: 1px solid var(--lamp-line); color: var(--cream); font-size: var(--t-sm); }
+
+  /* TC-022: no text under 12 px (the mockup sets the message time at 11 px). */
+  .p-message .bubble .meta { font-size: 12px; }
+
+  /* TC-023 / Design.md §14: primary phone actions are 44 px touch targets on coarse pointers. */
+  @media (pointer: coarse) {
+    .p-brief .lang button, .p-message .lang button, .p-message .replies a, .p-brief .dock .btn { height: 44px; }
+  }
+}

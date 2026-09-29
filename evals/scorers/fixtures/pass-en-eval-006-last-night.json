@@ -1,0 +1,19 @@
+{
+  "name": "pass-en-eval-006-last-night",
+  "case": "EVAL-006",
+  "expect": {
+    "pass": true,
+    "failed": []
+  },
+  "response": {
+    "mode": "model",
+    "answer": "On trip 0926-04, RJ14 GB 4521 was parked near Behror when the fuel fell by 38 L (₹3,420) between 2:14 and 2:40 AM while it stood still. Confidence: High. The Neemrana refuel matched.",
+    "lang": "en",
+    "cites": [
+      {
+        "tripId": "0926-04",
+        "label": "0926-04"
+      }
+    ]
+  }
+}

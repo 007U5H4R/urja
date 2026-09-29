@@ -1,0 +1,27 @@
+/* The OG card: a verbatim port of the card styles in .design/exploration/og/index.html
+   (<style> block), values unchanged. The mockup page's own frame (.og-page, .lbl, .fit and
+   the 30% thumbnail) is left out: this route is only the 1200 × 630 card that
+   scripts/render-og.ts screenshots into public/og.png. Imported by app/og-card/page.tsx only. */
+@layer components {
+  .og { width: 1200px; height: 630px; position: relative; overflow: hidden; transform-origin: 0 0;
+    background: radial-gradient(760px 480px at 6% -10%, oklch(0.705 0.166 53 / .16), transparent 70%), var(--bg);
+    outline: 1px solid var(--line-soft); outline-offset: -1px; }
+  /* right-side backdrop: optional truck render; the lamplight holds the composition without it */
+  .og .art { position: absolute; top: 0; right: 0; bottom: 0; width: 64%;
+    background: radial-gradient(520px 400px at 60% 44%, oklch(0.705 0.166 53 / .22), transparent 70%),
+                radial-gradient(340px 200px at 70% 100%, oklch(0.69 0.19 27 / .10), transparent 70%); }
+  .og .art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 42%); mask-image: linear-gradient(90deg, transparent, #000 42%); }
+  .og .brand { position: absolute; left: 76px; top: 64px; display: flex; align-items: center; gap: 14px; font-size: 36px; font-weight: 620; letter-spacing: -0.02em; }
+  .og .brand .mark { width: 46px; height: 46px; border-radius: 13px; }
+  .og .brand .mark svg { width: 28px; height: 28px; }
+  .og h1 { position: absolute; left: 76px; top: 50%; transform: translateY(-50%); width: 540px; font-size: 84px; font-weight: 400; line-height: 1; letter-spacing: -0.04em; text-wrap: balance;
+    text-shadow: 0 0 40px oklch(0.705 0.166 53 / .30), 0 0 100px oklch(0.705 0.166 53 / .16); }
+  .og .flag { position: absolute; right: 76px; top: 50%; transform: translateY(-50%); width: 470px; padding: 26px; border-radius: 20px; }
+  .og .flag .plate { height: 46px; font-size: 27px; padding: 0 14px; border-radius: 7px; }
+  .og .what { margin-top: 16px; font-size: 22px; line-height: 1.3; color: var(--fg-muted); }
+  .og .fuel { height: 156px; margin-top: 18px; }
+  .og .fuel svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .og .amt { margin-top: 16px; font-size: 66px; font-weight: 450; letter-spacing: -0.03em; line-height: 1; }
+  .og .foot { position: absolute; left: 76px; bottom: 58px; font-size: 22px; color: var(--fg-muted); }
+}

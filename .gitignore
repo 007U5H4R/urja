@@ -13,3 +13,13 @@ out/
 
 # agent worktrees (local isolation copies)
 .claude/worktrees/
+
+# testing & reports
+/playwright-report
+/test-results
+/coverage
+/blob-report
+
+# typescript / next
+*.tsbuildinfo
+next-env.d.ts

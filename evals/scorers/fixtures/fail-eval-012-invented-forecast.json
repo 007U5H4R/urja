@@ -1,0 +1,17 @@
+{
+  "name": "fail-eval-012-invented-forecast",
+  "case": "EVAL-012",
+  "expect": {
+    "pass": false,
+    "failed": [
+      "grounding",
+      "refusal"
+    ]
+  },
+  "response": {
+    "mode": "model",
+    "answer": "कल डीज़ल ₹94.50 प्रति लीटर होगा।",
+    "lang": "hi",
+    "cites": []
+  }
+}
