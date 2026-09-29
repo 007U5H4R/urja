@@ -12,9 +12,9 @@
 | TKT-03 Lamplight foundation | TASK-7 | c6b0673, e1ba025 |
 | TKT-04 Today lower half | TASK-8 | c4ddb91 |
 | TKT-05 Trip evidence | TASK-9 | b38035c |
-| TKT-06 Message and brief (+ EXE23 Hindi menu, drawer, html lang) | TASK-10 | 3b5c6be, ea791c3, 36df2ca |
+| TKT-06 Message and brief (+ EXE23 Hindi menu, drawer, html lang; EXE27 Hindi H1–H10) | TASK-10 | 3b5c6be, ea791c3, 36df2ca, 1d92c67 |
 | TKT-07 Ask API (+ EXE24 header, EXE26 fallback model) | TASK-11 | 8b1642a, ddfb752, eb097af, 4e28c77 |
-| TKT-08 Why Urja (+ EXE19 byline) | TASK-12 | abc2620, e6741d2 |
+| TKT-08 Why Urja (+ EXE19 byline, EXE28 quotes) | TASK-12 | abc2620, e6741d2, a528994 |
 | TKT-09 Link preview | TASK-13 | bf082f6 |
 | TKT-10 Maps | TASK-14 | 9d04764, b025cff (test fix) |
 | TKT-11 Screen states | TASK-15 | fb383cc |
@@ -51,11 +51,14 @@
    - EXE26 (4e28c77) now retries once on `ASK_FALLBACK_MODEL` inside the 8 s budget. But on the preview the default fallback, **`gemini-2.5-flash`, answers 404** for this key.
    - **Needs the user:** either billing/quota on the key, or a fallback model id that ListModels lists for this key, set as `ASK_FALLBACK_MODEL` in Vercel (then redeploy).
    - Evidence: `x-ask-outcome` on every response. `evals/results/ask-preview-attempt-1-eb097af.json` has 0/10 prepared by the model.
-   - Retries (at most 2, at least 30 min apart, then stop): attempt 1 at 15:29 UTC was probe only, and the eval was skipped (the primary gave 429/503, the fallback 404). Attempt 2 is scheduled for 16:10 UTC.
+   - Retries (at most 2, at least 30 min apart, then stop):
+     - Attempt 1 at 15:29 UTC was probe only, and the eval was skipped (the primary gave 429/503, the fallback 404).
+     - **Attempt 2: unchanged, skipped.** There was no Vercel env change or redeploy for the key. The local session found that the Mac's key 404s on every model, so it can't pick a fallback for Vercel's key. **Retrying stopped.**
+   - The unblock is the user's: billing and quota on the Vercel key's project in AI Studio, and optionally a verified `ASK_FALLBACK_MODEL` for that key. Don't set `ASK_FALLBACK_MODEL` until an id is verified.
 2. **TC-051 (manual, M-005/TKT-16):** external inspectors can't pass Vercel Authentication, and TC-051 targets the production URL at Stage 11. The tags and the image are verified on the preview.
 3. **Pending, manual (local session):**
    - TC-030 rows 4–7, 9–12 and 15 need the user at the Mac: an automated window was reported hidden, which throttled rAF. Rows 13–14 are for Stage 9. Re-check row 7: the buttons moved in f634a0e.
-   - The native Hindi review (`docs/exec/hindi-review.md`).
+   - The native Hindi review (`docs/exec/hindi-review.md`; the AI pre-review H1–H10 was applied in 1d92c67, EXE27).
 
 **Resolved in this session:** preview access (bypass); TC-055 LCP on `/` (was BLOCKED at 2.65 s locally; 1.83 s on the preview, with no code change and no threshold change); TKT-09 AC3; M-004 gate: PASS; DES-1 scene controls over the scene tag (f634a0e).
 
@@ -68,6 +71,7 @@
 
 **Still open (the user's, no action here):**
 - Gemini: billing and quota, or the fallback model id (BLOCKED item 1).
+- Why Urja chapter 01's title, "I went and asked", now sits above illustrative quotes (EXE28). Keep it or change it? It's a Design Freeze copy item, so it's unchanged.
 - Campfire and Obsidian sync: done by the local session from this ledger (§16.3). The cloud session never edits `backlog/`.
 
 **DES findings:**
@@ -85,7 +89,7 @@
 - `poster-img.ts` depends on a Next internal (pinned 16.3.6, parity-tested).
 - Wave/Meter/Rail degenerate-input nits (TASK-7).
 
-**Decisions logged:** EXE1–EXE26 in `decisions.md`.
+**Decisions logged:** EXE1–EXE28 in `decisions.md`.
 
 Branch: `build/stage7` (never `main`). Protocol: `CLAUDE.md` + `technical-plan.md` §16.2.
 Status values: todo | doing | review | done | blocked. `BLOCKED-pending-key` (historical) = needed `GEMINI_API_KEY`. The key is now in Vercel, and live checks go through the preview (§16.1 path B).
@@ -124,6 +128,8 @@ Vercel: each row records the pushed SHA. Since 2026-09-29 the VM reaches the pre
 | TASK-11 | EXE24 diagnostic header | done | eb097af | route tests: `x-ask-outcome` is `ok`, `http_4xx:404`/`:400`, `http_429:429`, `http_5xx:503`, `guard:no_cites` or `no_key`, and never carries the key; `pnpm verify` 1014 pass | pushed; preview serves it | Written directly (a small diagnostic, kept short on usage) with no subagent reviews. The body contract is unchanged. |
 | TASK-11 | EXE26 fallback model | done | 4e28c77 | unit: retry only on 429 or 503; not on 500, 404, 400, bad JSON, network errors or timeouts; off, or the same as the primary: no retry; inside 8 s (fake timers: the fallback gets exactly what is left, and < 1 s left means no retry); 2.x Flash gets `thinkingBudget: 0`; route: provenance, `x-ask-outcome` and the log name the answering model; the guard checks the fallback's answer; eval: per-case `model` and `modelCounts`; `pnpm verify` 1034 pass | pushed; on the preview the fallback `gemini-2.5-flash` answers 404 | Spec review: PASS on every clause. Quality review: no blocking issues. Fix round 1 applied minors: thinking mapping for the primary too, Pro gets no budget, case-insensitive same-model check, and a test renamed. |
 | TASK-18 | DES-1 scene controls | done | f634a0e | e2e scene.spec: the controls don't intersect the tag, the glass card or the rail box at 1440, 1200 and 1024 px (red before the fix, green after); scene.spec 14 pass; today, today-head and smoke 39 pass | pushed | Found in TC-030 run 1 on the Mac. CSS only. |
+| TASK-10 | EXE27 Hindi H1–H10 | done | 1d92c67 | copy, fallback (both chip 2 wordings → 217 L answer), hindi-review generator, TC-015 mockup parity; `pnpm verify` 1039 pass; e2e why, ask, phone, trip, today, html-lang 222 pass | pushed | Implementer in a worktree. Orchestrator check: diff is wording and formatting only, and no number changed. No separate subagent reviews, to save usage. |
+| TASK-12 | EXE28 illustrative quotes | done | a528994 | why tests: the label renders when any quote is illustrative; e2e why.spec | pushed | The placeholder no longer shows. Open question: chapter 01 title (EXE28). |
 | TASK-19 | TSK-15.* | todo (out of Stage 7 scope) | — | — | — | TKT-15 Stages 8–10 (local @claude) |
 | TASK-20 | TSK-16.* | todo (out of Stage 7 scope) | — | — | — | TKT-16 Stage 11 (local @claude) |
 

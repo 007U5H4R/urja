@@ -331,3 +331,14 @@
   - The eval records `model` per case and `modelCounts` in provenance.
 - **Gate unchanged:** an answer from the fallback model is `mode: "model"` and counts as a model answer (EXE13). No threshold, golden value or dataset changed.
 - **x-ask-outcome (user decision):** kept through Stage 9 QA. The Stage 10 security review decides whether it ships to `main`; the default is keep, since it carries no key or question.
+
+## EXE27 · Hindi AI pre-review H1–H10 applied — accepted 2026-09-29 (user decision, relayed by the local session)
+- An AI pre-review (not a native speaker) of `docs/exec/hindi-review.md`. H1–H10 are applied in the source strings, and the doc is regenerated with the header line "AI pre-review 2026-09-29 applied H1–H10; native review pending." The native review stays open.
+- **H1** changes a documented choice: technical-plan §6.6 and the mockups showed chip 2 in Hindi on the English drawer. It is now English ("How much diesel went unaccounted last week?"), and the Hindi drops गायब ("पिछले हफ़्ते कितने डीज़ल का हिसाब नहीं मिला?"). Both chips reach the same fallback answer (217 L, ₹19,530, 5 trips), and a test covers it. EVAL-002 and a route test keep the old user wording as input; that is a user's question, not our copy.
+- **Also applied, for consistency:** टंकी and सीमा on R2's "8%" line, and Indian km grouping in two English trip lines.
+- **Mockups:** 4 Hindi strings in `.design/exploration/final/brief.html` and chip 2 in `final/index.html` were updated to the new copy, because TC-015 compares the brief with the mockup. These are copy changes only, with no layout or visual change.
+- **Unchanged:** all numbers (km grouping is formatting only). Left for the native reviewer: मान लिया / माना, मामला, and the time-of-day boundaries.
+
+## EXE28 · Field quotes are illustrative and labelled as such — accepted 2026-09-29 (user decision)
+- `content/field-notes.ts` has four composite quotes with `illustrative: true`. Chapter 01 of Why Urja shows the label "Illustrative quotes, not from interviews: composites written to show what fleet owners commonly describe. Real field notes will replace them." above the cards, and each card has an "Illustrative" chip. They are never presented as interviews.
+- **Open for the user:** chapter 01's title, "I went and asked", now sits above illustrative quotes. It is unchanged here, because titles are part of the Why Urja IA and copy under the Design Freeze.
