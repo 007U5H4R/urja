@@ -247,3 +247,9 @@
 ## EXE12 · The phone screens keep their own top bar — accepted 2026-09-29
 - `final/brief.html` and `final/message.html` are phone screens with their own `.m-top` bar (wordmark plus menu) and no global top bar. The build renders them the same way: the global TopBar is hidden on `/brief` and `/message`, and the screen's own menu reaches Morning brief, Today, Trucks, Trips, Why Urja and Ask. TKT-03 AC2's "top bar on every route" is read as "every desktop-shell route". The mockups are the frozen visual truth, so this follows the Design Freeze rather than changing it.
 - `/brief` and `/message` render per request, so `?lang=en` is English on first paint (TC-027).
+
+## EXE13 · Do fallback answers count toward the Ask eval gate? — OPEN (user decision)
+- The eval runner scores whatever `/api/ask` returns. If the guard rejects the model's answers, the deterministic fallback, which is correct by construction, can pass all 10 prepared cases, and the §7 gate would read PASS while Gemini answered nothing.
+- **Built:** the runner reports `preparedByModel` ("x/10") and warns on every passing prepared case that did not come from the model. The gate itself is unchanged, per evaluation-plan §7 as written.
+- **Recommendation for TKT-15:** treat "≥ 9/10 prepared" as "≥ 9/10 prepared **answered by the model**". That is stricter, not weaker, but it changes the gate's meaning, so it is the user's call.
+- **Related:** §6.5's strict "a data question with 0 valid cites → fallback" rule means aggregate questions (EVAL-003/007/008/009) that the model answers without citing a trip will show as fallback. Tune the prompt, or accept cited trucks as citations, only after the baseline run.
