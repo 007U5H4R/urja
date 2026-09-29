@@ -308,3 +308,11 @@
   - `next.config.ts` rewrites (not redirects) `?lang=en` to the English group, so public URLs don't change. Direct hits on /en/* redirect to the public URL.
   - Unmatched URLs use `app/global-not-found.tsx`. This needs `experimental.globalNotFound` in Next 16.3.6 (pinned exactly); re-check it on any Next upgrade.
   - Trade-off: a link between root layouts (phone ↔ site, Hindi ↔ English phone) is a full page load. The in-place language toggle is still instant. On the demo path, only Brief → Trip is a full load (about 260 ms locally).
+
+## EXE24 · Ask names its outcome in an `x-ask-outcome` header — accepted 2026-09-29 (Stage 7 follow-up)
+- The preview's `/api/ask` fell back on every call, and the cloud session can't read Vercel runtime logs. Every answered `/api/ask` response (200, or 429 when rate-limited) now carries `x-ask-outcome`: `ok`, `timeout`, `network`, `http_4xx:<status>`, `http_429:429`, `http_5xx:<status>`, `bad_json`, `schema`, `guard:<reason>`, `no_key`, `rate_limited`, `cap` or `error`. The 400 and 413 validation errors don't carry it. It holds the same code the log line already records, plus the upstream HTTP status. It never carries the key or the question (a route test checks this). The response body contract (§6.1) is unchanged.
+- **What it showed (2026-09-29):** Gemini returned 503 on 9 of 11 calls, and the other 2 timed out at 8 s. TSK-07.1/AC6 and TSK-13.3 are BLOCKED on this upstream unavailability, not on the code. Picking another model is a TP5 decision for the user (the Vercel `ASK_MODEL` setting).
+
+## EXE25 · TC-055 is measured on the preview through the agent proxy — accepted 2026-09-29
+- Lighthouse 12.8.2 (mobile, simulated throttling) ran in the VM's Chromium via `--proxy-server`. The proxy's CA was added to the NSS store with `certutil`, so TLS is still verified. The proxy adds the Vercel bypass header.
+- Results: `/` has a median LCP of 1.83 s over 9 runs (two outliers at about 4.5 s are kept in the record), and `/why` 1.52 s over 5 runs, against the unchanged 2.5 s budget. M-004 passes. Proxy hops add latency on top of the real path, so these numbers err on the slow side.
