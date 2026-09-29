@@ -1,0 +1,19 @@
+{
+  "name": "pass-hinglish-eval-010-vikram",
+  "case": "EVAL-010",
+  "expect": {
+    "pass": true,
+    "failed": []
+  },
+  "response": {
+    "mode": "model",
+    "answer": "Vikram ki trip 0927-02 mein Kishangarh pump par bill 250 L ka hai, lekin tank sirf 200 L badha. ₹4,500 ka hisaab nahi mil raha. Confidence: Likely; Vikram ne jawab diya hai.",
+    "lang": "hinglish",
+    "cites": [
+      {
+        "tripId": "0927-02",
+        "label": "0927-02"
+      }
+    ]
+  }
+}

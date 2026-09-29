@@ -1,0 +1,29 @@
+{
+  "name": "fail-eval-005-hallucinated-number",
+  "case": "EVAL-005",
+  "expect": {
+    "pass": false,
+    "failed": [
+      "grounding"
+    ]
+  },
+  "response": {
+    "mode": "model",
+    "answer": "Yesterday you earned ₹1,86,400. ₹11,430 doesn't add up across 3 trips (0926-04, 0927-02, 0926-11), and another ₹14,999 is pending.",
+    "lang": "en",
+    "cites": [
+      {
+        "tripId": "0926-04",
+        "label": "0926-04"
+      },
+      {
+        "tripId": "0927-02",
+        "label": "0927-02"
+      },
+      {
+        "tripId": "0926-11",
+        "label": "0926-11"
+      }
+    ]
+  }
+}

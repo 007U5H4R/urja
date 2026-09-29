@@ -1,0 +1,19 @@
+{
+  "name": "pass-hi-eval-009-best-per-km",
+  "case": "EVAL-009",
+  "expect": {
+    "pass": true,
+    "failed": []
+  },
+  "response": {
+    "mode": "model",
+    "answer": "सबसे ज़्यादा कमाई RJ14 GC 7710 की है: सितंबर में ₹31.8 प्रति किलोमीटर। ड्राइवर महेश मीणा हैं, और इस ट्रक पर कोई फ़्लैग नहीं है।",
+    "lang": "hi",
+    "cites": [
+      {
+        "tripId": "0927-06",
+        "label": "0927-06"
+      }
+    ]
+  }
+}

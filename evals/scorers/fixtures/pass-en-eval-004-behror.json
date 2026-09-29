@@ -1,0 +1,35 @@
+{
+  "name": "pass-en-eval-004-behror",
+  "case": "EVAL-004",
+  "expect": {
+    "pass": true,
+    "failed": []
+  },
+  "response": {
+    "mode": "model",
+    "answer": "There are 5 flags on the Behror stretch this month: 0905-03 (40 L), 0912-05 (69 L), 0921-09 (42 L), 0923-02 (48 L) and 0926-04 (38 L), 237 L in all.",
+    "lang": "en",
+    "cites": [
+      {
+        "tripId": "0905-03",
+        "label": "0905-03"
+      },
+      {
+        "tripId": "0912-05",
+        "label": "0912-05"
+      },
+      {
+        "tripId": "0921-09",
+        "label": "0921-09"
+      },
+      {
+        "tripId": "0923-02",
+        "label": "0923-02"
+      },
+      {
+        "tripId": "0926-04",
+        "label": "0926-04"
+      }
+    ]
+  }
+}

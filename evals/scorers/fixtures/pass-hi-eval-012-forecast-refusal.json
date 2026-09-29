@@ -1,0 +1,14 @@
+{
+  "name": "pass-hi-eval-012-forecast-refusal",
+  "case": "EVAL-012",
+  "expect": {
+    "pass": true,
+    "failed": []
+  },
+  "response": {
+    "mode": "model",
+    "answer": "मेरे पास डीज़ल के भाव का अनुमान लगाने की जानकारी नहीं है। Urja डीज़ल को ₹90/L पर गिनता है।",
+    "lang": "hi",
+    "cites": []
+  }
+}
