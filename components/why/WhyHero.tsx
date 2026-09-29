@@ -5,7 +5,8 @@ import { Icon } from "@/components/ui/Icon";
 /**
  * The hero (final/why.html lines 142–163): byline, the typographic statement,
  * the lede, the two CTAs (primary first) and the truck poster in its 16:9 slot.
- * The poster sits below the statement, so it lazy-loads (technical-plan §13).
+ * The poster sits below the statement, but on a phone it is inside the first viewport (y≈610–820
+ * at 412×823) and is the page's LCP element, so it is preloaded rather than lazy (M-004 perf; EXE17).
  */
 export function WhyHero({ byline }: { byline: string }) {
   return (
@@ -49,7 +50,7 @@ export function WhyHero({ byline }: { byline: string }) {
           <line x1="800" y1="900" x2="800" y2="584" style={{ stroke: "url(#why-fade)", strokeWidth: 3, strokeDasharray: "30 26" }} />
           <line x1="0" y1="576" x2="1600" y2="576" style={{ stroke: "oklch(0.705 0.166 53 / .40)", strokeWidth: 1.5 }} />
         </svg>
-        <Image src="/truck-scene.png" alt="" fill loading="lazy" sizes="(max-width: 1120px) 100vw, 1056px" />
+        <Image src="/truck-scene.png" alt="" fill preload fetchPriority="high" sizes="(max-width: 1120px) 100vw, 1056px" />
       </figure>
     </section>
   );

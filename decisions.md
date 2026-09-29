@@ -269,3 +269,10 @@
 - TC-029 asks for "the poster … with the scene tag" when the 3D scene falls back, but the mockup's CSS (`.truck3d:not(.ready) .scene-tag{display:none}`) hides the tag until a live frame renders. The build follows TC-029: in the fallback state the tag shows at the top left of the poster, without its pointer line, and stays hidden on phones.
 - This is a label's visibility, not the 3D concept, camera or composition, so it is treated as a spec conflict resolved toward the test case. Revert with one CSS rule if the user prefers the mockup.
 - Debug hooks for the context-count test (`window.__urjaGL`, `__urjaGLForce`) exist only when the build sets `NEXT_PUBLIC_DEBUG_GL=1`. The value is inlined at build time, so production builds contain neither, and a bundle check enforces it.
+
+## EXE17 · Performance fixes for the M-004 budget — accepted 2026-09-29
+- Anek Devanagari is no longer preloaded (`preload: false`, look unchanged). English pages don't download the 726 KB Devanagari file; Hindi pages still paint in Anek.
+- Inter's fallback metrics are defined for Linux/Android as well as Arial systems, to keep CLS ≤ 0.1 during the font swap. The only visible change is the fallback-rendered → glyph.
+- `experimental.inlineCss` removes the render-blocking stylesheet round trip.
+- The Why Urja poster is not lazy-loaded. TKT-08 AC3 and §13 assume it sits below the fold, but on phones it is inside the first viewport, where lazy loading made it a late LCP element. It is now preloaded with high fetch priority, served as WebP (about 10 KB).
+- Performance fixes only: no threshold, visual direction or Design Freeze item changed.

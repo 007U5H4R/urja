@@ -112,14 +112,17 @@ describe("WhyEssay (chapters 01–07)", () => {
     expect(actions[0].querySelector("svg.i use")!.getAttribute("href")).toBe("#i-right");
   });
 
-  it("puts the poster in the 16:9 slot, decorative and lazy", () => {
+  // M-004 perf (EXE17): on a phone the poster is inside the first viewport and is /why's LCP element,
+  // so it must not lazy-load; it is fetched eagerly at high priority.
+  it("puts the poster in the 16:9 slot, decorative and eager (the phone LCP element)", () => {
     const { container } = renderEssay();
     const fig = container.querySelector("figure.w-scene")!;
     expect(fig.getAttribute("aria-hidden")).toBe("true");
     expect([...fig.querySelectorAll("svg [id]")].map((e) => e.id)).toEqual(["why-road", "why-fade", "why-hatchG"]);
     const img = fig.querySelector("img")!;
     expect(img.getAttribute("alt")).toBe("");
-    expect(img.getAttribute("loading")).toBe("lazy");
+    expect(img.getAttribute("loading")).not.toBe("lazy");
+    expect(img.getAttribute("fetchpriority")).toBe("high");
     expect(img.getAttribute("sizes")).toBeTruthy();
     expect(img.getAttribute("src")).toContain("truck-scene.png");
   });

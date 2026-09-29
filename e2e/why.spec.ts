@@ -23,7 +23,7 @@ test("the page loads with its title, one h1, the landmarks and no console errors
   await expect(page.getByRole("banner")).toHaveCount(1);
   await expect(page.getByRole("main")).toHaveCount(1);
   await expect(page.getByRole("heading", { level: 2 })).toHaveCount(7);
-  // Scroll to the end so the lazy poster loads too, then settle.
+  // Scroll to the end so every section has rendered, then settle.
   await page.locator("section[aria-labelledby='c7']").scrollIntoViewIfNeeded();
   await page.waitForLoadState("networkidle");
   expect(errors).toEqual([]);
@@ -72,10 +72,14 @@ test("chapter 01 shows the placeholder card and the ASSUMPTION line while there 
   );
 });
 
-test("the poster is a lazy next/image in the 16:9 slot, served as a modern format", async ({ page }) => {
+// M-004 perf (EXE17): on a phone the poster sits inside the first viewport and is the LCP element,
+// so it is eager, high priority and preloaded from <head> rather than lazy.
+test("the poster is an eager, preloaded next/image in the 16:9 slot, served as a modern format", async ({ page }) => {
   await page.goto("/why");
   const img = page.locator("figure.w-scene img");
-  await expect(img).toHaveAttribute("loading", "lazy");
+  await expect(img).not.toHaveAttribute("loading", "lazy");
+  await expect(img).toHaveAttribute("fetchpriority", "high");
+  await expect(page.locator('head link[rel="preload"][as="image"][imagesrcset*="truck-scene.png"]')).toHaveCount(1);
   await expect(img).toHaveAttribute("alt", "");
   await expect(img).toHaveAttribute("sizes", /.+/);
   await expect(img).toHaveAttribute("src", /\/_next\/image\?url=%2Ftruck-scene\.png/);

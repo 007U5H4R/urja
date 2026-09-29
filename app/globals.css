@@ -92,6 +92,34 @@
   color-scheme: dark;
 }
 
+/* M-004 CLS: Inter's fallback faces (app/layout.tsx sets adjustFontFallback: false and lists these).
+   They only paint until Inter arrives. Widths come from next/font's capsize metrics (Inter xWidthAvg
+   978 regular / 998 semibold, Arial 913 / 983 bold, Roboto 911 / 926 bold, all per 2048 em), but the
+   regular size is 102%, not the text-width 107%: Inter's opsz axis draws display sizes narrower,
+   and 102% keeps both the lede and the verdict / statement headings wrapping as Inter does at phone
+   widths (measured 360–430 px). Weights from 550 map to the bold faces so bold figures don't
+   overflow. ascent/descent keep Inter's line box (1984 / 494). */
+@font-face {
+  font-family: "Inter Fallback Arial"; font-weight: 100 549;
+  src: local("Arial"), local("ArialMT"), local("Liberation Sans"), local("LiberationSans"), local("Arimo"), local("Arimo Regular"), local("Arimo-Regular");
+  ascent-override: 94.98%; descent-override: 23.65%; line-gap-override: 0%; size-adjust: 102.00%;
+}
+@font-face {
+  font-family: "Inter Fallback Arial"; font-weight: 550 900;
+  src: local("Arial Bold"), local("Arial-BoldMT"), local("Liberation Sans Bold"), local("LiberationSans-Bold"), local("Arimo Bold"), local("Arimo-Bold");
+  ascent-override: 100.21%; descent-override: 24.95%; line-gap-override: 0%; size-adjust: 96.67%;
+}
+@font-face {
+  font-family: "Inter Fallback Roboto"; font-weight: 100 549;
+  src: local("Roboto"), local("Roboto Regular"), local("Roboto-Regular");
+  ascent-override: 94.77%; descent-override: 23.60%; line-gap-override: 0%; size-adjust: 102.22%;
+}
+@font-face {
+  font-family: "Inter Fallback Roboto"; font-weight: 550 900;
+  src: local("Roboto Bold"), local("Roboto-Bold");
+  ascent-override: 94.40%; descent-override: 23.50%; line-gap-override: 0%; size-adjust: 102.62%;
+}
+
 @layer base {
   * { box-sizing: border-box; margin: 0; }
   html { -webkit-text-size-adjust: 100%; }
