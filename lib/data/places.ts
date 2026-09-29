@@ -48,7 +48,7 @@ export const PLACES: readonly Place[] = [
   place("shahpura-dhaba", "dhaba", "Shahpura dhaba", "शाहपुरा ढाबा", [75.959, 27.389], DHABA_GEOFENCE_M),
   place("manoharpur-plaza", "plaza", "Manoharpur plaza", "मनोहरपुर टोल प्लाज़ा", [76.0027, 27.43992]),
   pump("behror-pump", "Behror highway pump", "बहरोड़ हाईवे पंप", [76.28493, 27.8837]),
-  pump("neemrana-hp", "HP pump Neemrana", "एचपी पंप नीमराना", [76.386, 27.987]),
+  pump("neemrana-hp", "HP pump Neemrana", "नीमराना एचपी पंप", [76.386, 27.987]),
   place("shahjahanpur-plaza", "plaza", "Shahjahanpur plaza", "शाहजहाँपुर टोल प्लाज़ा", [76.44818, 28.00863]),
   place("kherki-daula-plaza", "plaza", "Kherki Daula plaza", "खेड़की दौला टोल प्लाज़ा", [77.0345, 28.46678]),
 

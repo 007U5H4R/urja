@@ -250,6 +250,8 @@ export function hindiReviewMarkdown(): string {
     "",
     "Every Hindi string Urja shows, beside its English, for a native speaker to check (HANDOFF open item).",
     "",
+    "AI pre-review 2026-09-29 applied H1–H10; native review pending.",
+    "",
     "- **Generated** by `lib/brief/hindi-review.ts`; don't edit by hand. Regenerate with",
     "  `UPDATE_HINDI_REVIEW=1 pnpm exec vitest run lib/brief/hindi-review.test.ts`.",
     "- **How to review:** write OK, or a better wording, in the Reviewer column. Keep numbers, `₹`, `L` and plates as they are.",

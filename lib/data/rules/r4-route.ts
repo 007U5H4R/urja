@@ -15,7 +15,7 @@ import type { Flag, LngLat, Min, Trip } from "../types";
 import { toFlag } from "./common";
 import { grade } from "./confidence";
 import { maxGapMin, noiseBandL, smoothFuelCl } from "./signal";
-import { inr, km1, timeEn, timeHi } from "./text";
+import { inr, km1, kmWhole, timeEn, timeHi } from "./text";
 
 export interface RouteDeviation {
   extraKm: number;
@@ -130,8 +130,8 @@ export function detectR4(trip: Trip, dev: RouteDeviation | null = measureDeviati
   const evidence: Flag["evidence"] = [
     {
       text: {
-        en: `Drove ${actual} km against a planned ${route.plannedKm} km (${pct >= 0 ? "+" : ""}${pct}%)`,
-        hi: `तय ${route.plannedKm} किमी की जगह ${actual} किमी चला (${pct >= 0 ? "+" : ""}${pct}%)`,
+        en: `Drove ${kmWhole(actual)} km against a planned ${kmWhole(route.plannedKm)} km (${pct >= 0 ? "+" : ""}${pct}%)`,
+        hi: `तय ${kmWhole(route.plannedKm)} किमी की जगह ${kmWhole(actual)} किमी चला (${pct >= 0 ? "+" : ""}${pct}%)`,
       },
       source: "Trip plan",
     },
@@ -140,7 +140,7 @@ export function detectR4(trip: Trip, dev: RouteDeviation | null = measureDeviati
     evidence.push({
       text: {
         en: `Left the planned route for ${km1(dev.offPathKm)} km, ${timeEn(dev.offPathFrom)} to ${timeEn(dev.offPathTo)}`,
-        hi: `${timeHi(dev.offPathFrom)} से ${timeHi(dev.offPathTo)} तक ${km1(dev.offPathKm)} किमी तय रास्ते से हटकर`,
+        hi: `${timeHi(dev.offPathFrom)} से ${timeHi(dev.offPathTo)} तक ${km1(dev.offPathKm)} किमी तय रास्ते से हटकर चला`,
       },
       source: "Geofence",
     });
@@ -161,8 +161,8 @@ export function detectR4(trip: Trip, dev: RouteDeviation | null = measureDeviati
       evidence,
       whyConfidence:
         confidence === "high"
-          ? { en: "GPS tracked the whole trip with no gaps, and the extra distance is well past the 6% allowance.", hi: "GPS ने पूरी ट्रिप बिना रुकावट दर्ज की, और ज़्यादा दूरी 6% की छूट से काफ़ी ऊपर है।" }
-          : { en: "The extra distance is only a little past the 6% allowance; a closed road or a diversion would explain it.", hi: "ज़्यादा दूरी 6% की छूट से थोड़ी ही ऊपर है; बंद सड़क या डायवर्ज़न से भी ऐसा हो सकता है।" },
+          ? { en: "GPS tracked the whole trip with no gaps, and the extra distance is well past the 6% allowance.", hi: "GPS ने पूरी ट्रिप बिना रुकावट दर्ज की, और ज़्यादा दूरी 6% की सीमा से काफ़ी ऊपर है।" }
+          : { en: "The extra distance is only a little past the 6% allowance; a closed road or a diversion would explain it.", hi: "ज़्यादा दूरी 6% की सीमा से थोड़ी ही ऊपर है; बंद सड़क या डायवर्ज़न से भी ऐसा हो सकता है।" },
     }),
   ];
 }

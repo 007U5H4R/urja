@@ -92,7 +92,7 @@ describe("format", () => {
       "212 ट्रिप, 24 ट्रक, 1–27 सितंबर के डेटा से · Gemini 3.5 Flash · 1.8 सेकंड में जवाब · Urja ग़लत हो सकता है, इसलिए कार्रवाई से पहले ट्रिप खोलें।",
     );
     expect(provenanceLine({ scope: SCOPE_HI, model: null, ms: 40 }, "hi")).toBe(
-      "212 ट्रिप, 24 ट्रक, 1–27 सितंबर के डेटा से · सीधे आपके डेटा से, AI के बिना · 0.04 सेकंड में जवाब · Urja ग़लत हो सकता है, इसलिए कार्रवाई से पहले ट्रिप खोलें।",
+      "212 ट्रिप, 24 ट्रक, 1–27 सितंबर के डेटा से · AI के बिना, सीधा हिसाब · 0.04 सेकंड में जवाब · Urja ग़लत हो सकता है, इसलिए कार्रवाई से पहले ट्रिप खोलें।",
     );
   });
 });
@@ -241,10 +241,10 @@ describe("AskProvider + AskSheet: opening, focus, inert (TC-026)", () => {
     const chips = within(within(d).getByRole("group", { name: "Suggested questions" })).getAllByRole("button");
     expect(chips.map((c) => c.textContent)).toEqual([
       "Which truck earns least per km, and why?",
-      "पिछले हफ़्ते कितना डीज़ल गायब हुआ?",
+      "How much diesel went unaccounted last week?",
       "Show every flag on the Behror stretch",
     ]);
-    expect(chips[1].getAttribute("lang")).toBe("hi");
+    expect(chips[1].getAttribute("lang")).toBe("en");
   });
 });
 

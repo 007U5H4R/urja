@@ -56,7 +56,7 @@ export function detectR3(trip: Trip, prior: R3Prior = { r1Cl: 0, r4Cl: 0 }): Fla
     {
       text: {
         en: `Used ${usedL} L; this truck's normal on this route is ${baseL} L (${pct}% more)`,
-        hi: `${usedL} लीटर लगा; इस रूट पर इस ट्रक का आम खर्च ${baseL} लीटर है (${pct}% ज़्यादा)`,
+        hi: `${usedL} लीटर लगा; इस रूट पर इस ट्रक की आम खपत ${baseL} लीटर है (${pct}% ज़्यादा)`,
       },
       source: "Fleet history",
     },
@@ -73,16 +73,16 @@ export function detectR3(trip: Trip, prior: R3Prior = { r1Cl: 0, r4Cl: 0 }): Fla
   const whyConfidence = heavy
     ? {
         en: `Check: the truck carried ${trip.loadT} t against a usual ${usual} t, and the normal doesn't allow for load, so the extra diesel may be the load.`,
-        hi: `जाँचें: ट्रक में आम ${usual} टन की जगह ${trip.loadT} टन था, और आम खर्च में लोड नहीं जुड़ता, इसलिए ज़्यादा डीज़ल लोड की वजह से भी हो सकता है।`,
+        hi: `जाँचें: ट्रक में आम ${usual} टन की जगह ${trip.loadT} टन था, और आम खपत में लोड नहीं जुड़ता, इसलिए ज़्यादा डीज़ल लोड की वजह से भी हो सकता है।`,
       }
     : confidence === "high"
       ? {
           en: `${litres} L over normal is more than twice the 12% allowance, with a steady sensor and no GPS gaps.`,
-          hi: `आम से ${litres} लीटर ज़्यादा, 12% की छूट के दोगुने से भी ऊपर है; सेंसर स्थिर और GPS में कोई रुकावट नहीं।`,
+          hi: `आम से ${litres} लीटर ज़्यादा, 12% की सीमा के दोगुने से भी ऊपर है; सेंसर स्थिर और GPS में कोई रुकावट नहीं।`,
         }
       : {
           en: `${litres} L over normal is close to the 12% allowance; slow ghats or traffic could explain part of it.`,
-          hi: `आम से ${litres} लीटर ज़्यादा, 12% की छूट के करीब है; घाट या जाम से भी कुछ हिस्सा हो सकता है।`,
+          hi: `आम से ${litres} लीटर ज़्यादा, 12% की सीमा के करीब है; घाट या जाम से भी कुछ हिस्सा हो सकता है।`,
         };
   return [
     toFlag(trip, "R3", {

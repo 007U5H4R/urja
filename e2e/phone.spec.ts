@@ -108,7 +108,7 @@ test.describe("TC-027 · language toggle", () => {
     await clickUntil(page, "हिं", () => expect(main).toHaveAttribute("lang", "hi", { timeout: 500 }));
     await expect(page).toHaveURL(/\/brief$/);
     await expect(page).toHaveTitle("सुबह का हिसाब · Urja");
-    await expect(page.getByRole("img", { name: "पिछले 14 दिन की कमाई, कल की सबसे ऊँची में से एक" })).toBeVisible();
+    await expect(page.getByRole("img", { name: "पिछले 14 दिन की कमाई, कल की कमाई सबसे ज़्यादा में से एक थी" })).toBeVisible();
     await expect(page.getByRole("region", { name: "सितंबर अब तक" })).toBeVisible();
     await expect(page.locator("html")).toHaveAttribute("lang", "hi");
     // The toggle rewrites the URL in place: no server round trip for the copy.

@@ -34,6 +34,10 @@ export function rangeHi(a: Min, b: Min): string {
 /** ₹ with Indian grouping, never signed. */
 export const inr = (n: number) => formatINR(n, { sign: "never" });
 
+/** Whole km with Indian grouping (`1,412`), as the trip-plan line shows distances. */
+const KM_GROUPING = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
+export const kmWhole = (n: number) => KM_GROUPING.format(Math.round(n));
+
 /** One decimal, as evidence shows distances (`1.6 km`). */
 export const km1 = (n: number) => (Math.round(n * 10) / 10).toFixed(1);
 

@@ -57,7 +57,7 @@ const L = {
     send: "Ask",
     close: "Close Ask Urja",
     chipsGroup: "Suggested questions",
-    chips: ["Which truck earns least per km, and why?", "पिछले हफ़्ते कितना डीज़ल गायब हुआ?", "Show every flag on the Behror stretch"],
+    chips: ["Which truck earns least per km, and why?", "How much diesel went unaccounted last week?", "Show every flag on the Behror stretch"],
     answering: "Asking Gemini…",
     banner: BANNER,
     retry: "Try again",
@@ -71,7 +71,7 @@ const L = {
     send: "पूछें",
     close: "Urja से पूछें बंद करें",
     chipsGroup: "सुझाए गए सवाल",
-    chips: ["कौन-सा ट्रक प्रति किलोमीटर सबसे कम कमाता है, और क्यों?", "पिछले हफ़्ते कितना डीज़ल गायब हुआ?", "बहरोड़ वाले हिस्से के सारे फ़्लैग दिखाएँ"],
+    chips: ["कौन-सा ट्रक प्रति किलोमीटर सबसे कम कमाता है, और क्यों?", "पिछले हफ़्ते कितने डीज़ल का हिसाब नहीं मिला?", "बहरोड़ वाले हिस्से के सारे फ़्लैग दिखाएँ"],
     answering: "Gemini से पूछ रहे हैं…",
     banner: "Urja का AI अभी जवाब नहीं दे पाया, इसलिए यह आँकड़ा सीधे आपके डेटा से है।",
     retry: "फिर से कोशिश करें",
@@ -216,12 +216,12 @@ test.describe("Ask states (TC-024)", () => {
     const chips = drawer(page).getByRole("group", { name: "Suggested questions" }).getByRole("button");
     await expect(chips).toHaveText([
       "Which truck earns least per km, and why?",
-      "पिछले हफ़्ते कितना डीज़ल गायब हुआ?",
+      "How much diesel went unaccounted last week?",
       "Show every flag on the Behror stretch",
     ]);
     await chips.nth(1).click();
-    await expect(drawer(page).locator(".q")).toHaveText("पिछले हफ़्ते कितना डीज़ल गायब हुआ?");
-    expect(sent).toEqual([{ question: "पिछले हफ़्ते कितना डीज़ल गायब हुआ?" }]);
+    await expect(drawer(page).locator(".q")).toHaveText("How much diesel went unaccounted last week?");
+    expect(sent).toEqual([{ question: "How much diesel went unaccounted last week?" }]);
   });
 
   test("answering, then the answer with cite chips, the caveat and the provenance line; a cite opens its trip", async ({ page }) => {
@@ -452,7 +452,7 @@ test.describe("EXE23: the drawer on the Hindi brief, by keyboard (TC-026)", () =
     await ask(page, "पिछले हफ़्ते?", "hi");
     await expect(drawer(page, "hi").getByRole("heading", { level: 3 })).toHaveText(L.hi.banner);
     await expect(drawer(page, "hi").getByRole("button", { name: L.hi.retry })).toBeVisible();
-    await expect(drawer(page, "hi").locator(".prov")).toContainText("सीधे आपके डेटा से, AI के बिना");
+    await expect(drawer(page, "hi").locator(".prov")).toContainText("AI के बिना, सीधा हिसाब");
     expectNoSeriousAxe((await new AxeBuilder({ page }).include("#ask-drawer").analyze()).violations);
     await page.keyboard.press("Escape");
     await expect(drawer(page, "hi")).toBeHidden();

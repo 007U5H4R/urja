@@ -499,7 +499,7 @@ function neutralAsk(ctx: Ctx, f: Flag): string {
       return `This trip used ${used} L of diesel; this truck usually uses ${normal} L on this route.`;
     }
     case "R4":
-      return `This trip ran ${Math.round(trip.actualKm)} km against a planned ${routeById(trip.routeId).plannedKm} km.`;
+      return `This trip ran ${grouped.format(Math.round(trip.actualKm))} km against a planned ${grouped.format(routeById(trip.routeId).plannedKm)} km.`;
     case "R5":
       return `The toll claim is ${inr(f.inr)} more than FASTag shows.`;
   }
@@ -1099,7 +1099,7 @@ function timeline(ctx: Ctx): TimelineEvent[] {
         add(trip.end, {
           t: "",
           dot: "bad",
-          text: `Drove ${Math.round(trip.actualKm)} km against a planned ${route.plannedKm} km`,
+          text: `Drove ${grouped.format(Math.round(trip.actualKm))} km against a planned ${grouped.format(route.plannedKm)} km`,
           small: `Flagged: ${RULE_FLAGGED.R4}`,
           v: `+${Math.round(extraKm(trip))} km`,
           vTone: "loss",

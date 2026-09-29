@@ -153,6 +153,22 @@ describe("TC-046 · fallback intents answer the 10 prepared questions", () => {
     expect(a?.cites).toHaveLength(5);
   });
 
+  it("the diesel chip, in both languages (Hindi pre-review H1), gets the last-week answer: 217 L, ₹19,530, 5 trips", () => {
+    const en = fallbackAnswer("How much diesel went unaccounted last week?");
+    expect(en?.intent).toBe("last_week_diesel");
+    expect(en?.lang).toBe("en");
+    expect(en?.answer).toContain("217 L");
+    expect(en?.answer).toContain("₹19,530");
+    expect(en?.cites).toHaveLength(5);
+    const hi = fallbackAnswer("पिछले हफ़्ते कितने डीज़ल का हिसाब नहीं मिला?");
+    expect(hi?.intent).toBe("last_week_diesel");
+    expect(hi?.lang).toBe("hi");
+    expect(hi?.answer).toContain("217 लीटर");
+    expect(hi?.answer).toContain("₹19,530");
+    expect(hi?.answer).toContain("5 ट्रिप");
+    expect(hi?.cites).toEqual(en?.cites);
+  });
+
   it("the Hinglish question maps to trip 0927-02", () => {
     const a = fallbackAnswer("Vikram ki kal wali trip mein kya gadbad hai?");
     expect(a?.intent).toBe("truck_flags");

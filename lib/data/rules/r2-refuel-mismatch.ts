@@ -48,11 +48,11 @@ export function detectR2(trip: Trip): Flag[] {
       confidence,
       evidence: [
         {
-          text: { en: `Bill says ${billedL} L (${inr(bill.billedInr)}); the tank rose ${riseL} L`, hi: `बिल में ${billedL} लीटर (${inr(bill.billedInr)}); टैंक में ${riseL} लीटर बढ़ा` },
+          text: { en: `Bill says ${billedL} L (${inr(bill.billedInr)}); the tank rose ${riseL} L`, hi: `बिल में ${billedL} लीटर (${inr(bill.billedInr)}); टंकी में ${riseL} लीटर बढ़ा` },
           source: "Fuel bill",
         },
         {
-          text: { en: `Tank read ${R2_BEFORE_MIN} min before and ${R2_AFTER_MIN} min after the fill`, hi: `टैंक भरने से ${R2_BEFORE_MIN} मिनट पहले और ${R2_AFTER_MIN} मिनट बाद पढ़ा गया` },
+          text: { en: `Tank read ${R2_BEFORE_MIN} min before and ${R2_AFTER_MIN} min after the fill`, hi: `टंकी भरने से ${R2_BEFORE_MIN} मिनट पहले और ${R2_AFTER_MIN} मिनट बाद पढ़ा गया` },
           source: "Fuel sensor",
         },
         {
@@ -64,11 +64,11 @@ export function detectR2(trip: Trip): Flag[] {
         confidence === "likely"
           ? {
               en: "Capped at Likely: a bill can also cover cans or a second tank, and there is no pump-meter record to check against.",
-              hi: "‘शायद’ से ऊपर नहीं: बिल में कैन या दूसरे टैंक का डीज़ल भी हो सकता है, और पंप-मीटर का रिकॉर्ड नहीं है।",
+              hi: "‘शायद’ से ऊपर नहीं: बिल में कैन या दूसरी टंकी का डीज़ल भी हो सकता है, और पंप-मीटर का रिकॉर्ड नहीं है।",
             }
           : {
               en: `The bill is only ${litres} L above the tank's rise, a narrow margin over the 8% allowance.`,
-              hi: `बिल टैंक की बढ़त से सिर्फ़ ${litres} लीटर ज़्यादा है; 8% की छूट से यह अंतर कम है।`,
+              hi: `बिल टंकी की बढ़त से सिर्फ़ ${litres} लीटर ज़्यादा है; 8% की सीमा से यह अंतर कम है।`,
             },
     });
   }

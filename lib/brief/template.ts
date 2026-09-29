@@ -339,8 +339,8 @@ export function chartLabel(values: number[], lang: Lang): string {
   const n = values.length;
   if (lang === "hi") {
     const head = `पिछले ${n} दिन की कमाई`;
-    if (rank === 1) return `${head}, कल की सबसे ऊँची`;
-    if (rank <= 3) return `${head}, कल की सबसे ऊँची में से एक`;
+    if (rank === 1) return `${head}, कल की कमाई सबसे ज़्यादा थी`;
+    if (rank <= 3) return `${head}, कल की कमाई सबसे ज़्यादा में से एक थी`;
     return `${head}; कल ${inr(last)}`;
   }
   const head = `Profit over the last ${n} days`;
@@ -415,17 +415,17 @@ export function renderBrief(dayKey: string, lang: Lang, opts: { onlyHigh?: boole
     clean: cleanRich(d.trips, flaggedTrips, lang),
     month: {
       ariaLabel: hi ? `${monthName} अब तक` : `${monthName} so far`,
-      flaggedLabel: hi ? `${monthName} में पकड़ा` : `Flagged in ${monthName}`,
+      flaggedLabel: hi ? `${monthName} में फ़्लैग हुआ` : `Flagged in ${monthName}`,
       flaggedInr: sept.flaggedInr,
       recoveredLabel: hi ? "वापस मिला" : "Recovered",
       recoveredInr: sept.recoveredInr,
-      weeksLabel: hi ? "हफ़्तेवार: पकड़ा और वापस मिला" : "Flagged and recovered, week by week",
+      weeksLabel: hi ? "हर हफ़्ते: फ़्लैग हुआ और वापस मिला" : "Flagged and recovered, week by week",
       weeks: weeks().map((w) => ({ label: w.label, lit: w.bricks.lit, total: w.bricks.total })),
       cap: hi ? `हर ब्लॉक ≈ ${inr(BRICK_INR)} · चमकीले = वापस मिला` : `Each block ≈ ${inr(BRICK_INR)} · lit = recovered`,
     },
     ask: {
       label: hi ? "Urja से पूछें" : "Ask Urja",
-      placeholder: hi ? "कुछ भी पूछें, हिंदी या English में…" : "Ask anything, in Hindi or English…",
+      placeholder: hi ? "कुछ भी पूछें, हिंदी या अंग्रेज़ी में…" : "Ask anything, in Hindi or English…",
       button: hi ? "पूछें" : "Ask",
     },
   };

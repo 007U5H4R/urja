@@ -69,7 +69,7 @@ export const ASK_COPY: Record<Lang, AskCopy> = {
     citesLabel: "इस जवाब में इस्तेमाल हुई ट्रिप",
     citeChip: (tripId) => `ट्रिप ${tripId}`,
     from: (scope) => `${scope} के डेटा से`,
-    noModel: "सीधे आपके डेटा से, AI के बिना",
+    noModel: "AI के बिना, सीधा हिसाब",
     answeredIn: (s) => `${s} सेकंड में जवाब`,
     canBeWrong: "Urja ग़लत हो सकता है, इसलिए कार्रवाई से पहले ट्रिप खोलें।",
   },
@@ -88,12 +88,12 @@ export interface AskChip {
 export const ASK_CHIPS: Record<Lang, readonly AskChip[]> = {
   en: [
     { text: "Which truck earns least per km, and why?", lang: "en" },
-    { text: "पिछले हफ़्ते कितना डीज़ल गायब हुआ?", lang: "hi" },
+    { text: "How much diesel went unaccounted last week?", lang: "en" },
     { text: "Show every flag on the Behror stretch", lang: "en" },
   ],
   hi: [
     { text: "कौन-सा ट्रक प्रति किलोमीटर सबसे कम कमाता है, और क्यों?", lang: "hi" },
-    { text: "पिछले हफ़्ते कितना डीज़ल गायब हुआ?", lang: "hi" },
+    { text: "पिछले हफ़्ते कितने डीज़ल का हिसाब नहीं मिला?", lang: "hi" },
     { text: "बहरोड़ वाले हिस्से के सारे फ़्लैग दिखाएँ", lang: "hi" },
   ],
 };
