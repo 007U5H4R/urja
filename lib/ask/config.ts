@@ -20,6 +20,8 @@ import "server-only";
 export { PROMPT_VERSION } from "./prompt";
 
 export const DEFAULT_ASK_MODEL = "gemini-3.5-flash";
+/** EXE26: asked once when the primary answers 429 or 503; `ASK_FALLBACK_MODEL=off` disables it. */
+export const DEFAULT_FALLBACK_MODEL = "gemini-2.5-flash";
 export const ASK_TIMEOUT_MS = 8000;
 export const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 
@@ -27,15 +29,20 @@ const THINKING_LEVELS = ["minimal", "low", "medium", "high"] as const;
 export type ThinkingLevel = (typeof THINKING_LEVELS)[number];
 export const DEFAULT_THINKING_LEVEL: ThinkingLevel = "minimal";
 
+/** Gemini 3 models take a thinking level; 2.x models take a token budget (0 = off on Flash). */
+export type ThinkingConfig = { thinkingLevel: ThinkingLevel } | { thinkingBudget: number };
+
 export interface AskConfig {
   model: string;
+  /** Tried once, inside the same timeout, after a 429 or 503 from `model`; null = never. */
+  fallbackModel: string | null;
   temperature: number;
   maxOutputTokens: number;
-  thinking: { thinkingLevel: ThinkingLevel } | null;
+  thinking: ThinkingConfig | null;
   timeoutMs: number;
 }
 
-type Env = { ASK_MODEL?: string; ASK_THINKING_LEVEL?: string; [name: string]: string | undefined };
+type Env = { ASK_MODEL?: string; ASK_FALLBACK_MODEL?: string; ASK_THINKING_LEVEL?: string; [name: string]: string | undefined };
 
 /** The model settings. `env` defaults to process.env; tests pass their own. Never reads the key. */
 export function askConfig(env: Env = process.env): AskConfig {
@@ -46,9 +53,26 @@ export function askConfig(env: Env = process.env): AskConfig {
       : { thinkingLevel: (THINKING_LEVELS as readonly string[]).includes(level ?? "") ? (level as ThinkingLevel) : DEFAULT_THINKING_LEVEL };
   return {
     model: env.ASK_MODEL?.trim() || DEFAULT_ASK_MODEL,
+    fallbackModel: fallbackModel(env.ASK_FALLBACK_MODEL),
     temperature: 0.2,
     maxOutputTokens: 600,
     thinking,
     timeoutMs: ASK_TIMEOUT_MS,
   };
+}
+
+function fallbackModel(raw: string | undefined): string | null {
+  const v = raw?.trim();
+  if (!v) return DEFAULT_FALLBACK_MODEL;
+  return v.toLowerCase() === "off" ? null : v;
+}
+
+/**
+ * The thinking config `model` accepts. 2.x models reject `thinkingLevel`: 2.x Flash
+ * gets a zero budget (the lowest-latency setting, as "minimal" is for Gemini 3);
+ * other 2.x models (Pro can't turn thinking off) get none and keep their default.
+ */
+export function thinkingFor(model: string, thinking: ThinkingConfig | null): ThinkingConfig | null {
+  if (!/^gemini-2\./i.test(model)) return thinking;
+  return /flash/i.test(model) ? { thinkingBudget: 0 } : null;
 }

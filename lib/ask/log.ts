@@ -43,6 +43,8 @@ export interface AskLogLine {
   ipHash: string;
   /** Why the guard sent a model answer to the fallback. */
   guard?: string;
+  /** EXE26: the primary's busy answer when the fallback model was asked ("gemini-3.5-flash http_429:429"). */
+  firstAttempt?: string;
 }
 
 /** The first 16 hex of SHA-256(question). */

@@ -13,7 +13,7 @@ import { askConfig, type AskConfig } from "./config";
 import { AskRequest, type AskLang, type AskResponse } from "./contract";
 import { getAskContext } from "./context";
 import { fallbackAnswer, SAVED_MESSAGE } from "./fallback";
-import { callGemini } from "./gemini";
+import { callGeminiWithFallback, type GeminiAttempt } from "./gemini";
 import { guardAnswer } from "./guard";
 import { detectLang } from "./intents";
 import { tripLabel } from "./labels";
@@ -43,6 +43,18 @@ function json(status: number, body: unknown, extra: Record<string, string> = {})
   return new Response(JSON.stringify(body), { status, headers: { ...HEADERS, ...extra } });
 }
 
+const attemptCode = (a: GeminiAttempt) => (a.status ? `${a.outcome}:${a.status}` : a.outcome);
+/** Log form of a busy first attempt: "gemini-3.5-flash http_429:429". */
+const attemptLog = (a: GeminiAttempt) => `${a.model} ${attemptCode(a)}`;
+
+/**
+ * EXE24/EXE26 · "<outcome>[:<detail>][; model=<model>][; after=<first outcome> <first model>]".
+ * Outcome codes and model ids only: never the key or the question.
+ */
+function outcomeHeader(code: string, model: string | null, first?: GeminiAttempt): string {
+  return [code, model ? `model=${model}` : null, first ? `after=${attemptCode(first)} ${first.model}` : null].filter(Boolean).join("; ");
+}
+
 export function createAskHandler(deps: AskDeps = {}) {
   const limiter = deps.limiter ?? createRateLimiter();
   const sink = deps.sink ?? consoleSink;
@@ -65,6 +77,7 @@ export function createAskHandler(deps: AskDeps = {}) {
       cites?: string[];
       unsupported?: number[];
       guard?: string;
+      firstAttempt?: string;
     }) =>
       writeAskLog(
         {
@@ -82,6 +95,7 @@ export function createAskHandler(deps: AskDeps = {}) {
           unsupportedNumbers: e.unsupported ?? [],
           ipHash,
           ...(e.guard ? { guard: e.guard } : {}),
+          ...(e.firstAttempt ? { firstAttempt: e.firstAttempt } : {}),
         },
         sink,
       );
@@ -109,7 +123,7 @@ export function createAskHandler(deps: AskDeps = {}) {
     const qLang: AskLang = detectLang(question);
 
     // ── Answers that don't come from the model ───────────────────────────
-    const degrade = (outcome: AskOutcome, status = 200, extra: { retryAfterS?: number; guard?: string; model?: string | null; upstream?: number } = {}) => {
+    const degrade = (outcome: AskOutcome, status = 200, extra: { retryAfterS?: number; guard?: string; model?: string | null; upstream?: number; first?: GeminiAttempt } = {}) => {
       let body: AskResponse;
       let cites: string[] = [];
       let scope = "";
@@ -136,11 +150,11 @@ export function createAskHandler(deps: AskDeps = {}) {
         body = { mode: "saved", answer: SAVED_MESSAGE[lang], lang, cites: [], provenance };
       }
       if (extra.retryAfterS) body.retryAfterS = extra.retryAfterS;
-      log({ mode: body.mode, outcome, model: extra.model ?? null, question, lang: body.lang, cites, guard: extra.guard });
+      log({ mode: body.mode, outcome, model: extra.model ?? null, question, lang: body.lang, cites, guard: extra.guard, firstAttempt: extra.first && attemptLog(extra.first) });
       // EXE24: the outcome code (never the key or the question) in a header, so a
       // preview's fallbacks can be diagnosed without its runtime logs.
       const detail = extra.guard ?? (extra.upstream ? String(extra.upstream) : null);
-      const diag = { "x-ask-outcome": detail ? `${outcome}:${detail}` : outcome };
+      const diag = { "x-ask-outcome": outcomeHeader(detail ? `${outcome}:${detail}` : outcome, extra.model ?? null, extra.first) };
       return json(status, body, extra.retryAfterS ? { ...diag, "retry-after": String(extra.retryAfterS) } : diag);
     };
 
@@ -157,11 +171,14 @@ export function createAskHandler(deps: AskDeps = {}) {
       const apiKey = env.GEMINI_API_KEY?.trim();
       if (!apiKey) return degrade("no_key");
 
-      const result = await callGemini({ apiKey, context: bundle.json, question, config, fetchImpl: deps.fetchImpl ?? fetch });
-      if (!result.ok) return degrade(result.outcome, 200, { model: config.model, upstream: result.status });
+      const result = await callGeminiWithFallback({ apiKey, context: bundle.json, question, config, fetchImpl: deps.fetchImpl ?? fetch });
+      // EXE26: the model that answered (or failed last), and the busy first attempt if the fallback model was asked.
+      const answeredBy = result.attempts[result.attempts.length - 1].model;
+      const first = result.attempts.length > 1 ? result.attempts[0] : undefined;
+      if (!result.ok) return degrade(result.outcome, 200, { model: answeredBy, upstream: result.status, first });
 
       const g = guardAnswer(result.answer, { question, allowed: bundle.allowed, tripIds: bundle.tripIds });
-      if (!g.ok) return degrade("guard", 200, { guard: g.reason, model: result.model });
+      if (!g.ok) return degrade("guard", 200, { guard: g.reason, model: result.model, first });
 
       const lang = result.answer.lang;
       const body: AskResponse = {
@@ -172,8 +189,8 @@ export function createAskHandler(deps: AskDeps = {}) {
         ...(g.caveat ? { caveat: g.caveat } : {}),
         provenance: { scope: bundle.scope, model: result.model, ms: elapsed(), promptVersion: PROMPT_VERSION, datasetHash: bundle.hash },
       };
-      log({ mode: "model", outcome: "ok", model: result.model, question, lang, cites: g.cites, unsupported: g.unsupported });
-      return json(200, body, { "x-ask-outcome": "ok" });
+      log({ mode: "model", outcome: "ok", model: result.model, question, lang, cites: g.cites, unsupported: g.unsupported, firstAttempt: first && attemptLog(first) });
+      return json(200, body, { "x-ask-outcome": outcomeHeader("ok", result.model, first) });
     } catch {
       try {
         return degrade("error");

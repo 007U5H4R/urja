@@ -316,3 +316,18 @@
 ## EXE25 · TC-055 is measured on the preview through the agent proxy — accepted 2026-09-29
 - Lighthouse 12.8.2 (mobile, simulated throttling) ran in the VM's Chromium via `--proxy-server`. The proxy's CA was added to the NSS store with `certutil`, so TLS is still verified. The proxy adds the Vercel bypass header.
 - Results: `/` has a median LCP of 1.83 s over 9 runs (two outliers at about 4.5 s are kept in the record), and `/why` 1.52 s over 5 runs, against the unchanged 2.5 s budget. M-004 passes. Proxy hops add latency on top of the real path, so these numbers err on the slow side.
+
+## EXE26 · A fallback model answers when the primary is busy — accepted 2026-09-29 (user decision, relayed by the local session)
+- **Why:** the preview's Gemini calls got 429 (quota) and 503 (busy) from `gemini-3.5-flash`. The local session confirmed that the key and the model id are valid (ListModels lists `models/gemini-3.5-flash` with generateContent), so the free tier is the likely cause. The live demo shouldn't depend on one busy model.
+- **Built:** `callGeminiWithFallback` (lib/ask/gemini.ts).
+  - On an upstream **429 or 503**, and only then, it asks `ASK_FALLBACK_MODEL` once. The default is `gemini-2.5-flash`; `off` disables it; a value equal to the primary disables it too.
+  - The retry runs **inside the existing 8 s budget**, with whatever the first call left. It is skipped when less than 1 s is left (`MIN_RETRY_MS`). `ASK_TIMEOUT_MS` stays 8000.
+  - Any other failure, or a second failure, goes to the deterministic fallback as before. The guard checks the fallback model's answer like any other.
+- **Thinking config:** Gemini 2.x rejects `thinkingLevel`. `thinkingFor` sends `thinkingBudget: 0` to 2.x Flash (the lowest-latency setting, like "minimal" on Gemini 3) and no thinking config to other 2.x models (Pro can't turn thinking off). It applies to the primary too, so `ASK_MODEL` can be a 2.x Flash.
+- **Named everywhere:**
+  - `provenance.model` is the model that answered, so the UI's provenance line reads "Gemini 2.5 Flash".
+  - `x-ask-outcome` becomes `<outcome>[:<detail>][; model=<model>][; after=<first outcome> <first model>]`, for example `ok; model=gemini-2.5-flash; after=http_429:429 gemini-3.5-flash`. This extends the EXE24 format.
+  - The log line gains `firstAttempt`.
+  - The eval records `model` per case and `modelCounts` in provenance.
+- **Gate unchanged:** an answer from the fallback model is `mode: "model"` and counts as a model answer (EXE13). No threshold, golden value or dataset changed.
+- **x-ask-outcome (user decision):** kept through Stage 9 QA. The Stage 10 security review decides whether it ships to `main`; the default is keep, since it carries no key or question.

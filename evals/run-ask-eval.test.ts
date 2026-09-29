@@ -274,6 +274,18 @@ describe("runEval", () => {
     expect(result.provenance.warnings).toEqual([]);
   });
 
+  it("EXE26: records which model wrote each answer, and counts them", async () => {
+    const h = harness((id) => ({ status: 200, body: { ...good.get(id), provenance: provenance(["EVAL-002", "EVAL-005"].includes(id) ? "gemini-2.5-flash" : "gemini-3.5-flash") } }));
+    const { result } = await runEval(opts(), h.deps);
+    const out = h.lines.join("\n");
+    expect(result.cases.find((c) => c.id === "EVAL-002")?.model).toBe("gemini-2.5-flash");
+    expect(result.cases.find((c) => c.id === "EVAL-001")?.model).toBe("gemini-3.5-flash");
+    // Only model answers count; the EVAL-007 fixture is a fallback answer.
+    expect(result.provenance.modelCounts).toEqual({ "gemini-3.5-flash": 10, "gemini-2.5-flash": 2 });
+    expect(result.summary.preparedByModel).toBe("9/10");
+    expect(out).toMatch(/models gemini-3\.5-flash ×10, gemini-2\.5-flash ×2/);
+  });
+
   it("judges dirty from tracked files only", async () => {
     const h = harness();
     await runEval(opts(), h.deps);

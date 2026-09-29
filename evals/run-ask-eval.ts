@@ -144,6 +144,8 @@ export interface CaseResult {
   pass: boolean;
   /** model | fallback | saved from the API; 'error' when there was no usable response. */
   mode: string;
+  /** EXE26: the model that wrote the answer (provenance.model); null for fallback, saved or error. */
+  model: string | null;
   httpStatus: number | null;
   /** Client-side, end to end. */
   ms: number;
@@ -171,6 +173,8 @@ export interface Provenance {
   /** Where `model` came from: the responses' provenance, the runner's ASK_MODEL, or nowhere. */
   modelSource: "responses" | "ASK_MODEL env" | "none";
   modelsSeen: string[];
+  /** EXE26: answers per model (the primary and the fallback model both count as the model). */
+  modelCounts: Record<string, number>;
   promptVersion: string;
   datasetVersion: string;
   datasetHash: string | null;
@@ -361,6 +365,7 @@ export async function runEval(opts: RunOptions, deps: RunDeps = realDeps): Promi
       kind: c.kind,
       pass: score.pass,
       mode: usable?.mode ?? "error",
+      model: usable?.provenance?.model ?? null,
       httpStatus: outcome.status,
       ms: outcome.ms,
       serverMs: typeof usable?.provenance?.ms === "number" ? usable.provenance.ms : null,
@@ -381,7 +386,7 @@ export async function runEval(opts: RunOptions, deps: RunDeps = realDeps): Promi
     deps.log(`  ${last.id}  ${last.pass ? "pass" : "FAIL"}  ${last.mode}  ${last.ms} ms`);
   }
 
-  const provenance = buildProvenance(opts, deps, dataset, bundle.hash, seen);
+  const provenance = buildProvenance(opts, deps, dataset, bundle.hash, seen, cases);
   const summary = summarise(dataset, cases);
   if (opts.baseline && baseline) summary.vsBaseline = compare(opts.baseline, baseline, cases, summary);
 
@@ -444,6 +449,7 @@ function buildProvenance(
   dataset: EvalDataset,
   localHash: string,
   seen: { model: (string | null)[]; prompt: (string | undefined)[]; hash: (string | undefined)[] },
+  cases: CaseResult[],
 ): Provenance {
   const git = (args: string[], fallback: string) => {
     try {
@@ -470,6 +476,7 @@ function buildProvenance(
     model: models[0] ?? deps.env.ASK_MODEL ?? null,
     modelSource: models[0] ? "responses" : deps.env.ASK_MODEL ? "ASK_MODEL env" : "none",
     modelsSeen: models,
+    modelCounts: countModels(cases.filter((c) => c.mode === "model").map((c) => c.model)),
     promptVersion,
     datasetVersion: dataset.version,
     datasetHash: hashes[0] ?? null,
@@ -584,7 +591,7 @@ export function report(r: EvalResult): string[] {
   out.push(
     `Prepared ${s.prepared} (by the model ${s.preparedByModel}) · off-topic ${s.offtopic} · p50 ${s.p50Ms} ms · p90 ${s.p90Ms} ms · forbidden ${s.forbiddenHits} · unsupported ${s.unsupportedNumbers} (on passing ${s.unsupportedOnPassing})`,
     `Modes: ${Object.entries(s.modes).map(([k, v]) => `${k} ${v}`).join(", ")}`,
-    `Provenance: ${p.commit.slice(0, 7)}${p.dirty ? " (dirty)" : ""} on ${p.branch} · ${p.baseUrlHost} · model ${p.model ?? "none"}${p.modelSource === "responses" ? "" : ` (${p.modelSource})`} · ${p.promptVersion} · dataset ${p.datasetVersion} · hash ${p.datasetHash ?? "none"}`,
+    `Provenance: ${p.commit.slice(0, 7)}${p.dirty ? " (dirty)" : ""} on ${p.branch} · ${p.baseUrlHost} · ${modelText(p)} · ${p.promptVersion} · dataset ${p.datasetVersion} · hash ${p.datasetHash ?? "none"}`,
   );
   for (const w of [...s.warnings, ...p.warnings]) out.push(`Warning: ${w}`);
   if (s.vsBaseline) {
@@ -622,4 +629,17 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
       process.exitCode = 2;
     },
   );
+}
+
+function countModels(models: (string | null)[]): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const m of models) if (m) counts[m] = (counts[m] ?? 0) + 1;
+  return counts;
+}
+
+/** "model gemini-3.5-flash", or with several: "models gemini-3.5-flash ×11, gemini-2.5-flash ×2". */
+function modelText(p: Provenance): string {
+  const entries = Object.entries(p.modelCounts ?? {});
+  if (entries.length > 1) return `models ${entries.map(([m, n]) => `${m} ×${n}`).join(", ")}`;
+  return `model ${p.model ?? "none"}${p.modelSource === "responses" ? "" : ` (${p.modelSource})`}`;
 }

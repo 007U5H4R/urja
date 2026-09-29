@@ -383,9 +383,9 @@ describe("never 500", () => {
 });
 
 describe("x-ask-outcome diagnostic header (EXE24)", () => {
-  it("says ok on a model answer", async () => {
+  it("says ok and names the model on a model answer", async () => {
     const res = await POST(ask({ question: RECOGNISED }));
-    expect(res.headers.get("x-ask-outcome")).toBe("ok");
+    expect(res.headers.get("x-ask-outcome")).toBe("ok; model=gemini-3.5-flash");
   });
 
   it.each([
@@ -394,15 +394,16 @@ describe("x-ask-outcome diagnostic header (EXE24)", () => {
     [429, "http_429:429"],
     [503, "http_5xx:503"],
   ])("names the upstream status %i", async (code, expected) => {
+    vi.stubEnv("ASK_FALLBACK_MODEL", "off");
     fetchMock.mockImplementation(async () => new Response("{}", { status: code }));
     const res = await POST(ask({ question: RECOGNISED }));
-    expect(res.headers.get("x-ask-outcome")).toBe(expected);
+    expect(res.headers.get("x-ask-outcome")).toBe(`${expected}; model=gemini-3.5-flash`);
   });
 
   it("names the guard reason", async () => {
     fetchMock.mockImplementation(async () => geminiJson({ ...MODEL_OK, cited_trips: ["0999-99"] }));
     const res = await POST(ask({ question: RECOGNISED }));
-    expect(res.headers.get("x-ask-outcome")).toBe("guard:no_cites");
+    expect(res.headers.get("x-ask-outcome")).toBe("guard:no_cites; model=gemini-3.5-flash");
   });
 
   it("names a missing key, and never carries the key", async () => {
@@ -411,5 +412,52 @@ describe("x-ask-outcome diagnostic header (EXE24)", () => {
     for (const [, v] of res.headers) expect(v).not.toContain(KEY);
     vi.stubEnv("GEMINI_API_KEY", "");
     expect((await POST(ask({ question: RECOGNISED }))).headers.get("x-ask-outcome")).toBe("no_key");
+  });
+});
+
+describe("EXE26 · the fallback model answers when the primary is busy", () => {
+  const busyThen = (primary: number, second: () => Response) =>
+    fetchMock.mockImplementation(async (url: string) => (url.includes("/gemini-3.5-flash:") ? new Response("{}", { status: primary }) : second()));
+
+  it.each([429, 503])("a %i from the primary → a model answer from gemini-2.5-flash, named everywhere", async (code) => {
+    busyThen(code, () => geminiJson(MODEL_OK));
+    const res = await POST(ask({ question: RECOGNISED }));
+    const { body } = await read(res);
+    expect(AskResponse.parse(body).mode).toBe("model");
+    expect(body.provenance.model).toBe("gemini-2.5-flash");
+    const first = code === 429 ? "http_429:429" : "http_5xx:503";
+    expect(res.headers.get("x-ask-outcome")).toBe(`ok; model=gemini-2.5-flash; after=${first} gemini-3.5-flash`);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(lastLog()).toMatchObject({ mode: "model", outcome: "ok", model: "gemini-2.5-flash", firstAttempt: `gemini-3.5-flash ${first}` });
+  });
+
+  it("both busy → the deterministic fallback, as before, with both attempts named", async () => {
+    busyThen(429, () => new Response("{}", { status: 503 }));
+    const res = await POST(ask({ question: RECOGNISED }));
+    const { body } = await read(res);
+    expect(body.mode).toBe("fallback");
+    expect(body.provenance.model).toBeNull();
+    expect(res.headers.get("x-ask-outcome")).toBe("http_5xx:503; model=gemini-2.5-flash; after=http_429:429 gemini-3.5-flash");
+    expect(lastLog()).toMatchObject({ mode: "fallback", outcome: "http_5xx", model: "gemini-2.5-flash" });
+  });
+
+  it("the guard still checks the fallback model's answer", async () => {
+    busyThen(503, () => geminiJson({ ...MODEL_OK, cited_trips: ["0999-99"] }));
+    const res = await POST(ask({ question: RECOGNISED }));
+    expect((await read(res)).body.mode).toBe("fallback");
+    expect(res.headers.get("x-ask-outcome")).toBe("guard:no_cites; model=gemini-2.5-flash; after=http_5xx:503 gemini-3.5-flash");
+  });
+
+  it("a primary timeout ends at 8 s with the deterministic fallback, naming the primary", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    fetchMock.mockImplementation(
+      (_url: string, init: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => init.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")))),
+    );
+    const pending = POST(ask({ question: RECOGNISED }));
+    await vi.advanceTimersByTimeAsync(8000);
+    const res = await pending;
+    expect(res.headers.get("x-ask-outcome")).toBe("timeout; model=gemini-3.5-flash");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

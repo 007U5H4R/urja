@@ -2,12 +2,14 @@
  * The Gemini REST client (technical-plan §6.4). One POST per question:
  * - the key travels only in the `x-goog-api-key` header, never in the URL or body;
  * - the answer is JSON constrained by RESPONSE_SCHEMA, then validated with zod;
- * - an AbortController cuts the call at ASK_TIMEOUT_MS (8 s).
+ * - an AbortController cuts the call at ASK_TIMEOUT_MS (8 s);
+ * - on a 429 or 503, callGeminiWithFallback asks the fallback model once, inside
+ *   the same 8 s (EXE26).
  * Every failure comes back as an outcome, never as a throw, so the route can
  * fall back.
  */
 import "server-only";
-import { askConfig, GEMINI_BASE_URL, type AskConfig } from "./config";
+import { askConfig, GEMINI_BASE_URL, thinkingFor, type AskConfig } from "./config";
 import { SYSTEM_INSTRUCTION, userTurn } from "./prompt";
 import { ModelAnswer, RESPONSE_SCHEMA } from "./schema";
 
@@ -101,4 +103,38 @@ export async function callGemini({ apiKey, context, question, config = askConfig
   } finally {
     clearTimeout(timer);
   }
+}
+
+/** One call to one model, as the handler reports it (x-ask-outcome, the log). */
+export type GeminiAttempt = { model: string; outcome: GeminiFailure | "ok"; status?: number };
+
+/** Below this much of the budget, the fallback model isn't worth a call. */
+export const MIN_RETRY_MS = 1000;
+
+/**
+ * EXE26: call the primary model; on an upstream 429 (quota) or 503 (busy), call
+ * `config.fallbackModel` once with whatever is left of `config.timeoutMs`, so the
+ * whole exchange still ends within the one budget. Any other failure is final.
+ * `attempts` lists every call made, in order.
+ */
+export async function callGeminiWithFallback(
+  call: GeminiCall & { now?: () => number },
+): Promise<GeminiResult & { attempts: GeminiAttempt[] }> {
+  const config = call.config ?? askConfig();
+  const now = call.now ?? (() => performance.now());
+  const t0 = now();
+  const attempt = (r: GeminiResult, model: string): GeminiAttempt =>
+    r.ok ? { model, outcome: "ok" } : { model, outcome: r.outcome, ...(r.status ? { status: r.status } : {}) };
+
+  const first = await callGemini({ ...call, config: { ...config, thinking: thinkingFor(config.model, config.thinking) } });
+  const attempts = [attempt(first, config.model)];
+  const busy = !first.ok && (first.status === 429 || first.status === 503);
+  const fallback = config.fallbackModel;
+  const left = config.timeoutMs - (now() - t0);
+  if (!busy || !fallback || fallback.toLowerCase() === config.model.toLowerCase() || left < MIN_RETRY_MS) return { ...first, attempts };
+
+  const retryConfig: AskConfig = { ...config, model: fallback, thinking: thinkingFor(fallback, config.thinking), timeoutMs: Math.floor(left) };
+  const second = await callGemini({ ...call, config: retryConfig });
+  attempts.push(attempt(second, fallback));
+  return { ...second, attempts };
 }
