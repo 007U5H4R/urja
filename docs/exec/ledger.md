@@ -12,20 +12,20 @@
 | TKT-03 Lamplight foundation | TASK-7 | c6b0673, e1ba025 |
 | TKT-04 Today lower half | TASK-8 | c4ddb91 |
 | TKT-05 Trip evidence | TASK-9 | b38035c |
-| TKT-06 Message and brief | TASK-10 | 3b5c6be |
+| TKT-06 Message and brief (+ EXE23 Hindi menu, drawer, html lang) | TASK-10 | 3b5c6be, ea791c3, 36df2ca |
 | TKT-07 Ask API | TASK-11 | 8b1642a, ddfb752 |
-| TKT-08 Why Urja | TASK-12 | abc2620 |
+| TKT-08 Why Urja (+ EXE19 byline) | TASK-12 | abc2620, e6741d2 |
 | TKT-09 Link preview | TASK-13 | bf082f6 |
-| TKT-10 Maps | TASK-14 | 9d04764 |
+| TKT-10 Maps | TASK-14 | 9d04764, b025cff (test fix) |
 | TKT-11 Screen states | TASK-15 | fb383cc |
 | TKT-12 Ask UI | TASK-16 | 6e9c710 |
 | TKT-13 Ask eval | TASK-17 | 42a5e92, 63bb068 |
 | TKT-14 3D scene + M-004 performance fixes | TASK-18 | 0f6ab03, 2ec07f9, 9845a7b |
 
-**Final checks on 9845a7b:**
-- `pnpm verify`: 81 files / 983 tests pass (1 skipped).
-- `pnpm test:e2e`: 366 pass / 63 skipped by viewport project / 0 fail. One known flaky test ([phone] maps.spec reduced-motion) failed once under full-suite load elsewhere and passes on rerun.
-- `pnpm check:bundle` (flagless build): no key material, no debug hooks.
+**Final checks on b025cff** (after the EXE19–EXE23 follow-ups):
+- `pnpm verify`: 84 files / 1007 tests pass (1 skipped).
+- `pnpm build` (flagless) + `pnpm check:bundle`: pass; no key material, no debug hooks. Routes: `/`, `/why`, `/og-card`, `/trips` static; 247 trip pages SSG; `/brief`, `/message`, `/en/brief`, `/en/message` dynamic.
+- `pnpm test:e2e` on 36df2ca: 386 pass / 84 skipped by viewport project / 1 fail: the [phone] maps.spec reduced-motion test, the known flaky one. Root cause: the click scrolled the page on a phone, and the helper counted that scroll as a third marker position. b025cff measures the marker against the map instead; maps.spec then passed 240/240 with `--repeat-each=5` on all projects. The threshold (exactly 2 positions, a jump) is unchanged.
 
 **Gates** (details under "Gates" below):
 - M-001: **PASS**.
@@ -39,6 +39,7 @@
 - Ask: TC-040–TC-046.
 - Link preview and quality: TC-050 (local and a VERCEL_URL build), TC-055 (bundle; LCP on /why), TC-061.
 - TC-030's automated part.
+- EXE23: server `<html lang>` equals the screen's language on first paint (`e2e/html-lang.spec.ts`: /brief hi, /brief?lang=en en, both orders of a repeated `lang`, /message, the toggle flow, `main[lang]` = `html[lang]`); the phone menu and the Ask drawer follow the brief's language (ask.spec, phone.spec).
 - TC-060: GitHub Actions CI is green on both push and pull_request (cb49283). A flaky wrapper test found by the first real CI run was fixed in the test only; the component is unchanged.
 
 **BLOCKED:**
@@ -53,27 +54,25 @@
    - og:image 200 on the preview (TKT-09 AC3);
    - TC-051 unfurl;
    - Lighthouse on the preview.
-4. **Pending, manual (local session):** TC-030 on the Mac GPU (`docs/exec/tc-030-manual.md`) and the native Hindi review (`docs/exec/hindi-review.md`, 245 strings).
+4. **Pending, manual (local session):** TC-030 on the Mac GPU (`docs/exec/tc-030-manual.md`) and the native Hindi review (`docs/exec/hindi-review.md`; sections 8 Phone menu and 9 Ask drawer are new with EXE23). For the reviewer: the Hindi fallback provenance line says "डेटा से" twice ("…के डेटा से · सीधे आपके डेटा से, AI के बिना").
 5. **CI (TC-060) on GitHub: resolved 2026-09-29.** The earlier block was account billing. GitHub's annotation said "recent account payments have failed or your spending limit needs to be increased". After billing was fixed, run 55 (push, 7d7b059, attempt 2) passed every step: checkout, pnpm setup, Node 22, frozen install, `pnpm verify`, `pnpm build`, `pnpm check:bundle`.
 
 **User decisions (2026-09-29):**
 - **EXE13: accepted.** Only answers written by Gemini count toward "≥ 9/10 prepared"; fallback answers never count. Stricter, threshold unchanged. The runner gate and evaluation-plan §2/§7 are updated, and runner tests cover it.
 - **EXE16: confirmed.** The scene tag stays on the fallback poster; it is the honesty label and follows TC-029.
+- **EXE19: byline confirmed** as "Tushar Pathak · Product Manager" (e6741d2).
+- **EXE20/21/22: EXE12, EXE11 and EXE15 confirmed** as built.
+- **EXE23: done.** On the Hindi brief, the phone menu and the Ask drawer's visible labels (chips, cite chips, provenance, buttons) follow the brief's language (ea791c3). The server sends `<html lang="hi">` on the Hindi /brief and /message on first paint, through per-language root layouts (36df2ca). Screen-state copy stays English: an accepted exception.
 
 **Still open (the user's, no action here):**
-- The byline "Tushar Pathak" (`content/why.ts`) is not yet confirmed. Field quotes (`content/field-notes.ts`) are empty and the placeholder shows.
+- Field quotes (`content/field-notes.ts`) are empty and the placeholder shows.
 - The user will add `GEMINI_API_KEY` in Vercel and a Vercel Protection Bypass secret to this cloud environment. **When the bypass secret appears, measure TC-055 LCP on the preview first** (blocked item 2), then the other preview checks (item 3).
-- Judgement calls to confirm when convenient:
-  - EXE12: /brief and /message use their own top bar, following the phone mockups.
-  - EXE11: /why's phone menu has no "Ask Urja", matching why.html.
-  - EXE15: no route `loading.tsx` on prerendered pages; `?state=loading` shows the skeleton instead.
-  - State copy, drawer labels and the phone menu are English-only on the Hindi brief.
+- Campfire and Obsidian sync: done by the local session from this ledger (§16.3); the cloud session never edits `backlog/`.
 
 **DES/CR candidates for Stage 8–9:**
 - Balancer-trip outliers in long-route normals (EXE9).
 - Self-written R2–R5 variant copy (EXE10).
 - Fallback provenance shows "answered in 0.00 s".
-- Server `<html lang="en">` on the Hindi /brief (`<main lang="hi">` is correct).
 - Hero cameras fitted to the data vs map.js framing.
 - Fleet card says "updated just now".
 - OG mini chart has 2 red bars (data-true) vs the mockup's 4.
@@ -82,7 +81,7 @@
 - `poster-img.ts` depends on a Next internal (pinned 16.3.6, parity-tested).
 - Wave/Meter/Rail degenerate-input nits (TASK-7).
 
-**Decisions logged:** EXE1–EXE18 in `decisions.md`.
+**Decisions logged:** EXE1–EXE23 in `decisions.md`.
 
 Branch: `build/stage7` (never `main`). Protocol: `CLAUDE.md` + `technical-plan.md` §16.2.
 Status values: todo | doing | review | done | blocked. `BLOCKED-pending-key` = needs `GEMINI_API_KEY`, which this cloud environment does not have (§16.1 path B).
@@ -103,7 +102,7 @@ Vercel: previews may be missing or auth-protected from the VM, so each row recor
 | TASK-10 | TSK-06.1–06.4 | done | 3b5c6be | 647 unit in unit: TC-015 every data-hi/data-en string of brief.html + message.html matched in order (hi+en), Hindi time words, hiVerb agreement, clean-day variant, lib/site.ts normaliser, hindi-review drift test; e2e phone/shell/smoke 93/93 (TC-027 toggle + no-JS ?lang=en first paint, ?only=high, item links, TC-022, axe) | pushed; screenshots 375 vs mockups match | Spec PASS; quality: 2 blocking (site URL normalisation, hand-typed review rows) + 4 minor fixed in round 1. /brief and /message are dynamic (server-side lang). EXE12: global TopBar hidden on the phone screens. `docs/exec/hindi-review.md` (245 strings) awaits the native review. |
 | TASK-11 | TSK-07.2–07.6 | done | 8b1642a, ddfb752 | 469 unit in unit: TC-040 happy path, TC-041 timeout, TC-042 429/5xx/network/bad JSON/schema/no key → fallback or saved, TC-043 5/min + 40/day + 300/day without calling fetch, TC-044 cites, TC-045 key only in header / never logged / bundle scan, TC-046 all EVAL-001..010 fallback answers with golden numbers; leak guard (canary any case, prompt sentences, tag-split text); 413 body cap | pushed | Spec PASS; security review: 1 blocking (case-sensitive leak guard) + 9 minor fixed in round 1; round 2: EVAL-012 allows ₹90/L in refusals; re-review found tag-split bypass → fixed in a 3rd attempt (verified by orchestrator: guard runs on raw and stripped text). Context 39.3 KB, warmed at module init. Strict 0-cites → fallback kept per §6.5 (risk for aggregate EVALs; see TKT-13). |
 | TASK-11 | TSK-07.1 + AC6 | **BLOCKED-pending-key** | — | `scripts/probe-gemini.ts` prints "probe BLOCKED-pending-key" without a key (run with `--conditions=react-server`) | — | Needs `GEMINI_API_KEY` (EXE3). TP5 (model id + thinking level) unverified: `thinkingLevel: "minimal"` default, override `ASK_THINKING_LEVEL`. Run the probe first when a key exists. |
-| TASK-12 | TSK-08.1–08.2 | done | abc2620 | 337 unit in unit (placeholder + ASSUMPTION when quotes empty, fleet facts from data); e2e why + shell 47 pass (TC-022, axe 0 violations at 3 widths, one h1, real table, lazy poster AVIF/WebP, top-bar variant, 44 px touch targets on coarse pointers) | pushed; screenshots 1440/375 vs final/why.html match (fonts aside) | Spec PASS; quality PASS + 8 minor fixed in round 1 (why.css scoped under .essay, content-driven tiles, table name, SVG id prefixes). EXE11. Byline "Tushar Pathak" awaits user confirmation (`content/why.ts` BYLINE). |
+| TASK-12 | TSK-08.1–08.2 | done | abc2620 | 337 unit in unit (placeholder + ASSUMPTION when quotes empty, fleet facts from data); e2e why + shell 47 pass (TC-022, axe 0 violations at 3 widths, one h1, real table, lazy poster AVIF/WebP, top-bar variant, 44 px touch targets on coarse pointers) | pushed; screenshots 1440/375 vs final/why.html match (fonts aside) | Spec PASS; quality PASS + 8 minor fixed in round 1 (why.css scoped under .essay, content-driven tiles, table name, SVG id prefixes). EXE11. Byline confirmed by the user as "Tushar Pathak · Product Manager" (EXE19, e6741d2). |
 | TASK-13 | TSK-09.1–09.2 | done | bf082f6 | 754 unit in unit (lib/og alt = §9 string from data, lib/metadata per route, lib/site env cases, og.png IHDR 1200×630 and 151,669 B); e2e metadata: TC-050 tags on /, /why, /trips/0926-04, /brief (+?lang=en), /message; og.png 200; /og-card noindex, no top bar, not in nav; robots absent elsewhere | pushed; verified with a VERCEL_URL=example.vercel.app build (all https); og mockup vs /og-card parity screenshots match (2 red bars vs 4: data-true) | Spec PASS; quality: 1 blocking (site URL normalisation → adopted TASK-10's lib/site.ts) + render-script robustness fixed in round 1 and rebased on build/stage7. TKT-09 AC3 (og:image 200 on the preview) and TC-051 are pending (preview access). |
 | TASK-14 | TSK-10.1–10.4 | done | 9d04764 | 878 unit in unit (css-color, warm-style, map-client ready/8 s timeout/onFail, HeroCard selection with the map never loading, deep links, unmount while pending); e2e 287 pass / 49 project-skipped on the full suite (maps.spec 48: TC-025 selection + fly 1.4 s, TC-028 Carto aborted → overlay, reduced motion jump/no ping, TC-055 no maplibre in initial JS of /, axe) | pushed; mockup vs app screenshots (map 1/2, fleet, trip) match in elements; framing fitted to data | Spec PASS; quality PASS + 7 minor fixed in round 1. maplibre-gl 4.7.1 exact, dynamic import only. New shared e2e/fixtures.ts serves an offline Carto style to every spec (the sandbox browser doesn't trust the proxy CA; TLS verification stays on); @tiles specs use live tiles via Node. `/` stays static. |
 | TASK-15 | TSK-11.1–11.3 | done | fb383cc | 909 unit in unit (parseState, stateSpecimens golden: "11 of 17 done", "All 17 trips add up. ₹1,94,800 earned, nothing unaccounted.", "4th clean day", "6 trucks haven't sent data since 2 AM … The other 11 trips are ready.", "11 trucks are still on the road and 13 were in the yard or workshop"; static invariant; focus to h1); e2e states 42/42 and the full suite 329 pass / 49 project-skipped / 0 fail | pushed | Spec PASS; quality PASS + minor fixes in round 1 (trip loading.tsx deleted, focus after recovery, aria-busy scope, tests). EXE15: no route loading files on prerendered pages (scope change: TSK-11.1 loading.tsx not shipped; TC-027 no-JS first paint wins). State copy English-only, as in states.html. |
@@ -114,6 +113,10 @@ Vercel: previews may be missing or auth-protected from the VM, so each row recor
 | TASK-17 | TSK-13.3 | **BLOCKED-pending-key** | — | — | — | Run once `GEMINI_API_KEY` exists: `pnpm eval --base-url <preview or localhost with key> --label baseline-v1`, commit `evals/results/ask-baseline-v1-<sha>.json`, then later runs pass `--baseline <that file>`. |
 | TASK-18 | TSK-14.1–14.4 | done | 0f6ab03 | 969 unit in unit (guard regex, §7 dispose order + registry, isLive, mid-load unmount, bundle-debug scanner); e2e scene: TC-029 poster + 0 errors on 3 viewports, TC-055 no three in initial JS of / or trips (loads after FCP on / only), TC-030 automated: ≤ 1 live WebGL context after 10 Today ↔ Trip navigations counted by wrapping getContext, drag limits, no zoom, keyboard rotate/reset, context loss → poster; full suite 342 pass / 63 project-skipped / 0 fail; `check:bundle` clean on a flagless build | pushed | Spec: 1 blocking (production guard bypass via runtime env lookup) fixed by inlining NEXT_PUBLIC_DEBUG_GL in next.config.ts + a bundle check; quality: 2 blocking (tablet hero overlap hid "Open the evidence"; a test that couldn't fail) + 6 minor fixed in round 1; re-review reproduced the old attack → blocked. three@0.169.0 exact. EXE16 (scene tag on the fallback poster, flagged for the user). **TC-030 manual (Mac GPU) pending:** `docs/exec/tc-030-manual.md`. M-004 gate fixes: 2ec07f9 (EXE17) and 9845a7b (EXE18). |
 | TASK-18 | TC-055 LCP on / | **BLOCKED** | 9845a7b | Lighthouse mobile, simulated, local: / LCP 2.65 s (budget 2.5 s; was 7.8 s), /why 2.44 s, CLS ≤ 0.001 | local Lighthouse JSON in the session scratchpad (not in the repo) | Still over budget after the 2 allowed gate fix rounds; threshold unchanged. Remaining cost: ~125 KB gzip React/Next runtime evaluated before the first frame, plus HTTP/1.1 round trips locally. §13 measures on the preview (HTTP/2 + CDN), which the VM can't reach: **measure on the preview first**. If it still fails there, restructure Today's client islands (Stage 9/10). |
+| TASK-10 | EXE23 Hindi menu + drawer | done | ea791c3 | unit: menuLinks(lang) with a typed Hindi label per href, ASK_COPY/ASK_CHIPS {en,hi}, cite chips "ट्रिप 0926-04", usePageLang observer disconnects, hindi-review drift; e2e ask + phone 116 pass / 28 project-skipped | pushed | User decision EXE23. Spec PASS, quality PASS; round 1: cite chips, typed MENU_LABEL_HI, dead askCopy removed, observer test, Hindi wording. hindi-review.md sections 8–9. State copy English (accepted exception). |
+| TASK-10 | EXE23 server html lang | done | 36df2ca | unit: the last `lang` value wins in langParam and useLang; e2e html-lang.spec (hi/en first paint on /brief and /message, both orders of a repeated lang, main[lang] = html[lang], /message EN → brief flow, no cross-layout prefetch, /en/* 307); full suite 373 pass / 77 skipped in the worktree | pushed | Route groups `app/(site)` en, `app/(phone)` hi, `app/(phone-en)/en` en, with a `?lang=en` rewrite and `experimental.globalNotFound` (build notes in EXE23). Spec PASS, quality PASS; round 1: repeated-lang parity (blocking), 307 redirects, prefetch off across root layouts, stale comments. Cross-layout links do a full page load. |
+| TASK-12 | EXE19 byline | done | e6741d2 | why tests: byline "A concept for Bytebeam · Tushar Pathak · Product Manager · September 2026" | pushed | User decision EXE19; BYLINE gets a `role` field. |
+| TASK-14 | flaky test fix | done | b025cff | maps.spec 240/240 with --repeat-each=5 on all projects | pushed | The reduced-motion marker check measured page scroll on phones; now measured against the map. Assertion unchanged. |
 | TASK-19 | TSK-15.* | todo (out of Stage 7 scope) | — | — | — | TKT-15 Stages 8–10 (local @claude) |
 | TASK-20 | TSK-16.* | todo (out of Stage 7 scope) | — | — | — | TKT-16 Stage 11 (local @claude) |
 
