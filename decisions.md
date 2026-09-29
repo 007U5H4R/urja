@@ -286,3 +286,20 @@
 - **Measured (Lighthouse 12.8.2 mobile, simulated, median of 9, local `next start`):** / LCP 3.63 → 2.65 s (still over 2.5), /why 3.31 → 2.44 s, CLS ≤ 0.001, first-load JS on / 145 KB gzip. The rest of Today's LCP is its ~125 KB gzip of React and Next runtime, which Lantern counts because it evaluates before the text paints; see the M-004 gate report.
 - **Licences:** the fonts are SIL OFL 1.1. `app/fonts/OFL-Inter.txt` and `app/fonts/OFL-Anek.txt` carry each project's copyright line and the full licence text (OFL §2), and `tests/fonts.test.ts` checks they are there.
 - **Result:** Lighthouse mobile with simulated throttling, locally: / LCP 2.65 s (from 7.8 s), /why 2.44 s, CLS ≤ 0.001. / is still over the 2.5 s budget after the two allowed fix rounds, so TC-055 LCP on / is **BLOCKED** in the ledger and the threshold is unchanged. §13 sets the budget "on the preview" (HTTP/2, CDN), so the preview measurement decides it.
+
+## EXE19 · Byline confirmed — accepted 2026-09-29 (user decision)
+- The Why Urja byline author is "Tushar Pathak · Product Manager" (`content/why.ts` `BYLINE.author`). The byline open item is closed.
+
+## EXE20 · EXE12 confirmed by the user — 2026-09-29
+- /brief and /message keep their own `.m-top` bar and hide the global top bar, following the frozen phone mockups.
+
+## EXE21 · EXE11 confirmed by the user — 2026-09-29
+- The /why phone menu has no "Ask Urja", matching `final/why.html`.
+
+## EXE22 · EXE15 confirmed by the user — 2026-09-29
+- No route `loading.tsx` on prerendered pages. This protects no-JS first paint and LCP; `?state=loading` shows the skeleton.
+
+## EXE23 · Hindi brief: the menu, the Ask drawer and `<html lang>` follow the language — accepted 2026-09-29 (user decision)
+- When the brief or message is in Hindi (`lang=hi`), the phone menu items and every visible label in the Ask drawer (title, input placeholder, chips, buttons, state lines, fallback banner, provenance line) are Hindi. Every new Hindi string goes into `docs/exec/hindi-review.md` for the native review.
+- **Accepted exception:** the screen-state copy (`?state=loading|empty|clean|error`) stays English. These states are rare and `final/states.html` is English.
+- **Accessibility fix:** the server sends `<html lang="hi">` on the Hindi /brief and /message on first paint (and `lang="en"` for `?lang=en`), not `lang="en"` corrected after hydration. Today and the other pages stay statically prerendered; public URLs don't change.
