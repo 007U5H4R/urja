@@ -27,7 +27,7 @@ Vercel: previews may be missing or auth-protected from the VM, so each row recor
 | TASK-17 | TSK-13.1–13.2 | done | 42a5e92 | 678 unit in unit: scorer per evaluation-plan §4 (24 fixtures: 13 passing, 11 failing incl. all AC1 cases), runner with mocked fetch (pacing, 429 retry, timeouts, provenance, baseline delta, §7 gate + §2 blockers enforced separately, key-shape gate, redaction); smoke run vs next start (no key): 10/10 prepared via fallback, 0/3 off-topic (saved), gate FAIL as expected — not committed | pushed | Spec: 1 gap (§2 blockers) fixed; quality: 2 blocking fixed in round 1; re-review found a comma-grouping false pass → fixed in round 2. Dataset and plan untouched. EXE13 (fallback vs model in the gate) is an OPEN user decision. |
 | TASK-17 | follow-up | done | 63bb068 | 7 new runner tests: `--out <dir>` validated before any request | pushed | Found at the M-003 gate (EISDIR after a full run). |
 | TASK-17 | TSK-13.3 | **BLOCKED-pending-key** | — | — | — | Run once `GEMINI_API_KEY` exists: `pnpm eval --base-url <preview or localhost with key> --label baseline-v1`, commit `evals/results/ask-baseline-v1-<sha>.json`, then later runs pass `--baseline <that file>`. |
-| TASK-18 | TSK-14.1–14.4 | review | — | — | — | TKT-14 3D (wt-d): spec found a production guard bypass via runtime env lookup → fix round 1 in progress with the tablet overlap fix |
+| TASK-18 | TSK-14.1–14.4 | done | 0f6ab03 | 969 unit in unit (guard regex, §7 dispose order + registry, isLive, mid-load unmount, bundle-debug scanner); e2e scene: TC-029 poster + 0 errors on 3 viewports, TC-055 no three in initial JS of / or trips (loads after FCP on / only), TC-030 automated: ≤ 1 live WebGL context after 10 Today ↔ Trip navigations counted by wrapping getContext, drag limits, no zoom, keyboard rotate/reset, context loss → poster; full suite 342 pass / 63 project-skipped / 0 fail; `check:bundle` clean on a flagless build | pushed | Spec: 1 blocking (production guard bypass via runtime env lookup) fixed by inlining NEXT_PUBLIC_DEBUG_GL in next.config.ts + a bundle check; quality: 2 blocking (tablet hero overlap hid "Open the evidence"; a test that couldn't fail) + 6 minor fixed in round 1; re-review reproduced the old attack → blocked. three@0.169.0 exact. EXE16 (scene tag on the fallback poster, flagged for the user). **TC-030 manual (Mac GPU) pending:** `docs/exec/tc-030-manual.md`. |
 | TASK-19 | TSK-15.* | todo | — | — | — | TKT-15: not in this session's scope (local @claude) |
 | TASK-20 | TSK-16.* | todo | — | — | — | TKT-16: not in this session's scope (local @claude) |
 
@@ -62,6 +62,24 @@ _(one section per milestone, newest last)_
 - **TCs passed:** TC-024 (Ask), TC-026, TC-040–TC-046.
 - **Open issues:** (M) EXE13, a user decision: should fallback answers count toward "≥ 9/10 prepared"? (M) GitHub Actions account block (from M-001). (L) `pnpm eval --out <dir>` crashes with EISDIR after the run; to be fixed as a TASK-17 follow-up. (L) Fallback provenance shows "answered in 0.00 s", which is accurate (the server takes about 2 ms) but reads oddly; a Stage 8 candidate.
 - **Decision:** every criterion that doesn't need the key passes; continuing.
+
+### Gate M-002 · The demo path on real data — PASS (2026-09-29, delegated gate policy)
+- **Commit:** fb383cc (code; QA on d98975a, ledger-only after it). Vercel preview: **pending**.
+- **Commands:** `pnpm verify` → 73 files / 916 tests; `pnpm test:e2e` → 329 pass / 49 skipped by project / 0 fail (the orchestrator and QA got the same).
+- **Independent QA subagent** (own Playwright scripts against `next start -p 3070`, Carto served offline):
+  1. TC-020 steps 1–4 at 375 and 1440 (Message → Brief → Trip "2:14 AM / 38 L / ₹3,420" → Today verdict → Map): **PASS**, 0 console errors.
+  2. TC-021 numbers agree across Today, Brief (hi+en), Message (hi+en) and Trip (₹1,86,400, ₹11,430, 3 trips, ₹3,420, 38 L, ₹4,500, ₹3,510, ₹58,240, ₹21,600): **PASS**. The no-rupee-literals test passes.
+  3. TC-022: 27/27 URL × width cases with no horizontal scroll, no text under 12 px: **PASS**.
+  4. TC-023: the menu reaches all 6 destinations on /, /brief, /message and trips, 44 px targets: **PASS**.
+  5. TC-024: every state on Today, Brief and Trip with computed copy and a focusable retry: **PASS**.
+  6. TC-025: rows 1–3 update the lit row, glass card and rail knob; rows 2–3 switch to Map; Fleet reads 24 · 11/12/1: **PASS**.
+  7. TC-027: with no JS, Hindi is the default and `?lang=en` gives English first paint; the toggle works: **PASS**.
+  8. TC-028: Carto aborted → "Map unavailable; every event is in the timeline", page usable: **PASS**.
+  9. TC-015: 24/24 **PASS**.
+  10. Mockup parity pairs at 1440 and 375 for index, trip, brief, message and states: **PASS**. Differences are fonts and charts under file://, the menu button on the phone screens (EXE12), computed empty-state counts (§4.9), and the host shown as localhost locally.
+- **TCs passed:** TC-015, TC-020 (1–4), TC-021, TC-022, TC-023, TC-024, TC-025, TC-027, TC-028.
+- **Open issues (low):** the server sends `<html lang="en">` on the Hindi /brief (`<main lang="hi">` is right; html is fixed after hydration); the message preview host needs checking on the preview; state copy, the phone menu and the drawer are English on the Hindi brief; a focus ring shows on the trip h1 in `?state=error`.
+- **Decision:** all exit criteria pass. Continuing to the M-004 gate.
 
 ## Decisions and scope log
 
