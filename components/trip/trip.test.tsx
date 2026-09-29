@@ -266,7 +266,8 @@ describe("TripMapSlot", () => {
 describe("Trip states (Design.md §18)", () => {
   it("loading is a skeleton only, with no progress figures", () => {
     const { container } = render(<TripSkeleton />);
-    expect(container.querySelector("main")!.getAttribute("aria-busy")).toBe("true");
+    expect(container.querySelector("main")!.hasAttribute("aria-busy")).toBe(false);
+    expect(container.querySelector("[data-skeleton='trip']")!.getAttribute("aria-busy")).toBe("true");
     expect(container.querySelector("h1")).toBeNull();
     expect(container.textContent).toBe("Loading this trip");
     expect(container.querySelector("[data-skeleton='flag']")).toBeTruthy();

@@ -8,6 +8,9 @@ import { TripHead } from "@/components/trip/TripHead";
 import { TripLedger } from "@/components/trip/TripLedger";
 import { TripMapSlot } from "@/components/trip/TripMapSlot";
 import { Icon } from "@/components/ui/Icon";
+import { StateSwitch } from "@/components/states/StateSwitch";
+import { TripErrorSpecimen } from "@/components/states/TripErrorSpecimen";
+import { TripSkeleton } from "@/components/trip/TripStates";
 import { getTripIds, getTripView } from "@/lib/data/views/trip";
 import { getTripMapView } from "@/lib/data/views/trip-map";
 import { tripMetadata } from "@/lib/metadata";
@@ -25,40 +28,48 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   return tripMetadata((await params).tripId) ?? {};
 }
 
-/** Trip evidence (final/trip.html): a static server component built from the TripView. */
+/**
+ * Trip evidence (final/trip.html): a static server component built from the TripView.
+ * `?state=loading|error` (TKT-11) swaps in the skeleton or the error card on the
+ * client, so every trip page stays prerendered. There is no loading.tsx here (EXE15):
+ * its boundary made the prerendered HTML ship the skeleton first, with the real
+ * <main> inside <div hidden> until a script swapped it in. ?state=loading shows it.
+ */
 export default async function TripPage({ params }: Params) {
   const v = getTripView((await params).tripId);
   // A guard only: with dynamicParams = false, Next answers any id outside
   // generateStaticParams with the root 404 before this page runs.
   if (!v) notFound();
   return (
-    <main className="wrap">
-      <nav className="crumbs" aria-label="Breadcrumb">
-        <Link href="/">Today</Link>
-        <Icon name="right" />
-        {v.crumbs.viaEyes && (
-          <>
-            <Link href="/">Needs your eyes</Link>
-            <Icon name="right" />
-          </>
-        )}
-        <span aria-current="page">{v.crumbs.current}</span>
-      </nav>
+    <StateSwitch specimens={{ loading: <TripSkeleton />, error: <TripErrorSpecimen /> }}>
+      <main className="wrap">
+        <nav className="crumbs" aria-label="Breadcrumb">
+          <Link href="/">Today</Link>
+          <Icon name="right" />
+          {v.crumbs.viaEyes && (
+            <>
+              <Link href="/">Needs your eyes</Link>
+              <Icon name="right" />
+            </>
+          )}
+          <span aria-current="page">{v.crumbs.current}</span>
+        </nav>
 
-      <TripHead head={v.head} />
+        <TripHead head={v.head} />
 
-      <section className="trip-grid">
-        {/* verdict first in reading order; placed right of the map on wide screens */}
-        <FlagCard card={v.card} driver={v.driver} />
-        <TripMapSlot map={v.map} rail={v.rail} route={getTripMapView(v.id)} />
-      </section>
+        <section className="trip-grid">
+          {/* verdict first in reading order; placed right of the map on wide screens */}
+          <FlagCard card={v.card} driver={v.driver} />
+          <TripMapSlot map={v.map} rail={v.rail} route={getTripMapView(v.id)} />
+        </section>
 
-      <FuelSpeedChart chart={v.chart} />
+        <FuelSpeedChart chart={v.chart} />
 
-      <section className="lower">
-        <Timeline events={v.timeline} />
-        <TripLedger ledger={v.ledger} normal={v.routeNormal} />
-      </section>
-    </main>
+        <section className="lower">
+          <Timeline events={v.timeline} />
+          <TripLedger ledger={v.ledger} normal={v.routeNormal} />
+        </section>
+      </main>
+    </StateSwitch>
   );
 }

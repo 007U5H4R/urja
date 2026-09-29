@@ -1,15 +1,11 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
+import "@/components/states/states.css";
 
-/** A static skeleton block (states.html `.sk`: surface-2, no shimmer). */
-const sk = (width: string, height: number, extra?: CSSProperties): CSSProperties => ({
-  display: "block",
-  background: "var(--surface-2)",
-  borderRadius: 6,
-  width,
-  height,
-  ...extra,
-});
+/** A static skeleton block (states.html `.sk`: surface-2, no shimmer); size inline, as in the mockup. */
+function Sk({ w, h, style }: { w: string; h: number; style?: CSSProperties }) {
+  return <span className="sk" style={{ width: w, height: h, ...style }}></span>;
+}
 
 /**
  * Trip loading state (Design.md §18): a skeleton of the head and the flag
@@ -17,31 +13,31 @@ const sk = (width: string, height: number, extra?: CSSProperties): CSSProperties
  */
 export function TripSkeleton() {
   return (
-    <main className="wrap" aria-busy="true">
+    <main className="wrap">
       <p role="status" className="sr-only">
         Loading this trip
       </p>
-      <div aria-hidden="true">
+      <div aria-hidden="true" aria-busy="true" data-skeleton="trip">
         <section className="triphead">
           <div style={{ flex: "1 1 320px" }}>
-            <span style={sk("60%", 36)}></span>
-            <span style={sk("85%", 14, { marginTop: 12 })}></span>
+            <Sk w="60%" h={36} />
+            <Sk w="85%" h={14} style={{ marginTop: 12 }} />
           </div>
           <div style={{ flex: "0 1 220px" }}>
-            <span style={sk("100%", 36)}></span>
-            <span style={sk("80%", 14, { marginTop: 10 })}></span>
+            <Sk w="100%" h={36} />
+            <Sk w="80%" h={14} style={{ marginTop: 10 }} />
           </div>
         </section>
         <section className="trip-grid">
           <article className="panel flagcard" data-skeleton="flag">
-            <span style={sk("40%", 26)}></span>
-            <span style={sk("75%", 28)}></span>
-            <span style={sk("45%", 30)}></span>
+            <Sk w="40%" h={26} />
+            <Sk w="75%" h={28} />
+            <Sk w="45%" h={30} />
             <div className="block">
-              <span style={sk("90%", 14)}></span>
-              <span style={sk("82%", 14, { marginTop: 12 })}></span>
-              <span style={sk("86%", 14, { marginTop: 12 })}></span>
-              <span style={sk("70%", 14, { marginTop: 12 })}></span>
+              <Sk w="90%" h={14} />
+              <Sk w="82%" h={14} style={{ marginTop: 12 }} />
+              <Sk w="86%" h={14} style={{ marginTop: 12 }} />
+              <Sk w="70%" h={14} style={{ marginTop: 12 }} />
             </div>
           </article>
           <article className="panel mapcard" data-skeleton="map"></article>
@@ -61,7 +57,7 @@ export function TripError({ onRetry }: { onRetry: () => void }) {
       <section className="pagehead" aria-labelledby="h1">
         <div>
           <p className="greet">Trip evidence</p>
-          <h1 className="verdict" id="h1">
+          <h1 className="verdict" id="h1" tabIndex={-1}>
             Couldn’t load this trip
           </h1>
           <p className="mt-3 text-[var(--fg-muted)]">
