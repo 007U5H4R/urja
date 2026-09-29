@@ -1,26 +1,6 @@
 # Stage 7 execution ledger — Urja
 
-## Stage 7 follow-up: preview checks (2026-09-29, second cloud session)
-Preview access works now: the environment's API credential adds the Vercel bypass header for `*.vercel.app`. `https://urja-git-build-stage7-tushar-49a6.vercel.app/` returns **200**, not a 302 to Vercel login. It serves the latest code: `/brief` sends `<html lang="hi">` (36df2ca), and after eb097af it sends the new `x-ask-outcome` header.
-- **TC-055 LCP on `/`: PASS on the preview** (budget 2.5 s, unchanged). Lighthouse 12.8.2, mobile, simulated throttling, run in the VM's Chromium through the agent proxy:
-  - `/`: median of 9 runs is **1.83 s** (runs 4.43, 2.41, 1.78, 1.83, 2.45, 1.81, 1.73, 4.51, 1.66). CLS ≤ 0.003. The LCP element is `h1#h1`.
-  - `/why`: median of 5 runs is **1.52 s**. CLS ≤ 0.078.
-  - Two of the 9 runs on `/` came in at about 4.5 s. Their cause wasn't isolated (a CDN or edge cache miss is the likely one), so they are recorded, not excluded. No restructure was needed, so no fix round was spent.
-- **TKT-09 AC3: PASS.** The preview's og:image is `https://urja-4zernaml8-tushar-49a6.vercel.app/og.png`, which is the deployment URL: 200, image/png, 1200×630, 151,669 B, the same bytes as the local build. `/og.png` on the branch URL also returns 200. All 13 OG and Twitter tags are present on `/`.
-- **TC-051 (manual, M-005/TKT-16): BLOCKED for now.** The tags and the image are checked above. External inspectors (LinkedIn Post Inspector, opengraph.xyz) can't pass Vercel Authentication, because only this VM gets the bypass header, and TC-051 targets the production URL at Stage 11. Per TC-051: "record BLOCKED with the reason, not PASS".
-- **TASK-11 TSK-07.1 + AC6: BLOCKED (upstream Gemini 503).** The key is set in Vercel. 11 of 11 live calls to the preview's `/api/ask` fell back.
-  - Round 1: diagnosis. There are no runtime logs from here, so eb097af adds an `x-ask-outcome` header (EXE24).
-  - Round 2: re-probe. **9 of 11 calls got `http_5xx:503`** (Gemini unavailable) in about 0.3–0.7 s; the other 2 timed out at the 8 s abort. The pattern held after a 90 s pause.
-  - Re-check (2026-09-29, 15:00 UTC, on your request): of 7 calls, 4 got `http_429:429` from Gemini (quota exhausted; not our limiter, which would say `rate_limited`), 2 got `http_5xx:503` and 1 timed out. Still no model answer.
-  - TP5 is partly verified. The model id (`gemini-3.5-flash`, the default; the Vercel `ASK_MODEL` value isn't visible from here) and `thinkingLevel: "minimal"` got neither 404 nor 400. But the model never returned an answer, so AC6 (a live answer under 4 s) is unmet.
-  - **User action:** in Google AI Studio, check the key's project and the model's availability, or set `ASK_MODEL` in Vercel to an available Flash model. Then rerun the probe (`pnpm tsx --conditions=react-server scripts/probe-gemini.ts`, with the key) or `/api/ask` on the preview and read `x-ask-outcome`.
-- **TASK-17 TSK-13.3: BLOCKED (same cause).** `pnpm eval` ran against the preview (label `preview-attempt-1`, committed as `evals/results/ask-preview-attempt-1-eb097af.json`):
-  - prepared 10/10, but **0/10 by the model**; off-topic 0/3 (saved); modes: fallback 10, saved 3; forbidden 0.
-  - **Gate: FAIL** under EXE13.
-  - It is deliberately *not* labelled `baseline-v1`: a baseline must hold model answers. Run `--label baseline-v1` once Gemini answers.
-- **M-004: PASS.** TC-055 LCP on `/` was the only blocked criterion, and it now passes on the preview, where §13 measures it.
-
-## Stage 7 summary (final, 2026-09-29)
+## Stage 7 summary (updated 2026-09-29, second cloud session)
 **Status: Stage 7 is complete on `build/stage7`** (PR [007U5H4R/urja#1](https://github.com/007U5H4R/urja/pull/1), not merged; `main` untouched). TKT-15 and TKT-16 (Stages 8–11) are out of scope.
 
 **Done: all 14 build tickets (TKT-01..14 = TASK-5..18).** Each unit had one implementer (TDD), a fresh spec review and a fresh code-quality review, at most 2 fix rounds, and one commit per unit, pushed. Main code commits:
@@ -33,14 +13,14 @@ Preview access works now: the environment's API credential adds the Vercel bypas
 | TKT-04 Today lower half | TASK-8 | c4ddb91 |
 | TKT-05 Trip evidence | TASK-9 | b38035c |
 | TKT-06 Message and brief (+ EXE23 Hindi menu, drawer, html lang) | TASK-10 | 3b5c6be, ea791c3, 36df2ca |
-| TKT-07 Ask API | TASK-11 | 8b1642a, ddfb752 |
+| TKT-07 Ask API (+ EXE24 header, EXE26 fallback model) | TASK-11 | 8b1642a, ddfb752, eb097af, 4e28c77 |
 | TKT-08 Why Urja (+ EXE19 byline) | TASK-12 | abc2620, e6741d2 |
 | TKT-09 Link preview | TASK-13 | bf082f6 |
 | TKT-10 Maps | TASK-14 | 9d04764, b025cff (test fix) |
 | TKT-11 Screen states | TASK-15 | fb383cc |
 | TKT-12 Ask UI | TASK-16 | 6e9c710 |
 | TKT-13 Ask eval | TASK-17 | 42a5e92, 63bb068 |
-| TKT-14 3D scene + M-004 performance fixes | TASK-18 | 0f6ab03, 2ec07f9, 9845a7b |
+| TKT-14 3D scene + M-004 performance fixes (+ DES-1) | TASK-18 | 0f6ab03, 2ec07f9, 9845a7b, f634a0e |
 
 **Final checks on b025cff** (after the EXE19–EXE23 follow-ups):
 - `pnpm verify`: 84 files / 1007 tests pass (1 skipped).
@@ -53,29 +33,31 @@ Preview access works now: the environment's API credential adds the Vercel bypas
 - M-003: **PASS** on every criterion that doesn't need the key.
 - M-004: **PASS** (TC-055 LCP on `/` passes on the preview at 1.83 s; see the follow-up above).
 
-**TCs passed** (automated, locally):
+**TCs passed:**
 - Data and rules: TC-001–TC-014, TC-015.
 - Screens and flows: TC-020 (steps 1–4), TC-021, TC-022, TC-023, TC-024, TC-025, TC-026, TC-027, TC-028, TC-029, TC-031.
-- Ask: TC-040–TC-046.
-- Link preview and quality: TC-050 (local and a VERCEL_URL build), TC-055 (bundle; LCP on /why), TC-061.
-- TC-030's automated part.
-- EXE23: server `<html lang>` equals the screen's language on first paint (`e2e/html-lang.spec.ts`: /brief hi, /brief?lang=en en, both orders of a repeated `lang`, /message, the toggle flow, `main[lang]` = `html[lang]`); the phone menu and the Ask drawer follow the brief's language (ask.spec, phone.spec).
-- TC-060: GitHub Actions CI is green on both push and pull_request (cb49283). A flaky wrapper test found by the first real CI run was fixed in the test only; the component is unchanged.
+- Ask: TC-040–TC-046 (mocked model and fallback).
+- Link preview and quality: TC-050 (local, a VERCEL_URL build, and the preview), TC-055 (bundle; **LCP on the preview**: `/` 1.83 s, `/why` 1.52 s), TC-061.
+- TKT-09 AC3: og:image 200 on the preview.
+- TC-030: the automated part; manual run 1 on the Mac: rows 2, 3 and 8 PASS, row 1 PARTIAL (see `docs/exec/tc-030-manual.md`).
+- EXE23: server `<html lang>` equals the screen's language on first paint (`e2e/html-lang.spec.ts`); the phone menu and the Ask drawer follow the brief's language (ask.spec, phone.spec).
+- TC-060: GitHub Actions CI green on push and pull_request, most recently on 63b4af8, bb6d4b6 and 4e28c77.
+
+**Preview:** `https://urja-git-build-stage7-tushar-49a6.vercel.app` returns 200 from this VM, because the environment's API credential adds the Vercel bypass header (done 2026-09-29). Lighthouse, og:image and `/api/ask` are all checked on it. External visitors still see Vercel Authentication.
 
 **BLOCKED:**
-1. **BLOCKED-pending-key** (no `GEMINI_API_KEY` here, EXE3; never faked):
-   - TSK-07.1 probe and the TP5 model/thinking check. Run `pnpm tsx --conditions=react-server scripts/probe-gemini.ts` first.
-   - TKT-07 AC6: a live answer in under 4 s.
-   - TSK-13.3 baseline: `pnpm eval --base-url <preview or localhost with key> --label baseline-v1`, then commit `evals/results/ask-baseline-v1-<sha>.json`.
-   - The final eval gate numbers (TKT-15), now counting only model answers (EXE13).
-2. **TC-055 LCP on `/` (BLOCKED; budget stays 2.5 s):** Lighthouse mobile with simulated throttling, locally, is 2.65 s after the 2 allowed fix rounds (it was 7.8 s). /why is at 2.44 s. §13 measures on the preview (HTTP/2 + CDN). **Next step, once the Vercel Protection Bypass secret is in this environment: measure it on the preview first.** If it still fails there, restructure Today's client islands.
-3. **Pending on the preview.** The Vercel preview builds and deploys: build/stage7 at 75ca01e is **Ready** (2026-09-29 10:35 UTC), at `urja-git-build-stage7-tushar-49a6.vercel.app`. But it sits behind Vercel Authentication, so the VM gets redirected to Vercel's login and can't run these checks:
-   - preview 200;
-   - og:image 200 on the preview (TKT-09 AC3);
-   - TC-051 unfurl;
-   - Lighthouse on the preview.
-4. **Pending, manual (local session):** TC-030 on the Mac GPU (`docs/exec/tc-030-manual.md`) and the native Hindi review (`docs/exec/hindi-review.md`; sections 8 Phone menu and 9 Ask drawer are new with EXE23). For the reviewer: the Hindi fallback provenance line says "डेटा से" twice ("…के डेटा से · सीधे आपके डेटा से, AI के बिना").
-5. **CI (TC-060) on GitHub: resolved 2026-09-29.** The earlier block was account billing. GitHub's annotation said "recent account payments have failed or your spending limit needs to be increased". After billing was fixed, run 55 (push, 7d7b059, attempt 2) passed every step: checkout, pnpm setup, Node 22, frozen install, `pnpm verify`, `pnpm build`, `pnpm check:bundle`.
+1. **Live Ask (TSK-07.1 probe and TP5, TKT-07 AC6, TSK-13.3 baseline).** `GEMINI_API_KEY` is set in Vercel. The model id and key are valid: the local session's ListModels lists `models/gemini-3.5-flash`.
+   - `gemini-3.5-flash` answers **429** (quota) or **503** (busy). The key's project is most likely on the free tier; the user is checking billing and quota in AI Studio.
+   - EXE26 (4e28c77) now retries once on `ASK_FALLBACK_MODEL` inside the 8 s budget. But on the preview the default fallback, **`gemini-2.5-flash`, answers 404** for this key.
+   - **Needs the user:** either billing/quota on the key, or a fallback model id that ListModels lists for this key, set as `ASK_FALLBACK_MODEL` in Vercel (then redeploy).
+   - Evidence: `x-ask-outcome` on every response. `evals/results/ask-preview-attempt-1-eb097af.json` has 0/10 prepared by the model.
+   - Retries (at most 2, at least 30 min apart, then stop): attempt 1 at 15:29 UTC was probe only, and the eval was skipped (the primary gave 429/503, the fallback 404). Attempt 2 is scheduled for 16:10 UTC.
+2. **TC-051 (manual, M-005/TKT-16):** external inspectors can't pass Vercel Authentication, and TC-051 targets the production URL at Stage 11. The tags and the image are verified on the preview.
+3. **Pending, manual (local session):**
+   - TC-030 rows 4–7, 9–12 and 15 need the user at the Mac: an automated window was reported hidden, which throttled rAF. Rows 13–14 are for Stage 9. Re-check row 7: the buttons moved in f634a0e.
+   - The native Hindi review (`docs/exec/hindi-review.md`).
+
+**Resolved in this session:** preview access (bypass); TC-055 LCP on `/` (was BLOCKED at 2.65 s locally; 1.83 s on the preview, with no code change and no threshold change); TKT-09 AC3; M-004 gate: PASS; DES-1 scene controls over the scene tag (f634a0e).
 
 **User decisions (2026-09-29):**
 - **EXE13: accepted.** Only answers written by Gemini count toward "≥ 9/10 prepared"; fallback answers never count. Stricter, threshold unchanged. The runner gate and evaluation-plan §2/§7 are updated, and runner tests cover it.
@@ -85,9 +67,11 @@ Preview access works now: the environment's API credential adds the Vercel bypas
 - **EXE23: done.** On the Hindi brief, the phone menu and the Ask drawer's visible labels (chips, cite chips, provenance, buttons) follow the brief's language (ea791c3). The server sends `<html lang="hi">` on the Hindi /brief and /message on first paint, through per-language root layouts (36df2ca). Screen-state copy stays English: an accepted exception.
 
 **Still open (the user's, no action here):**
-- Field quotes (`content/field-notes.ts`) are empty and the placeholder shows.
-- The user will add `GEMINI_API_KEY` in Vercel and a Vercel Protection Bypass secret to this cloud environment. **When the bypass secret appears, measure TC-055 LCP on the preview first** (blocked item 2), then the other preview checks (item 3).
-- Campfire and Obsidian sync: done by the local session from this ledger (§16.3); the cloud session never edits `backlog/`.
+- Gemini: billing and quota, or the fallback model id (BLOCKED item 1).
+- Campfire and Obsidian sync: done by the local session from this ledger (§16.3). The cloud session never edits `backlog/`.
+
+**DES findings:**
+- **DES-1 (fixed, f634a0e, TC-030 run 1):** on desktop, `.scene-ctl` covered the scene tag. At 1200 px the buttons spanned x 46–84, y 235–361 and the tag x 61–308, y 255–364. The controls are now a row at the bottom left, above the rail box. An e2e test asserts no intersection with the tag, the glass card or the rail box at 1440, 1200 and 1024 px, and the 44 px coarse-pointer targets are kept. This is a pixel and accessibility fix, so no Design Freeze approval was needed.
 
 **DES/CR candidates for Stage 8–9:**
 - Balancer-trip outliers in long-route normals (EXE9).
@@ -101,11 +85,11 @@ Preview access works now: the environment's API credential adds the Vercel bypas
 - `poster-img.ts` depends on a Next internal (pinned 16.3.6, parity-tested).
 - Wave/Meter/Rail degenerate-input nits (TASK-7).
 
-**Decisions logged:** EXE1–EXE23 in `decisions.md`.
+**Decisions logged:** EXE1–EXE26 in `decisions.md`.
 
 Branch: `build/stage7` (never `main`). Protocol: `CLAUDE.md` + `technical-plan.md` §16.2.
-Status values: todo | doing | review | done | blocked. `BLOCKED-pending-key` = needs `GEMINI_API_KEY`, which this cloud environment does not have (§16.1 path B).
-Vercel: previews may be missing or auth-protected from the VM, so each row records the pushed SHA; preview checks are **pending** for the local session (§16.3).
+Status values: todo | doing | review | done | blocked. `BLOCKED-pending-key` (historical) = needed `GEMINI_API_KEY`. The key is now in Vercel, and live checks go through the preview (§16.1 path B).
+Vercel: each row records the pushed SHA. Since 2026-09-29 the VM reaches the preview through the bypass header.
 
 ## Tasks
 
@@ -138,10 +122,34 @@ Vercel: previews may be missing or auth-protected from the VM, so each row recor
 | TASK-12 | EXE19 byline | done | e6741d2 | why tests: byline "A concept for Bytebeam · Tushar Pathak · Product Manager · September 2026" | pushed | User decision EXE19; BYLINE gets a `role` field. |
 | TASK-14 | flaky test fix | done | b025cff | maps.spec 240/240 with --repeat-each=5 on all projects | pushed | The reduced-motion marker check measured page scroll on phones; now measured against the map. Assertion unchanged. |
 | TASK-11 | EXE24 diagnostic header | done | eb097af | route tests: `x-ask-outcome` is `ok`, `http_4xx:404`/`:400`, `http_429:429`, `http_5xx:503`, `guard:no_cites` or `no_key`, and never carries the key; `pnpm verify` 1014 pass | pushed; preview serves it | Written directly (a small diagnostic, kept short on usage) with no subagent reviews. The body contract is unchanged. |
+| TASK-11 | EXE26 fallback model | done | 4e28c77 | unit: retry only on 429 or 503; not on 500, 404, 400, bad JSON, network errors or timeouts; off, or the same as the primary: no retry; inside 8 s (fake timers: the fallback gets exactly what is left, and < 1 s left means no retry); 2.x Flash gets `thinkingBudget: 0`; route: provenance, `x-ask-outcome` and the log name the answering model; the guard checks the fallback's answer; eval: per-case `model` and `modelCounts`; `pnpm verify` 1034 pass | pushed; on the preview the fallback `gemini-2.5-flash` answers 404 | Spec review: PASS on every clause. Quality review: no blocking issues. Fix round 1 applied minors: thinking mapping for the primary too, Pro gets no budget, case-insensitive same-model check, and a test renamed. |
+| TASK-18 | DES-1 scene controls | done | f634a0e | e2e scene.spec: the controls don't intersect the tag, the glass card or the rail box at 1440, 1200 and 1024 px (red before the fix, green after); scene.spec 14 pass; today, today-head and smoke 39 pass | pushed | Found in TC-030 run 1 on the Mac. CSS only. |
 | TASK-19 | TSK-15.* | todo (out of Stage 7 scope) | — | — | — | TKT-15 Stages 8–10 (local @claude) |
 | TASK-20 | TSK-16.* | todo (out of Stage 7 scope) | — | — | — | TKT-16 Stage 11 (local @claude) |
 
 ## Gates
+
+### Preview checks log (2026-09-29, second cloud session)
+Preview access works now: the environment's API credential adds the Vercel bypass header for `*.vercel.app`. `https://urja-git-build-stage7-tushar-49a6.vercel.app/` returns **200**, not a 302 to Vercel login. It serves the latest code: `/brief` sends `<html lang="hi">` (36df2ca), and after eb097af it sends the new `x-ask-outcome` header.
+- **TC-055 LCP on `/`: PASS on the preview** (budget 2.5 s, unchanged). Lighthouse 12.8.2, mobile, simulated throttling, run in the VM's Chromium through the agent proxy:
+  - `/`: median of 9 runs is **1.83 s** (runs 4.43, 2.41, 1.78, 1.83, 2.45, 1.81, 1.73, 4.51, 1.66). CLS ≤ 0.003. The LCP element is `h1#h1`.
+  - `/why`: median of 5 runs is **1.52 s**. CLS ≤ 0.078.
+  - Two of the 9 runs on `/` came in at about 4.5 s. Their cause wasn't isolated (a CDN or edge cache miss is the likely one), so they are recorded, not excluded. No restructure was needed, so no fix round was spent.
+- **TKT-09 AC3: PASS.** The preview's og:image is `https://urja-4zernaml8-tushar-49a6.vercel.app/og.png`, which is the deployment URL: 200, image/png, 1200×630, 151,669 B, the same bytes as the local build. `/og.png` on the branch URL also returns 200. All 13 OG and Twitter tags are present on `/`.
+- **TC-051 (manual, M-005/TKT-16): BLOCKED for now.** The tags and the image are checked above. External inspectors (LinkedIn Post Inspector, opengraph.xyz) can't pass Vercel Authentication, because only this VM gets the bypass header, and TC-051 targets the production URL at Stage 11. Per TC-051: "record BLOCKED with the reason, not PASS".
+- **TASK-11 TSK-07.1 + AC6: BLOCKED (upstream Gemini 503).** The key is set in Vercel. 11 of 11 live calls to the preview's `/api/ask` fell back.
+  - Round 1: diagnosis. There are no runtime logs from here, so eb097af adds an `x-ask-outcome` header (EXE24).
+  - Round 2: re-probe. **9 of 11 calls got `http_5xx:503`** (Gemini unavailable) in about 0.3–0.7 s; the other 2 timed out at the 8 s abort. The pattern held after a 90 s pause.
+  - Re-check (2026-09-29, 15:00 UTC, on your request): of 7 calls, 4 got `http_429:429` from Gemini (quota exhausted; not our limiter, which would say `rate_limited`), 2 got `http_5xx:503` and 1 timed out. Still no model answer.
+  - TP5 is partly verified. The model id (`gemini-3.5-flash`, the default; the Vercel `ASK_MODEL` value isn't visible from here) and `thinkingLevel: "minimal"` got neither 404 nor 400. But the model never returned an answer, so AC6 (a live answer under 4 s) is unmet.
+  - **User action:** in Google AI Studio, check the key's project and the model's availability, or set `ASK_MODEL` in Vercel to an available Flash model. Then rerun the probe (`pnpm tsx --conditions=react-server scripts/probe-gemini.ts`, with the key) or `/api/ask` on the preview and read `x-ask-outcome`.
+- **TASK-17 TSK-13.3: BLOCKED (same cause).** `pnpm eval` ran against the preview (label `preview-attempt-1`, committed as `evals/results/ask-preview-attempt-1-eb097af.json`):
+  - prepared 10/10, but **0/10 by the model**; off-topic 0/3 (saved); modes: fallback 10, saved 3; forbidden 0.
+  - **Gate: FAIL** under EXE13.
+  - It is deliberately *not* labelled `baseline-v1`: a baseline must hold model answers. Run `--label baseline-v1` once Gemini answers.
+- **M-004: PASS.** TC-055 LCP on `/` was the only blocked criterion, and it now passes on the preview, where §13 measures it.
+
+
 
 _(one section per milestone, newest last)_
 
