@@ -46,8 +46,8 @@
    - TSK-07.1 probe and the TP5 model/thinking check. Run `pnpm tsx --conditions=react-server scripts/probe-gemini.ts` first.
    - TKT-07 AC6: a live answer in under 4 s.
    - TSK-13.3 baseline: `pnpm eval --base-url <preview or localhost with key> --label baseline-v1`, then commit `evals/results/ask-baseline-v1-<sha>.json`.
-   - The final eval gate numbers (TKT-15).
-2. **TC-055 LCP on `/`:** Lighthouse mobile with simulated throttling, locally, is 2.65 s against 2.5 s after the 2 allowed fix rounds (it was 7.8 s). /why is at 2.44 s. The threshold is unchanged. §13 measures on the preview (HTTP/2 + CDN): measure there first, and if it still fails, restructure Today's client islands.
+   - The final eval gate numbers (TKT-15), now counting only model answers (EXE13).
+2. **TC-055 LCP on `/` (BLOCKED; budget stays 2.5 s):** Lighthouse mobile with simulated throttling, locally, is 2.65 s after the 2 allowed fix rounds (it was 7.8 s). /why is at 2.44 s. §13 measures on the preview (HTTP/2 + CDN). **Next step, once the Vercel Protection Bypass secret is in this environment: measure it on the preview first.** If it still fails there, restructure Today's client islands.
 3. **Pending on the preview.** The Vercel preview builds and deploys: build/stage7 at 75ca01e is **Ready** (2026-09-29 10:35 UTC), at `urja-git-build-stage7-tushar-49a6.vercel.app`. But it sits behind Vercel Authentication, so the VM gets redirected to Vercel's login and can't run these checks:
    - preview 200;
    - og:image 200 on the preview (TKT-09 AC3);
@@ -56,14 +56,18 @@
 4. **Pending, manual (local session):** TC-030 on the Mac GPU (`docs/exec/tc-030-manual.md`) and the native Hindi review (`docs/exec/hindi-review.md`, 245 strings).
 5. **CI (TC-060) on GitHub: resolved 2026-09-29.** The earlier block was account billing. GitHub's annotation said "recent account payments have failed or your spending limit needs to be increased". After billing was fixed, run 55 (push, 7d7b059, attempt 2) passed every step: checkout, pnpm setup, Node 22, frozen install, `pnpm verify`, `pnpm build`, `pnpm check:bundle`.
 
-**Open user decisions:**
-- **EXE13:** should the Ask eval's "≥ 9/10 prepared" count only model answers? Today fallback answers pass too; the runner reports `preparedByModel`. Recommended: count model answers only.
-- **EXE16:** the scene tag shows on the fallback poster (TC-029), whereas the mockup hides it until a live frame. One CSS rule reverts it.
-- **EXE12:** /brief and /message hide the global top bar and use their own `.m-top` menu, following the phone mockups rather than TKT-03 AC2's "every route".
-- **EXE11:** /why's phone menu has no "Ask Urja", matching why.html.
-- **EXE15:** no route `loading.tsx` on prerendered pages; `?state=loading` shows the skeleton instead.
-- The byline "Tushar Pathak" (`content/why.ts`); field quotes (`content/field-notes.ts`, empty, placeholder shown).
-- English-only state copy, drawer labels and phone menu on the Hindi brief.
+**User decisions (2026-09-29):**
+- **EXE13: accepted.** Only answers written by Gemini count toward "≥ 9/10 prepared"; fallback answers never count. Stricter, threshold unchanged. The runner gate and evaluation-plan §2/§7 are updated, and runner tests cover it.
+- **EXE16: confirmed.** The scene tag stays on the fallback poster; it is the honesty label and follows TC-029.
+
+**Still open (the user's, no action here):**
+- The byline "Tushar Pathak" (`content/why.ts`) is not yet confirmed. Field quotes (`content/field-notes.ts`) are empty and the placeholder shows.
+- The user will add `GEMINI_API_KEY` in Vercel and a Vercel Protection Bypass secret to this cloud environment. **When the bypass secret appears, measure TC-055 LCP on the preview first** (blocked item 2), then the other preview checks (item 3).
+- Judgement calls to confirm when convenient:
+  - EXE12: /brief and /message use their own top bar, following the phone mockups.
+  - EXE11: /why's phone menu has no "Ask Urja", matching why.html.
+  - EXE15: no route `loading.tsx` on prerendered pages; `?state=loading` shows the skeleton instead.
+  - State copy, drawer labels and the phone menu are English-only on the Hindi brief.
 
 **DES/CR candidates for Stage 8–9:**
 - Balancer-trip outliers in long-route normals (EXE9).
@@ -105,6 +109,7 @@ Vercel: previews may be missing or auth-protected from the VM, so each row recor
 | TASK-15 | TSK-11.1–11.3 | done | fb383cc | 909 unit in unit (parseState, stateSpecimens golden: "11 of 17 done", "All 17 trips add up. ₹1,94,800 earned, nothing unaccounted.", "4th clean day", "6 trucks haven't sent data since 2 AM … The other 11 trips are ready.", "11 trucks are still on the road and 13 were in the yard or workshop"; static invariant; focus to h1); e2e states 42/42 and the full suite 329 pass / 49 project-skipped / 0 fail | pushed | Spec PASS; quality PASS + minor fixes in round 1 (trip loading.tsx deleted, focus after recovery, aria-busy scope, tests). EXE15: no route loading files on prerendered pages (scope change: TSK-11.1 loading.tsx not shipped; TC-027 no-JS first paint wins). State copy English-only, as in states.html. |
 | TASK-16 | TSK-12.1–12.4 | done | 6e9c710 | 800 unit in unit (useAsk incl. timeout during body read, loader retry, error boundary; AskAnswer text-only rendering, cites, provenance); e2e ask 28 pass / 20 project-skipped (TC-026 ⌘K/Ctrl+K, 12× Tab trapped, inert, Esc/scrim, focus return; motion 0.24 s/0.18 s; TC-024 states; ?ask deep link; phone dock + full-screen chat on /, /brief, /message; axe) | pushed | Spec: 2 gaps (?ask deep link, saved banner) fixed; quality: 1 blocking (stuck on answering after a timeout mid-body) + 5 minor fixed in round 1. EXE14. First-load JS on / ≈ 182 KB gzip incl. the noModule polyfill. |
 | TASK-17 | TSK-13.1–13.2 | done | 42a5e92 | 678 unit in unit: scorer per evaluation-plan §4 (24 fixtures: 13 passing, 11 failing incl. all AC1 cases), runner with mocked fetch (pacing, 429 retry, timeouts, provenance, baseline delta, §7 gate + §2 blockers enforced separately, key-shape gate, redaction); smoke run vs next start (no key): 10/10 prepared via fallback, 0/3 off-topic (saved), gate FAIL as expected — not committed | pushed | Spec: 1 gap (§2 blockers) fixed; quality: 2 blocking fixed in round 1; re-review found a comma-grouping false pass → fixed in round 2. Dataset and plan untouched. EXE13 (fallback vs model in the gate) is an OPEN user decision. |
+| TASK-17 | EXE13 gate | done | (this commit) | 89 eval tests: a 10/10 run with 3 fallback answers → FAIL (7/10 by the model); all-fallback → FAIL; 9/10 by the model → PASS | pushed | User decision EXE13: the prepared gate counts only model answers; evaluation-plan §2/§7 updated. Threshold unchanged. |
 | TASK-17 | follow-up | done | 63bb068 | 7 new runner tests: `--out <dir>` validated before any request | pushed | Found at the M-003 gate (EISDIR after a full run). |
 | TASK-17 | TSK-13.3 | **BLOCKED-pending-key** | — | — | — | Run once `GEMINI_API_KEY` exists: `pnpm eval --base-url <preview or localhost with key> --label baseline-v1`, commit `evals/results/ask-baseline-v1-<sha>.json`, then later runs pass `--baseline <that file>`. |
 | TASK-18 | TSK-14.1–14.4 | done | 0f6ab03 | 969 unit in unit (guard regex, §7 dispose order + registry, isLive, mid-load unmount, bundle-debug scanner); e2e scene: TC-029 poster + 0 errors on 3 viewports, TC-055 no three in initial JS of / or trips (loads after FCP on / only), TC-030 automated: ≤ 1 live WebGL context after 10 Today ↔ Trip navigations counted by wrapping getContext, drag limits, no zoom, keyboard rotate/reset, context loss → poster; full suite 342 pass / 63 project-skipped / 0 fail; `check:bundle` clean on a flagless build | pushed | Spec: 1 blocking (production guard bypass via runtime env lookup) fixed by inlining NEXT_PUBLIC_DEBUG_GL in next.config.ts + a bundle check; quality: 2 blocking (tablet hero overlap hid "Open the evidence"; a test that couldn't fail) + 6 minor fixed in round 1; re-review reproduced the old attack → blocked. three@0.169.0 exact. EXE16 (scene tag on the fallback poster, flagged for the user). **TC-030 manual (Mac GPU) pending:** `docs/exec/tc-030-manual.md`. M-004 gate fixes: 2ec07f9 (EXE17) and 9845a7b (EXE18). |

@@ -248,10 +248,10 @@
 - `final/brief.html` and `final/message.html` are phone screens with their own `.m-top` bar (wordmark plus menu) and no global top bar. The build renders them the same way: the global TopBar is hidden on `/brief` and `/message`, and the screen's own menu reaches Morning brief, Today, Trucks, Trips, Why Urja and Ask. TKT-03 AC2's "top bar on every route" is read as "every desktop-shell route". The mockups are the frozen visual truth, so this follows the Design Freeze rather than changing it.
 - `/brief` and `/message` render per request, so `?lang=en` is English on first paint (TC-027).
 
-## EXE13 · Do fallback answers count toward the Ask eval gate? — OPEN (user decision)
+## EXE13 · Only model answers count toward the Ask eval gate — accepted 2026-09-29 (user decision)
 - The eval runner scores whatever `/api/ask` returns. If the guard rejects the model's answers, the deterministic fallback, which is correct by construction, can pass all 10 prepared cases, and the §7 gate would read PASS while Gemini answered nothing.
 - **Built:** the runner reports `preparedByModel` ("x/10") and warns on every passing prepared case that did not come from the model. The gate itself is unchanged, per evaluation-plan §7 as written.
-- **Recommendation for TKT-15:** treat "≥ 9/10 prepared" as "≥ 9/10 prepared **answered by the model**". That is stricter, not weaker, but it changes the gate's meaning, so it is the user's call.
+- **Decided (user, 2026-09-29): yes.** "≥ 9/10 prepared" now means ≥ 9/10 prepared answers **written by the model** (`mode: "model"`); fallback answers never count. It is stricter, and the threshold is unchanged. Implemented in `evals/run-ask-eval.ts` `summarise()` and in evaluation-plan §2 and §7, with runner tests (a 10/10 run with fallback answers fails; all-fallback fails).
 - **Related:** §6.5's strict "a data question with 0 valid cites → fallback" rule means aggregate questions (EVAL-003/007/008/009) that the model answers without citing a trip will show as fallback. Tune the prompt, or accept cited trucks as citations, only after the baseline run.
 
 ## EXE14 · Ask drawer build details — accepted 2026-09-29
@@ -265,9 +265,9 @@
 - `?state=` on Today and Trip is read on the client after hydration, so `/` stays static (○). The cost: a hard load of `/?state=…` shows the working view until hydration, and the specimen payload ships with `/`. `/brief` reads `?state` on the server (it is already dynamic for `?lang`).
 - **Not a Design Freeze item:** a performance and no-JS fix; the states' copy and layout follow `final/states.html`. A cleaner alternative for later is query-based rewrites to prerendered specimen routes.
 
-## EXE16 · The scene tag shows on the poster — accepted 2026-09-29, flagged for the user
+## EXE16 · The scene tag shows on the poster — accepted 2026-09-29, confirmed by the user
 - TC-029 asks for "the poster … with the scene tag" when the 3D scene falls back, but the mockup's CSS (`.truck3d:not(.ready) .scene-tag{display:none}`) hides the tag until a live frame renders. The build follows TC-029: in the fallback state the tag shows at the top left of the poster, without its pointer line, and stays hidden on phones.
-- This is a label's visibility, not the 3D concept, camera or composition, so it is treated as a spec conflict resolved toward the test case. Revert with one CSS rule if the user prefers the mockup.
+- This is a label's visibility, not the 3D concept, camera or composition, so it is treated as a spec conflict resolved toward the test case. **Confirmed by the user (2026-09-29): keep it; it is the honesty label.**
 - Debug hooks for the context-count test (`window.__urjaGL`, `__urjaGLForce`) exist only when the build sets `NEXT_PUBLIC_DEBUG_GL=1`. The value is inlined at build time, so production builds contain neither, and a bundle check enforces it.
 
 ## EXE17 · Performance fixes for the M-004 budget — accepted 2026-09-29

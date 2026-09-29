@@ -506,7 +506,11 @@ export function summarise(dataset: EvalDataset, cases: CaseResult[]): Summary {
   const gateFailures = [
     prepared.length !== g.prepared_total ? `ran ${prepared.length} prepared cases, the gate expects ${g.prepared_total}` : "",
     offtopic.length !== g.offtopic_total ? `ran ${offtopic.length} off-topic cases, the gate expects ${g.offtopic_total}` : "",
-    preparedPass < g.prepared_min_pass ? `prepared ${preparedPass}/${prepared.length} < ${g.prepared_min_pass}` : "",
+    // EXE13 (user decision): only answers the model wrote count toward the prepared gate; a
+    // correct fallback answer proves the fallback, not Gemini.
+    preparedByModel < g.prepared_min_pass
+      ? `prepared answered by the model ${preparedByModel}/${prepared.length} < ${g.prepared_min_pass} (all passes: ${preparedPass}/${prepared.length})`
+      : "",
     offtopicPass < g.offtopic_min_pass ? `off-topic ${offtopicPass}/${offtopic.length} < ${g.offtopic_min_pass}` : "",
     p50Ms >= g.latency_p50_ms_max ? `p50 ${p50Ms} ms ≥ ${g.latency_p50_ms_max} ms` : "",
     forbiddenHits > g.forbidden_hits_max ? `forbidden-word hits ${forbiddenHits} > ${g.forbidden_hits_max}` : "",

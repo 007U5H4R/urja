@@ -221,7 +221,28 @@ describe("runEval", () => {
     expect(exitCode).toBe(0);
   });
 
-  it("counts prepared passes by the model and warns on each prepared pass that isn't a model answer, without changing the gate", async () => {
+  it("EXE13: the prepared gate counts only answers the model wrote; a fallback pass never counts", async () => {
+    // Two more prepared cases answered by the fallback (the EVAL-007 fixture already is one), all correct:
+    // 10/10 pass, but only 7/10 by the model.
+    const h = harness((id) =>
+      id === "EVAL-001" || id === "EVAL-002" ? { status: 200, body: { ...good.get(id), mode: "fallback" } } : { status: 200, body: good.get(id) },
+    );
+    const { result, exitCode } = await runEval(opts(), h.deps);
+    expect(result.summary.prepared).toBe("10/10");
+    expect(result.summary.preparedByModel).toBe("7/10");
+    expect(result.summary.gate).toBe("FAIL");
+    expect(result.summary.gateFailures.join(" ")).toMatch(/prepared answered by the model 7\/10 < 9/);
+    expect(exitCode).toBe(1);
+  });
+
+  it("EXE13: an all-fallback run fails the gate even when every answer is right", async () => {
+    const h = harness((id) => ({ status: 200, body: { ...good.get(id), mode: "fallback", provenance: provenance(null) } }));
+    const { result } = await runEval(opts(), h.deps);
+    expect(result.summary.preparedByModel).toBe("0/10");
+    expect(result.summary.gate).toBe("FAIL");
+  });
+
+  it("counts prepared passes by the model and warns on each prepared pass that isn't a model answer (9/10 by the model still passes)", async () => {
     // The EVAL-007 fixture is a fallback answer.
     const h = harness();
     const { result } = await runEval(opts(), h.deps);
@@ -269,10 +290,11 @@ describe("runEval", () => {
   });
 
   it("keeps a failed case in the results, lists it, and still passes at 9/10", async () => {
+    // Every other answer comes from the model, so the gate (EXE13: model answers only) sees 9/10.
     const h = harness((id) =>
       id === "EVAL-003"
         ? { status: 200, body: { mode: "model", answer: "RJ14 GC 3309 earns about ₹13 per km.", lang: "en", cites: [], provenance: provenance() } }
-        : { status: 200, body: { ...good.get(id), provenance: provenance() } },
+        : { status: 200, body: { ...good.get(id), mode: "model", provenance: provenance() } },
     );
     const { result, exitCode } = await runEval(opts(), h.deps);
     expect(result.cases).toHaveLength(13);
@@ -302,7 +324,7 @@ describe("runEval", () => {
     expect(c1.notes.join(" ")).toMatch(/ECONNREFUSED/);
     expect(result.cases.find((c) => c.id === "EVAL-002")).toMatchObject({ pass: false, mode: "error", httpStatus: 500 });
     expect(result.summary).toMatchObject({ prepared: "8/10", offtopic: "2/3", forbiddenHits: 1, gate: "FAIL" });
-    expect(result.summary.gateFailures.join(" ")).toMatch(/prepared 8\/10 < 9[\s\S]*off-topic 2\/3 < 3[\s\S]*forbidden/);
+    expect(result.summary.gateFailures.join(" ")).toMatch(/prepared answered by the model 7\/10 < 9[\s\S]*off-topic 2\/3 < 3[\s\S]*forbidden/);
     expect(exitCode).toBe(1);
   });
 
