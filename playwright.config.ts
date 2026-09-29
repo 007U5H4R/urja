@@ -41,7 +41,12 @@ export default defineConfig({
     // `exec` keeps `next start` in Playwright's process group. pnpm 12 runs
     // scripts in a new process group, so `pnpm start` would be orphaned on
     // teardown and Playwright would hang waiting for its stdout to close.
-    command: `pnpm build && exec ./node_modules/.bin/next start -p ${PORT}`,
+    // NEXT_PUBLIC_DEBUG_GL=1 (non-secret) lets e2e/scene.spec.ts read the live WebGL context count
+    // (`window.__urjaGL`, TC-030) and opt one page past the software-GPU guard. It changes nothing
+    // else, so every other spec runs as before; next.config.ts inlines it ("0" elsewhere) and
+    // `pnpm check:bundle` keeps the hooks out of flagless builds. A second server
+    // was not used: two `next build`s would share .next (distDir is not configurable by env).
+    command: `NEXT_PUBLIC_DEBUG_GL=1 pnpm build && exec ./node_modules/.bin/next start -p ${PORT}`,
     port: PORT,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,

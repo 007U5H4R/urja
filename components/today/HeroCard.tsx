@@ -1,13 +1,17 @@
 "use client";
 
 import "@/components/map/map.css";
+import "@/components/scene/scene.css";
 
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { HeroMapData } from "@/components/map/hero-map";
 import type { HeroMapHandle } from "@/components/map/map-client";
 import { MAP_UNAVAILABLE } from "@/components/map/map-copy";
+import { SceneBoundary } from "@/components/scene/SceneBoundary";
+import type { SceneState } from "@/components/scene/TruckScene";
 import { Icon } from "@/components/ui/Icon";
 import type { CleanLine, EyeRow, EyesHead, HeroFlag, HeroFleet, HeroScene, MapCity } from "@/lib/data/views/today";
 import { EyesList } from "./EyesList";
@@ -26,6 +30,9 @@ export interface HeroCardProps {
 }
 
 type MapStatus = "off" | "loading" | "ready" | "failed";
+
+// The live 3D scene (TKT-14): its wrapper loads after hydration and three.js after idle (TC-055).
+const TruckScene = dynamic(() => import("@/components/scene/TruckScene"), { ssr: false });
 
 /** Where a link or the URL points the hero: `?view=map|fleet`, `?flag=2`. */
 function fromUrl(search: string, flags: number): { view: HeroView; selected: number } | null {
@@ -48,7 +55,9 @@ function fromUrl(search: string, flags: number): { view: HeroView; selected: num
  * work while the map is loading, blocked or never loads (Review focus #4).
  *
  * MapLibre is fetched only when the Map or Fleet view is first shown, through
- * `import()` of components/map/map-client (TC-055).
+ * `import()` of components/map/map-client (TC-055). The Scene view's poster is server-rendered;
+ * TruckScene mounts the three.js canvas over it after its first frame, or leaves the poster on a
+ * weak or missing GPU (`sceneState`).
  */
 export function HeroCard({ hero, fleet, scene, cities, eyes, eyesHead, cleanLine }: HeroCardProps) {
   const [selected, setSelected] = useState(0);
@@ -56,7 +65,9 @@ export function HeroCard({ hero, fleet, scene, cities, eyes, eyesHead, cleanLine
   const [mapWanted, setMapWanted] = useState(false);
   const [status, setStatus] = useState<MapStatus>("off");
   const [mounted, setMounted] = useState(0);
+  const [sceneState, setSceneState] = useState<SceneState>("poster");
   const cardRef = useRef<HTMLElement>(null);
+  const sceneRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<HTMLDivElement>(null);
   const handle = useRef<HeroMapHandle | null>(null);
 
@@ -155,8 +166,17 @@ export function HeroCard({ hero, fleet, scene, cities, eyes, eyesHead, cleanLine
     <section className="hero-row">
       {/* where it happened: the flagged trips on a real, tilted night map */}
       <article ref={cardRef} className={view === "scene" ? "panel mapcard is-scene" : "panel mapcard"} id="mapcard" aria-labelledby="map-h" data-map={status}>
-        {/* Scene: the poster until TKT-14 mounts the three.js canvas over it, inside this element. */}
-        <div className="truck3d" id="scene" role="img" aria-label={scene.ariaLabel} data-slot="scene" style={{ backgroundImage: "none" }}>
+        {/* Scene: the poster (loading and fallback); the three.js canvas is prepended over it once its first frame is drawn. */}
+        <div
+          ref={sceneRef}
+          className={sceneState === "poster" ? "truck3d" : `truck3d ${sceneState}`}
+          id="scene"
+          role="img"
+          aria-label={scene.ariaLabel}
+          data-slot="scene"
+          data-scene={sceneState}
+          style={{ backgroundImage: "none" }}
+        >
           <Image src={scene.poster} alt="" fill preload sizes="(max-width: 1180px) 100vw, 60vw" style={{ objectFit: "cover", objectPosition: "30% center" }} />
           <div className="scene-tag glass" aria-hidden="true">
             <span className="plate">{scene.plate}</span>
@@ -165,6 +185,9 @@ export function HeroCard({ hero, fleet, scene, cities, eyes, eyesHead, cleanLine
             <small>{scene.source}</small>
           </div>
         </div>
+        <SceneBoundary onError={() => setSceneState("fallback")}>
+          <TruckScene host={sceneRef} active={view === "scene"} plate={scene.plate} onState={setSceneState} />
+        </SceneBoundary>
         {/* role="group", not the mockup's "img": the numbered flag markers inside are buttons, and an img's children are hidden from assistive tech. */}
         <div className="map" id="heroMap" ref={mapRef} role="group" aria-label={view === "fleet" ? fleet.ariaLabel : flag.map.ariaLabel}></div>
         <div className="fade"></div>

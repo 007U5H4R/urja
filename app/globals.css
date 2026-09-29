@@ -592,4 +592,7 @@
 @layer components {
   @media (pointer: coarse) { .m-menu summary { width: 44px; height: 44px; } }
   @media (pointer: coarse) { .topbar .btn, .w-hero .actions .btn { height: 44px; } }
+  /* 761–1020 px (one-column hero, desktop glass card): at lamp.css's 440 px the rail box covers
+     "Open the evidence". 520 px clears the card (top 64 px + its height) above the rail box. */
+  @media (min-width: 761px) and (max-width: 1020px) { .mapcard { min-height: 520px; } }
 }
