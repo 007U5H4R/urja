@@ -8,7 +8,7 @@ import { Bricks } from "@/components/charts/Bricks";
 import { Icon } from "@/components/ui/Icon";
 import { Money } from "@/components/ui/Money";
 import { MobileMenu } from "@/components/shell/MobileMenu";
-import { AskDockSlot } from "./AskDockSlot";
+import { AskDock } from "@/components/ask/AskDock";
 import { BriefItem } from "./BriefItem";
 import { LangToggle } from "./LangToggle";
 import { RichText } from "./RichText";
@@ -120,7 +120,7 @@ export function Brief({ copy }: { copy: Record<Lang, BriefCopy> }) {
         </section>
       </main>
 
-      <AskDockSlot lang={lang} copy={c.ask} />
+      <AskDock lang={lang} copy={c.ask} />
     </div>
   );
 }

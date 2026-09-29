@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Anek_Devanagari, Inter } from "next/font/google";
+import { AskProvider } from "@/components/ask/AskProvider";
+import { askShellData } from "@/components/ask/askScope";
 import { TopBar } from "@/components/shell/TopBar";
 import { IconSprite } from "@/components/ui/IconSprite";
 import { rootMetadata } from "@/lib/og";
@@ -26,12 +28,16 @@ export const metadata: Metadata = rootMetadata();
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  // TKT-12: Ask Urja is mounted once for every route; its scope line is computed here, on the server.
+  const ask = askShellData();
   return (
     <html lang="en" className={`${inter.variable} ${anek.variable}`}>
       <body>
         <IconSprite />
-        <TopBar fleetName={SHELL.fleetName} truckCount={SHELL.truckCount} />
-        {children}
+        <AskProvider scope={ask.scope} saved={ask.saved}>
+          <TopBar fleetName={SHELL.fleetName} truckCount={SHELL.truckCount} />
+          {children}
+        </AskProvider>
       </body>
     </html>
   );
