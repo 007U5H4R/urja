@@ -253,3 +253,9 @@
 - **Built:** the runner reports `preparedByModel` ("x/10") and warns on every passing prepared case that did not come from the model. The gate itself is unchanged, per evaluation-plan §7 as written.
 - **Recommendation for TKT-15:** treat "≥ 9/10 prepared" as "≥ 9/10 prepared **answered by the model**". That is stricter, not weaker, but it changes the gate's meaning, so it is the user's call.
 - **Related:** §6.5's strict "a data question with 0 valid cites → fallback" rule means aggregate questions (EVAL-003/007/008/009) that the model answers without citing a trip will show as fallback. Tune the prompt, or accept cited trucks as citations, only after the baseline run.
+
+## EXE14 · Ask drawer build details — accepted 2026-09-29
+- The drawer is Radix Dialog, written directly because the shadcn registry is blocked (EXE2). Its motion is CSS keyframes keyed to Radix's open/closed state, with the §6.6 values (240 ms `cubic-bezier(.2,.8,.2,1)`, 180 ms scrim, none under reduced motion).
+- The drawer chunk loads lazily, warmed when the browser is idle and mounted on first open, to keep `/` under the 200 KB first-load budget.
+- A fallback answer's provenance reads "straight from your data, no AI" instead of a model name. Saved answers carry the banner's first clause ("Urja's AI couldn't answer right now."), because the second half promises a number a saved answer doesn't have.
+- The drawer's own labels stay English on the Hindi brief (no Hindi drawer copy is specified). This is a follow-up for Stage 8.
