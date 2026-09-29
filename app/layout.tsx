@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Anek_Devanagari, Inter } from "next/font/google";
 import { TopBar } from "@/components/shell/TopBar";
 import { IconSprite } from "@/components/ui/IconSprite";
+import { rootMetadata } from "@/lib/og";
 import { SHELL } from "@/lib/site-shell";
 import "./globals.css";
 
@@ -19,9 +20,8 @@ const anek = Anek_Devanagari({
   variable: "--font-hi",
 });
 
-export const metadata: Metadata = {
-  title: "Urja",
-};
+// technical-plan §9: metadataBase, the "%s · Urja" template and the site-wide OG/Twitter set.
+export const metadata: Metadata = rootMetadata();
 
 export default function RootLayout({
   children,

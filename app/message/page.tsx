@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Chat } from "@/components/phone/Chat";
 import { YESTERDAY_DAY } from "@/lib/data/aggregates";
 import { langParam } from "@/lib/brief/dict";
+import { messageMetadata } from "@/lib/metadata";
 import { renderMessage } from "@/lib/brief/template";
 import { siteHost } from "@/lib/site";
 import "@/components/phone/phone.css";
@@ -12,7 +13,8 @@ type Search = { searchParams: Promise<{ lang?: string | string[] }> };
 
 export async function generateMetadata({ searchParams }: Search): Promise<Metadata> {
   const lang = langParam((await searchParams).lang);
-  return { title: { absolute: renderMessage(YESTERDAY_DAY, lang).title } };
+  // TKT-09: the language-aware title plus the full Open Graph and Twitter set.
+  return messageMetadata(lang);
 }
 
 export default async function MessagePage({ searchParams }: Search) {

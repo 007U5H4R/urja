@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Brief } from "@/components/phone/Brief";
 import { YESTERDAY_DAY } from "@/lib/data/aggregates";
 import { langParam } from "@/lib/brief/dict";
+import { briefMetadata } from "@/lib/metadata";
 import { renderBrief } from "@/lib/brief/template";
 import "@/components/phone/phone.css";
 
@@ -13,7 +14,8 @@ const onlyHigh = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] 
 
 export async function generateMetadata({ searchParams }: Search): Promise<Metadata> {
   const lang = langParam((await searchParams).lang);
-  return { title: { absolute: renderBrief(YESTERDAY_DAY, lang).title } };
+  // TKT-09: the language-aware title plus the full Open Graph and Twitter set.
+  return briefMetadata(lang);
 }
 
 export default async function BriefPage({ searchParams }: Search) {

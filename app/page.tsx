@@ -1,9 +1,13 @@
+import type { Metadata } from "next";
 import { EyesList } from "@/components/today/EyesList";
 import { KpiCards } from "@/components/today/KpiCards";
 import { LedgerBar } from "@/components/today/LedgerBar";
 import { PageHead } from "@/components/today/PageHead";
 import { TrucksTable } from "@/components/today/TrucksTable";
 import { getToday, trucksTableView } from "@/lib/data/views/today";
+import { todayMetadata } from "@/lib/metadata";
+
+export const metadata: Metadata = todayMetadata();
 
 /**
  * Today (final/index.html). A static server component: the view model is

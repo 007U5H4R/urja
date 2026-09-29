@@ -2,7 +2,7 @@ import Link from "next/link";
 import { AskTrigger } from "./AskTrigger";
 import { MobileMenu } from "./MobileMenu";
 import { NavPills } from "./NavPills";
-import { HideOnPhoneScreens, RouteVariant } from "./RouteVariant";
+import { HideOnBarlessRoutes, RouteVariant } from "./RouteVariant";
 
 type TopBarProps = { fleetName: string; truckCount: number };
 
@@ -21,10 +21,11 @@ function initials(name: string): string {
  * it follows final/why.html lines 125–137 instead: no Ask trigger or fleet
  * chip, and a "Start the demo" button before the menu. On the phone screens
  * (/brief, /message) it renders nothing: they carry their own bar and menu (EXE12).
+ * Nor on /og-card, the link-preview card scripts/render-og.ts screenshots (§9).
  */
 export function TopBar({ fleetName, truckCount }: TopBarProps) {
   return (
-    <HideOnPhoneScreens>
+    <HideOnBarlessRoutes>
       <header className="topbar">
         <div className="wrap">
           <Link className="wordmark" href="/" aria-label="Urja, Today">
@@ -59,6 +60,6 @@ export function TopBar({ fleetName, truckCount }: TopBarProps) {
           <MobileMenu />
         </div>
       </header>
-    </HideOnPhoneScreens>
+    </HideOnBarlessRoutes>
   );
 }

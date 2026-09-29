@@ -47,3 +47,12 @@ export function isPhoneRoute(pathname: string): boolean {
   const p = pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
   return PHONE_ROUTES.includes(p);
 }
+
+/** The 1200 × 630 link-preview card that scripts/render-og.ts screenshots (technical-plan §9). */
+export const OG_CARD_PATH = "/og-card";
+
+/** Routes that render without the global TopBar: the phone screens (EXE12) and the OG card. */
+export function hidesTopBar(pathname: string): boolean {
+  const p = pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
+  return isPhoneRoute(p) || p === OG_CARD_PATH;
+}

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { resolveSiteUrl, siteHostOf } from "./site";
 
 // technical-plan §9: NEXT_PUBLIC_SITE_URL ?? (production → VERCEL_PROJECT_PRODUCTION_URL
@@ -59,3 +59,31 @@ describe("lib/site", () => {
     expect(siteHostOf("http://localhost:3000")).toBe("localhost:3000");
   });
 });
+
+// The module-level exports, as Next reads them at build time (merged from TKT-09's tests).
+describe("lib/site module exports", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  async function load(env: SiteEnvStub) {
+    for (const k of ["NEXT_PUBLIC_SITE_URL", "VERCEL_ENV", "VERCEL_PROJECT_PRODUCTION_URL", "VERCEL_URL"] as const) vi.stubEnv(k, env[k] ?? "");
+    vi.resetModules();
+    return import("./site");
+  }
+
+  it("are absolute https on the deployment host whenever VERCEL_URL is set", async () => {
+    for (const VERCEL_ENV of ["preview", "development"]) {
+      const s = await load({ VERCEL_ENV, VERCEL_URL: "urja-x.vercel.app" });
+      expect(s.siteUrl).toBe("https://urja-x.vercel.app");
+      expect(s.siteHost).toBe("urja-x.vercel.app");
+    }
+  });
+
+  it("fall back to localhost:3000 with no deployment env", async () => {
+    const s = await load({});
+    expect([s.siteUrl, s.siteHost]).toEqual(["http://localhost:3000", "localhost:3000"]);
+  });
+});
+
+type SiteEnvStub = Partial<Record<"NEXT_PUBLIC_SITE_URL" | "VERCEL_ENV" | "VERCEL_PROJECT_PRODUCTION_URL" | "VERCEL_URL", string>>;

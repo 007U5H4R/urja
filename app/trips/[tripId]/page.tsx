@@ -9,6 +9,7 @@ import { TripLedger } from "@/components/trip/TripLedger";
 import { TripMapSlot } from "@/components/trip/TripMapSlot";
 import { Icon } from "@/components/ui/Icon";
 import { getTripIds, getTripView } from "@/lib/data/views/trip";
+import { tripMetadata } from "@/lib/metadata";
 
 type Params = { params: Promise<{ tripId: string }> };
 
@@ -20,8 +21,7 @@ export function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
-  const v = getTripView((await params).tripId);
-  return v ? { title: v.title } : {};
+  return tripMetadata((await params).tripId) ?? {};
 }
 
 /** Trip evidence (final/trip.html): a static server component built from the TripView. */
