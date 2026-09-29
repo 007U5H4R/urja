@@ -63,13 +63,23 @@ test("the market is a real table with column and row headers", async ({ page }) 
   await expect(table.locator("tbody th[scope='row']")).toHaveText(["Fleetx", "Intangles", "LocoNav", "Samsara", "Urja"]);
 });
 
-test("chapter 01 shows the placeholder card and the ASSUMPTION line while there are no field quotes", async ({ page }) => {
+test("chapter 01 labels its four quotes as illustrative, not from interviews, and shows no placeholder", async ({ page }) => {
   await page.goto("/why");
   const c1 = page.locator("section[aria-labelledby='c1']");
-  await expect(c1.locator("figure.quote .chip.wait")).toHaveText("Placeholder");
   await expect(c1.locator("p.assume")).toHaveText(
-    "ASSUMPTION: quotes are placeholders until the field conversations happen. None will be invented.",
+    "Illustrative quotes, not from interviews: composites written to show what fleet owners commonly describe. Real field notes will replace them.",
   );
+  await expect(c1.locator("p.assume")).toBeVisible();
+  await expect(c1.locator("figure.quote")).toHaveCount(4);
+  await expect(c1.locator("figure.quote .chip.wait")).toHaveText(["Illustrative", "Illustrative", "Illustrative", "Illustrative"]);
+  await expect(c1.locator("figure.quote figcaption")).toHaveText([
+    "Owner, 18 trucks, Jaipur",
+    "Munshi, 30 trucks, Kishangarh",
+    "Owner, 9 trucks, Ajmer",
+    "Owner, 24 trucks, Bhiwandi",
+  ]);
+  await expect(c1).not.toContainText("Placeholder");
+  await expect(c1).not.toContainText("ASSUMPTION");
 });
 
 // M-004 perf (EXE17): on a phone the poster sits inside the first viewport and is the LCP element,

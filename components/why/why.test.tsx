@@ -18,11 +18,20 @@ afterEach(cleanup);
 
 const view = getWhyView();
 const ASSUMPTION = "ASSUMPTION: quotes are placeholders until the field conversations happen. None will be invented.";
+const ILLUSTRATIVE =
+  "Illustrative quotes, not from interviews: composites written to show what fleet owners commonly describe. Real field notes will replace them.";
 const norm = (s: string | null | undefined) => (s ?? "").replace(/\s+/g, " ").trim();
 
 describe("content", () => {
-  it("ships no invented field quotes", () => {
-    expect(quotes).toEqual([]);
+  it("ships only the four illustrative quotes, each flagged as illustrative (never presented as interviews)", () => {
+    expect(quotes.map((q) => `${q.role}, ${q.fleetSize}, ${q.city}`)).toEqual([
+      "Owner, 18 trucks, Jaipur",
+      "Munshi, 30 trucks, Kishangarh",
+      "Owner, 9 trucks, Ajmer",
+      "Owner, 24 trucks, Bhiwandi",
+    ]);
+    expect(quotes[3].text).toBe("The GPS app tells me where the truck is. It doesn’t tell me whether the trip made money.");
+    for (const q of quotes) expect(q.illustrative).toBe(true);
   });
 
   it("takes the fleet numbers from the dataset", () => {
@@ -54,8 +63,8 @@ describe("FieldNotes (chapter 01)", () => {
 
   it("shows real quotes, without the placeholder or the ASSUMPTION line, once they exist", () => {
     const heard: Quote[] = [
-      { text: "First quote.", role: "Owner", fleetSize: "12 trucks", city: "Jaipur" },
-      { text: "Second quote.", role: "Munshi", fleetSize: "40 trucks", city: "Kishangarh" },
+      { text: "First quote.", role: "Owner", fleetSize: "12 trucks", city: "Jaipur", illustrative: false },
+      { text: "Second quote.", role: "Munshi", fleetSize: "40 trucks", city: "Kishangarh", illustrative: false },
     ];
     const { container } = render(<FieldNotes quotes={heard} />);
     const figs = [...container.querySelectorAll("figure.quote")];
@@ -69,6 +78,28 @@ describe("FieldNotes (chapter 01)", () => {
     const twice = render(<FieldNotes quotes={[heard[0], heard[0]]} />);
     expect(twice.container.querySelectorAll("figure.quote")).toHaveLength(2);
     expect(container.querySelector("p.assume")).toBeNull();
+    expect(container.textContent).not.toContain("Illustrative");
+  });
+
+  it("labels the quotes as illustrative whenever any quote is illustrative, and drops the placeholder", () => {
+    const real: Quote = { text: "Heard quote.", role: "Owner", fleetSize: "12 trucks", city: "Jaipur", illustrative: false };
+    const made: Quote = { text: "Composite quote.", role: "Munshi", fleetSize: "30 trucks", city: "Kishangarh", illustrative: true };
+    for (const list of [[made], [real, made], [made, real]]) {
+      const { container, unmount } = render(<FieldNotes quotes={list} />);
+      const label = container.querySelector("p.assume")!;
+      expect(norm(label.textContent)).toBe(ILLUSTRATIVE);
+      expect(label.querySelector("b")!.textContent).toBe("Illustrative quotes, not from interviews:");
+      // The label comes before the quotes, so no quote is read without it.
+      expect(container.firstElementChild).toBe(label);
+      // Each illustrative card carries its own chip; a heard quote doesn't.
+      const figs = [...container.querySelectorAll("figure.quote")];
+      expect(figs.map((f) => f.querySelector(".chip.wait")?.textContent ?? null)).toEqual(
+        list.map((q) => (q.illustrative ? "Illustrative" : null)),
+      );
+      expect(container.textContent).not.toContain("Placeholder");
+      expect(container.textContent).not.toContain("ASSUMPTION");
+      unmount();
+    }
   });
 });
 
@@ -218,8 +249,16 @@ describe("WhyEssay (chapters 01–07)", () => {
     );
   });
 
-  it("shows the placeholder and ASSUMPTION line in chapter 01 while quotes is empty", () => {
+  it("shows the illustrative label and the four quotes in chapter 01, and no placeholder", () => {
     const { container } = renderEssay();
+    const c1 = container.querySelector("section[aria-labelledby='c1']")!;
+    expect(norm(c1.querySelector("p.assume")!.textContent)).toBe(ILLUSTRATIVE);
+    expect(c1.querySelectorAll("figure.quote")).toHaveLength(4);
+    expect(c1.textContent).not.toContain("Placeholder");
+  });
+
+  it("shows the placeholder and ASSUMPTION line in chapter 01 while quotes is empty", () => {
+    const { container } = render(<WhyEssay view={view} quotes={[]} />);
     const c1 = container.querySelector("section[aria-labelledby='c1']")!;
     expect(c1.querySelector("figure.quote .chip.wait")!.textContent).toBe("Placeholder");
     expect(norm(c1.querySelector("p.assume")!.textContent)).toBe(ASSUMPTION);

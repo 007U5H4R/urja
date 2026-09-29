@@ -42,6 +42,7 @@
   /* 01 · placeholder quote: hatched and dashed, like days that haven't happened yet */
   .essay .quote { margin: 4px 0 0; padding: 18px 22px 20px; border-radius: var(--r-lg); border: 1px dashed var(--line);
     background: repeating-linear-gradient(135deg, oklch(1 0 0 / .03) 0 1px, transparent 1px 8px), var(--surface-1); }
+  .essay .quote + .quote { margin-top: 12px; }
   .essay .quote blockquote { margin: 14px 0 0; }
   .essay .quote blockquote p { font-size: clamp(1.2rem, 1.05rem + .6vw, 1.5rem); line-height: 1.4; font-weight: 350; color: var(--fg-muted); }
   .essay .quote blockquote p::before { content: "“"; color: var(--lamp); margin-right: .06em; }
