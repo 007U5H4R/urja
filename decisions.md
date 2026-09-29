@@ -243,3 +243,7 @@
 - On `/why` the top bar matches `final/why.html`: wordmark, pills, "Start the demo" and the menu, with no Ask field and no fleet chip. The phone menu on `/why` therefore has no "Ask Urja" item. Every other route keeps the full shell, and TC-023's "menu reaches Ask" holds there.
 - The page's own styles (`why.html`'s `<style>` block) are ported verbatim into `components/why/why.css`, scoped under `.essay` and loaded only by `/why`.
 - Touch targets: on coarse pointers the phone menu button and the top-bar and hero buttons are at least 44 px (TC-023). This is an accessibility fix, so it needs no design review.
+
+## EXE12 · The phone screens keep their own top bar — accepted 2026-09-29
+- `final/brief.html` and `final/message.html` are phone screens with their own `.m-top` bar (wordmark plus menu) and no global top bar. The build renders them the same way: the global TopBar is hidden on `/brief` and `/message`, and the screen's own menu reaches Morning brief, Today, Trucks, Trips, Why Urja and Ask. TKT-03 AC2's "top bar on every route" is read as "every desktop-shell route". The mockups are the frozen visual truth, so this follows the Design Freeze rather than changing it.
+- `/brief` and `/message` render per request, so `?lang=en` is English on first paint (TC-027).
