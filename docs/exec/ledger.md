@@ -39,7 +39,7 @@
 - Ask: TC-040–TC-046.
 - Link preview and quality: TC-050 (local and a VERCEL_URL build), TC-055 (bundle; LCP on /why), TC-061.
 - TC-030's automated part.
-- TC-060: GitHub Actions CI is green (run 55, 7d7b059).
+- TC-060: GitHub Actions CI is green on both push and pull_request (cb49283). A flaky wrapper test found by the first real CI run was fixed in the test only; the component is unchanged.
 
 **BLOCKED:**
 1. **BLOCKED-pending-key** (no `GEMINI_API_KEY` here, EXE3; never faked):
