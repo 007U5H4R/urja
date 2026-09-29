@@ -1,6 +1,6 @@
 /**
  * Server-only: the provenance scope and the saved-answer line, computed from
- * the same aggregates as the screens (never typed in). app/layout.tsx passes
+ * the same aggregates as the screens (never typed in). app/root-document.tsx passes
  * them to the client AskProvider as props, so no lib/data reaches the client.
  */
 import "server-only";

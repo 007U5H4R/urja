@@ -43,12 +43,15 @@ async function trackMarker(page: Page, n: number, act: () => Promise<void>, ms =
   await page.evaluate(
     ({ n, ms }) => {
       const el = document.querySelector(`.fmark[aria-label="Show flag ${n} on the map"]`)!;
+      // Measured against the map, so a page scroll caused by the click (on a phone) isn't counted as map motion.
+      const map = el.closest(".maplibregl-map")!;
       const out: [number, number, number][] = [];
       (window as unknown as { __track: typeof out }).__track = out;
       const t0 = performance.now();
       const tick = () => {
         const r = el.getBoundingClientRect();
-        out.push([performance.now() - t0, Math.round(r.x), Math.round(r.y)]);
+        const m = map.getBoundingClientRect();
+        out.push([performance.now() - t0, Math.round(r.x - m.x), Math.round(r.y - m.y)]);
         if (performance.now() - t0 < ms) requestAnimationFrame(tick);
       };
       requestAnimationFrame(tick);

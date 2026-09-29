@@ -54,7 +54,7 @@ class SheetBoundary extends Component<
 }
 
 /**
- * Ask Urja, mounted once in app/layout.tsx. It owns the one `useAsk` state and
+ * Ask Urja, mounted once in app/root-document.tsx. It owns the one `useAsk` state and
  * the drawer, and opens it from: ⌘K / Ctrl+K, ASK_OPEN_EVENT (the top-bar
  * AskTrigger and the menu's "Ask Urja"), `/?ask` on Today, and the brief's dock
  * (through `useAskOpener`, which also sends the dock's question).
