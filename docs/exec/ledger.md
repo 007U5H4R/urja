@@ -54,7 +54,7 @@
    - TC-051 unfurl;
    - Lighthouse on the preview.
 4. **Pending, manual (local session):** TC-030 on the Mac GPU (`docs/exec/tc-030-manual.md`) and the native Hindi review (`docs/exec/hindi-review.md`, 245 strings).
-5. **CI (TC-060) on GitHub:** every Actions run fails in about 3 s with no steps or logs. The block is at the account level, not the code: a re-run made after the repo went public (2026-09-29) still failed, with `runner_id: 0`, so no runner was ever assigned. The same steps pass locally. **User action:** GitHub → Settings → Billing and plans (payment method, Actions spending limit), and the repo's Settings → Actions → General. Then re-run. The details are in a comment on PR #1.
+5. **CI (TC-060) on GitHub:** every Actions run fails in about 3 s with no steps or logs. The block is at the account level, not the code. GitHub's annotation on the job reads: "The job was not started because recent account payments have failed or your spending limit needs to be increased. Please check the 'Billing & plans' section in your settings." A re-run made after the repo went public (2026-09-29) still failed, with `runner_id: 0`, so no runner was ever assigned. The same steps pass locally. **User action:** GitHub → Settings → Billing and plans (payment method, Actions spending limit), and the repo's Settings → Actions → General. Then re-run. The details are in a comment on PR #1.
 
 **Open user decisions:**
 - **EXE13:** should the Ask eval's "≥ 9/10 prepared" count only model answers? Today fallback answers pass too; the runner reports `preparedByModel`. Recommended: count model answers only.
