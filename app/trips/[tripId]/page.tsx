@@ -9,6 +9,7 @@ import { TripLedger } from "@/components/trip/TripLedger";
 import { TripMapSlot } from "@/components/trip/TripMapSlot";
 import { Icon } from "@/components/ui/Icon";
 import { getTripIds, getTripView } from "@/lib/data/views/trip";
+import { getTripMapView } from "@/lib/data/views/trip-map";
 import { tripMetadata } from "@/lib/metadata";
 
 type Params = { params: Promise<{ tripId: string }> };
@@ -49,7 +50,7 @@ export default async function TripPage({ params }: Params) {
       <section className="trip-grid">
         {/* verdict first in reading order; placed right of the map on wide screens */}
         <FlagCard card={v.card} driver={v.driver} />
-        <TripMapSlot map={v.map} rail={v.rail} />
+        <TripMapSlot map={v.map} rail={v.rail} route={getTripMapView(v.id)} />
       </section>
 
       <FuelSpeedChart chart={v.chart} />

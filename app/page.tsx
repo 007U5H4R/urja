@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { EyesList } from "@/components/today/EyesList";
+import { HeroCard } from "@/components/today/HeroCard";
 import { KpiCards } from "@/components/today/KpiCards";
 import { LedgerBar } from "@/components/today/LedgerBar";
 import { PageHead } from "@/components/today/PageHead";
@@ -12,7 +12,8 @@ export const metadata: Metadata = todayMetadata();
 /**
  * Today (final/index.html). A static server component: the view model is
  * built from the memoised dataset at build time. Phone order (Design.md §16):
- * verdict → ledger bar → needs your eyes → hero → September cards → trucks.
+ * verdict → ledger bar → needs your eyes → hero → September cards → trucks
+ * (lamp.css puts the eyes list first in the stacked hero row).
  */
 export default function Today() {
   const today = getToday();
@@ -20,11 +21,16 @@ export default function Today() {
     <main className="wrap">
       <PageHead greeting={today.greeting} verdict={today.verdict} tags={today.tags} />
       <LedgerBar ledger={today.ledger} />
-      <section className="hero-row">
-        {/* TKT-10 fills this slot with the hero card (scene · map · fleet); it keeps the grid's first column. */}
-        <div className="hero-slot" data-slot="hero" />
-        <EyesList eyes={today.eyes} head={today.eyesHead} cleanLine={today.cleanLine} />
-      </section>
+      {/* The hero card (scene · map · fleet) and "Needs your eyes" share one selection. */}
+      <HeroCard
+        hero={today.hero}
+        fleet={today.fleetNow}
+        scene={today.heroScene}
+        cities={today.mapCities}
+        eyes={today.eyes}
+        eyesHead={today.eyesHead}
+        cleanLine={today.cleanLine}
+      />
       <KpiCards september={today.september} />
       <TrucksTable trucks={trucksTableView(today.trucks)} />
     </main>

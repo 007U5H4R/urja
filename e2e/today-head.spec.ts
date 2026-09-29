@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "./fixtures";
 
 // TSK-02.8 · TKT-02 AC5 (TC-001, TC-021): Today's verdict and ledger bar come from the engine.
 

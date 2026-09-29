@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "./fixtures";
 
 // TKT-05 (TASK-9): the Trip evidence page. TC-003 (UI), TC-004/005 render, the
 // 404 deep links (review focus #3), the /trips redirect, honest driver actions,

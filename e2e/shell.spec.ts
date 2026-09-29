@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "./fixtures";
 
 // TKT-03 AC2 + AC5 (TC-022, TC-031 shell): the top bar on every route, the
 // ≤760px menu, no horizontal scroll at 375 / 768 / 1440, ⌘K hidden on touch.

@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "./fixtures";
 
 // TKT-08 AC1–AC3 (TC-022, TC-023 touch target): the Why Urja page at 375 / 768 / 1440.
 

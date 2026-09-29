@@ -4,8 +4,8 @@
  *
  * TSK-02.6 builds the head (greeting, verdict, tags, ledger bar) with
  * `getTodayHead()`. TKT-04 fills `eyes`, `cleanLine`, `september` and
- * `trucks`; TKT-10 fills `hero` and `fleetNow`. Until then those fields are
- * optional, and each later ticket narrows its own.
+ * `trucks`; TKT-10 fills the hero card: `hero` (one per eyes row),
+ * `fleetNow`, `heroScene` and `mapCities`.
  */
 import { DEMO_NOW, MIN_PER_DAY, RECONCILED_AT, SEPT_START, istMin } from "@/lib/clock";
 import { formatDateIST, formatINR, formatTimeIST, minToISTParts } from "@/lib/format";
@@ -19,16 +19,21 @@ import {
   trucks as rankedTrucks,
   weeks as septemberWeeks,
   yesterday,
-  type FleetNowView,
+  fleetNow as fleetNowOf,
+  type NowState,
   type TruckRow,
 } from "../aggregates";
-import { WRONG_FLAG_LIMIT_PCT } from "../constants";
+import { R4, WRONG_FLAG_LIMIT_PCT } from "../constants";
 import { baselineClFor, truckByPlate } from "../fleet";
+import { distanceToPathM } from "../geo";
 import { tripById, type ReadonlyFlag } from "../index";
 import { placeById } from "../places";
-import { routeById, routeName } from "../routes";
+import { isLocalRoute, routeById, routeName } from "../routes";
+import { tankUsedCl } from "../rules/r3-excess";
 import { rangeEn } from "../rules/text";
-import type { Confidence, Plate, TripId } from "../types";
+import type { Confidence, LngLat, Plate, Trip, TripId } from "../types";
+import { getTripView, type RailView } from "./trip";
+import { getTripMapView } from "./trip-map";
 
 // ── Contract ─────────────────────────────────────────────────────────────
 export type LedgerPartKey = "diesel" | "tolls" | "other" | "profit";
@@ -178,11 +183,87 @@ export interface TodayTrucks {
   period: string;
 }
 
-/** TKT-10 extends this with the hero card's rows, rail and map selection. */
+/** A glass-card row: a label and its value, or the confidence meter. */
+export type HeroRow = { label: string; value: string } | { label: string; confidence: Confidence };
+
+/** The hero's tick rail for a flag: the trip page's rail with the hero's own sub-head. */
+export interface HeroRail {
+  /** 'Night of 26–27 Sep' */
+  head: string;
+  /** '286 km on NH48' */
+  sub: string;
+  total: number;
+  step: number;
+  segs: RailView["segs"];
+  knob?: RailView["knob"];
+  ends: [string, string];
+}
+
+/** One flag on the hero map (map.js FLAGS[i]). */
+export interface HeroFlagMap {
+  /** Where the numbered marker and the lamp pool sit. */
+  at: LngLat;
+  /** The marker's place label: 'Behror', 'Kishangarh pump', 'whole trip'. */
+  place: string;
+  /** The trip as driven (simplified GPS). */
+  route: LngLat[];
+  /** The planned path, drawn dashed only where the truck left it; else null. */
+  plan: LngLat[] | null;
+  bounds: [LngLat, LngLat];
+  /** The marker button's label: 'Show flag 1 on the map'. */
+  markerLabel: string;
+  /** The map's aria-label while this flag is selected. */
+  ariaLabel: string;
+}
+
+/** A hero flag: the glass card, rail and map data for eyes row `n` (final/index.html FL[]). */
 export interface HeroFlag {
   n: 1 | 2 | 3;
   tripId: TripId;
   plate: Plate;
+  /** 'Trip 0926-04' */
+  trip: string;
+  /** 'Ramesh Kumar · Jaipur → Delhi (Okhla)' */
+  who: string;
+  inr: number;
+  rows: HeroRow[];
+  cta: { text: string; href: string };
+  rail: HeroRail;
+  map: HeroFlagMap;
+}
+
+/** The Fleet view: where the 24 trucks are now (final/index.html showFleet, map.js TRUCKS). */
+export interface HeroFleet {
+  /** '24 trucks' */
+  title: string;
+  /** 'updated just now' */
+  updated: string;
+  legend: { state: NowState; label: string; count: number }[];
+  cta: { text: string; href: string };
+  /** 'Now, 7:12 AM' */
+  railHead: string;
+  railNote: string;
+  trucks: { lngLat: LngLat; state: NowState }[];
+  bounds: [LngLat, LngLat];
+  ariaLabel: string;
+}
+
+/** Flag 1's moment, which the Scene view reconstructs (Design.md §26): the tag and the description. */
+export interface HeroScene {
+  plate: Plate;
+  /** 'Parked · ignition off' */
+  status: string;
+  /** 'Fuel −38 L · 2:14 AM' */
+  loss: string;
+  source: string;
+  poster: string;
+  ariaLabel: string;
+}
+
+/** A city label on the hero map. */
+export interface MapCity {
+  name: string;
+  lngLat: LngLat;
 }
 
 export interface TodayView {
@@ -196,14 +277,14 @@ export interface TodayView {
   cleanLine: CleanLine;
   september: SeptemberKpis;
   trucks: TodayTrucks;
-  hero?: HeroFlag[];
-  fleetNow?: FleetNowView;
+  /** One per eyes row, same order (TKT-10). */
+  hero: HeroFlag[];
+  fleetNow: HeroFleet;
+  heroScene: HeroScene;
+  mapCities: MapCity[];
 }
 
 export type TodayHead = Pick<TodayView, "greeting" | "verdict" | "tags" | "ledger">;
-
-/** Everything Today renders until TKT-10 adds the hero. */
-export type TodayPage = Omit<TodayView, "hero" | "fleetNow">;
 
 // ── Builders ─────────────────────────────────────────────────────────────
 /** The fleet owner, as the greeting addresses him. */
@@ -636,12 +717,220 @@ function trucksTable(rows: readonly TruckRow[], month: string): TodayTrucks {
   };
 }
 
-/** Today, head to trucks table (§4.6, TSK-02.6 + TSK-04.1). TKT-10 adds the hero and the fleet-now view. */
-export function getToday(): TodayPage {
+// ── Hero card (TKT-10, TSK-10.2) ─────────────────────────────────────────
+/** The cities map.js labels on the hero map. */
+const MAP_CITY_IDS = ["jaipur", "delhi", "ahmedabad", "mumbai"] as const;
+const SCENE_POSTER = "/truck-scene.png";
+const SCENE_SOURCE = "Reconstruction from GPS + fuel sensor";
+const L = (cl: number) => Math.round(cl / 100);
+/** 'Jaipur → Delhi (Okhla)' → 'Jaipur to Delhi': the route in words. */
+const routeWords = (routeId: string) => shortRoute(routeId).replace(" → ", " to ");
+
+function bboxOf(points: readonly LngLat[]): [LngLat, LngLat] {
+  const xs = points.map((p) => p[0]);
+  const ys = points.map((p) => p[1]);
+  return [
+    [Math.min(...xs), Math.min(...ys)],
+    [Math.max(...xs), Math.max(...ys)],
+  ];
+}
+
+const ignitionOffDuring = (f: ReadonlyFlag) => {
+  const trip = tripById(f.tripId);
+  return trip.samples.slice(Math.max(0, f.at - trip.start), (f.until ?? f.at) - trip.start + 1).some((x) => !x.ignition);
+};
+
+const nearestBill = (f: ReadonlyFlag) =>
+  [...tripById(f.tripId).refuels].sort((a, b) => Math.abs(a.t - f.at) - Math.abs(b.t - f.at))[0];
+
+/** The road a trip ran on, as the trip page names it: NH48 for the intercity routes. */
+export const roadOf = (routeId: string) => (isLocalRoute(routeId) ? "the planned route" : "NH48");
+
+const isSpread = (f: ReadonlyFlag) => f.evidence.some((e) => e.text.en.startsWith("Spread across the trip"));
+
+/** The glass card's rows for a flag, in the mockup's words (FL[i].rows). */
+function heroRows(f: ReadonlyFlag): HeroRow[] {
+  const conf: HeroRow = { label: "Confidence", confidence: f.confidence };
+  const trip = tripById(f.tripId);
+  switch (f.rule) {
+    case "R1": {
+      const near = f.placeId ? ` near ${placeById(f.placeId).name.en}` : "";
+      return [
+        { label: "Diesel unaccounted", value: `${f.litres ?? 0} L` },
+        { label: "Where", value: `${ignitionOffDuring(f) ? "Parked" : "Standing"}${near}` },
+        { label: "When", value: formatTimeIST(f.at) },
+        conf,
+      ];
+    }
+    case "R2": {
+      const bill = nearestBill(f);
+      if (!bill) break;
+      return [
+        { label: "Bill says", value: `${L(bill.billedCl)} L` },
+        { label: "Tank rose", value: `${L(bill.tankRiseCl)} L` },
+        { label: "Where", value: placeById(bill.placeId).name.en },
+        conf,
+      ];
+    }
+    case "R3": {
+      const truck = truckByPlate(f.plate);
+      const usual = truck.usualLoadT[trip.routeId];
+      return [
+        { label: "Used", value: `${L(tankUsedCl(trip as unknown as Trip))} L` },
+        { label: "This truck’s normal", value: `${L(baselineClFor(truck, trip.routeId))} L` },
+        { label: "Load", value: usual === undefined ? `${trip.loadT} t` : `${trip.loadT} t (usual ${usual} t)` },
+        conf,
+      ];
+    }
+  }
+  // R4 and R5 have no Today mockup: their first two evidence lines, by source.
+  return [...f.evidence.slice(0, 2).map((e) => ({ label: e.source, value: e.text.en })), conf];
+}
+
+/** The rail box's sub-head: the trip's km, where the flag sits on it. */
+function railSub(f: ReadonlyFlag): string {
+  const trip = tripById(f.tripId);
+  const km = `${INT.format(trip.actualKm)} km`;
+  if (f.rule === "R1" || f.rule === "R4") return `${km} on ${roadOf(trip.routeId)}`;
+  if (f.rule === "R3" && isSpread(f)) return `${km} · spread across the trip, no single stop`;
+  return km;
+}
+
+/** What the selected flag is, for the map's aria-label. */
+function flagInWords(f: ReadonlyFlag): string {
+  const trip = tripById(f.tripId);
+  switch (f.rule) {
+    case "R1": {
+      const near = f.placeId ? ` near ${placeById(f.placeId).name.en}` : "";
+      return `${ignitionOffDuring(f) ? "parked" : "standing"}${near} when ${f.litres ?? 0} litres of diesel went unaccounted`;
+    }
+    case "R2": {
+      const bill = nearestBill(f);
+      if (bill) return `where the fuel bill at ${placeById(bill.placeId).name.en} was ${L(bill.billedCl - bill.tankRiseCl)} litres more than the tank rose`;
+      break;
+    }
+    case "R3":
+      return `which used ${f.litres ?? 0} litres more diesel than this truck’s normal${isSpread(f) ? ", spread across the trip" : ""}`;
+  }
+  return f.evidence[0]?.text.en.replace(/^\w/, (c) => c.toLowerCase()) ?? `trip ${trip.id}`;
+}
+
+function heroPlace(f: ReadonlyFlag): string {
+  if (f.rule === "R3") return "whole trip";
+  if (f.rule === "R2") {
+    const bill = nearestBill(f);
+    if (bill) return placeById(bill.placeId).name.en;
+  }
+  return f.placeId ? placeById(f.placeId).name.en : "";
+}
+
+export function heroFlags(eyes: readonly EyeRow[], flags: readonly ReadonlyFlag[]): HeroFlag[] {
+  const count = word(eyes.length);
+  // The same flags, in the same order, as eyeRows().
+  const shown = flags.filter((x) => x.status !== "wrong");
+  return eyes.map((e, i) => {
+    const f = shown[i];
+    const trip = tripById(f.tripId);
+    const tripView = getTripView(f.tripId)!;
+    const m = getTripMapView(f.tripId)!;
+    const leaves = m.actual.some((p) => distanceToPathM(p, m.plan) > R4.offPathM);
+    const rail: HeroRail = {
+      head: tripView.rail.head,
+      sub: railSub(f),
+      total: tripView.rail.total,
+      step: tripView.rail.step,
+      segs: tripView.rail.segs,
+      ends: tripView.rail.ends,
+    };
+    if (tripView.rail.knob) rail.knob = tripView.rail.knob;
+    return {
+      n: e.n,
+      tripId: e.tripId,
+      plate: e.plate,
+      trip: `Trip ${e.tripId}`,
+      who: `${e.driver} · ${routeName(trip.routeId).en}`,
+      inr: e.inr,
+      rows: heroRows(f),
+      cta: { text: "Open the evidence", href: `/trips/${e.tripId}` },
+      rail,
+      map: {
+        at: m.focus,
+        place: heroPlace(f),
+        route: m.actual,
+        plan: leaves ? m.plan : null,
+        bounds: bboxOf(leaves ? [...m.actual, ...m.plan] : m.actual),
+        markerLabel: `Show flag ${e.n} on the map`,
+        ariaLabel: `Map of the ${count} flagged trips. Selected: ${e.plate}, ${routeWords(trip.routeId)}, ${flagInWords(f)}.`,
+      },
+    };
+  });
+}
+
+const NOW_LABEL: Record<NowState, { card: string; words: string }> = {
+  moving: { card: "On a trip", words: "on a trip" },
+  yard: { card: "In a yard", words: "in a yard" },
+  workshop: { card: "Workshop", words: "in the workshop" },
+};
+
+export function heroFleet(flagCount: number): HeroFleet {
+  const now = fleetNowOf();
+  const ago = Math.max(0, DEMO_NOW - now.at);
+  const states: NowState[] = ["moving", "yard", "workshop"];
+  const note = `Numbered markers are yesterday’s ${flagCount} ${flagCount === 1 ? "flag" : "flags"}`;
+  const trucks = now.trucks.map((t) => ({ lngLat: [t.lngLat[0], t.lngLat[1]] as LngLat, state: t.state }));
+  const n = trucks.length;
+  return {
+    title: `${n} ${n === 1 ? "truck" : "trucks"}`,
+    updated: ago === 0 ? "updated just now" : `updated ${ago} min ago`,
+    legend: states.map((state) => ({ state, label: NOW_LABEL[state].card, count: now.counts[state] })),
+    cta: { text: "See every truck", href: "#trucks" },
+    railHead: `Now, ${formatTimeIST(now.at)}`,
+    railNote: note,
+    trucks,
+    bounds: bboxOf(trucks.map((t) => t.lngLat)),
+    ariaLabel: `Map of all ${n} trucks now: ${states.map((s) => `${now.counts[s]} ${NOW_LABEL[s].words}`).join(", ")}. ${note}.`,
+  };
+}
+
+export function heroScene(flags: readonly ReadonlyFlag[]): HeroScene {
+  const f = flags.find((x) => x.rule === "R1" && x.status !== "wrong") ?? flags.find((x) => x.status !== "wrong");
+  if (!f) {
+    return { plate: "", status: "", loss: "", source: SCENE_SOURCE, poster: SCENE_POSTER, ariaLabel: "3D scene of a truck parked at night." };
+  }
+  const off = ignitionOffDuring(f);
+  const at = formatTimeIST(f.at);
+  const litres = f.litres ?? 0;
+  const m = getTripMapView(f.tripId)!;
+  const offKm = distanceToPathM(m.focus, m.plan) / 1000;
+  const near = f.placeId ? ` near ${placeById(f.placeId).name.en}` : "";
+  const road = roadOf(tripById(f.tripId).routeId);
+  const where = offKm * 1000 > R4.offPathM ? ` ${(Math.round(offKm * 10) / 10).toFixed(1)} km off ${road}${near}` : ` on ${road}${near}`;
+  return {
+    plate: f.plate,
+    status: off ? "Parked · ignition off" : "Standing · ignition on",
+    loss: `Fuel −${litres} L · ${at}`,
+    source: SCENE_SOURCE,
+    poster: SCENE_POSTER,
+    ariaLabel:
+      `3D scene of truck ${f.plate} ${off ? "parked" : "standing"}${where} at ${at} with its ignition ${off ? "off" : "on"}. ` +
+      `The fuel tank is lit red because ${litres} litres went unaccounted.`,
+  };
+}
+
+export function mapCities(): MapCity[] {
+  return MAP_CITY_IDS.map((id) => {
+    const p = placeById(id);
+    return { name: p.name.en, lngLat: [p.lngLat[0], p.lngLat[1]] };
+  });
+}
+
+/** Today, head to hero (§4.6, TSK-02.6 + TSK-04.1 + TKT-10). */
+export function getToday(): TodayView {
   const head = getTodayHead();
   const y = yesterday();
   const rows = rankedTrucks();
   const sept = september(rows);
+  const eyes = eyeRows(y.flags);
   return {
     ...head,
     eyesHead: {
@@ -650,9 +939,13 @@ export function getToday(): TodayPage {
       inr: y.unaccountedInr,
       countText: eyesCountText(head.verdict.flaggedTrips, y.trips),
     },
-    eyes: eyeRows(y.flags),
+    eyes,
     cleanLine: { others: y.trips - head.verdict.flaggedTrips, text: cleanLineText(head.verdict.flaggedTrips, y.trips) },
     september: sept,
     trucks: trucksTable(rows, sept.month),
+    hero: heroFlags(eyes, y.flags),
+    fleetNow: heroFleet(eyes.length),
+    heroScene: heroScene(y.flags),
+    mapCities: mapCities(),
   };
 }

@@ -15,16 +15,16 @@ export interface EyesListProps {
   eyes: EyeRow[];
   head: EyesHead;
   cleanLine: CleanLine;
-  /** The lit row when the hero drives the selection (TKT-10); uncontrolled otherwise, starting at row 1. */
+  /** The lit row when the HeroCard drives the selection; uncontrolled otherwise, starting at row 1. */
   selected?: EyeRow["n"];
-  /** Fired when a row is selected; TKT-10 flies the hero map to that flag. */
+  /** Fired when a row is selected; the HeroCard lights it, updates the glass card and rail, and flies the map. */
   onSelect?: (n: EyeRow["n"]) => void;
 }
 
 /**
  * "Needs your eyes" (final/index.html lines 75–102): yesterday's flags in eye
- * order. The whole row is a toggle button that lights it (and, with TKT-10,
- * shows it on the hero map); "Evidence" opens the trip.
+ * order. The whole row is a toggle button that lights it and shows it in the
+ * hero (glass card, rail, map); "Evidence" opens the trip.
  */
 export function EyesList({ eyes, head, cleanLine, selected, onSelect }: EyesListProps) {
   const [own, setOwn] = useState<EyeRow["n"]>(eyes[0]?.n ?? 1);
@@ -59,11 +59,9 @@ export function EyesList({ eyes, head, cleanLine, selected, onSelect }: EyesList
             <span className="l3">
               <Confidence level={e.confidence} lang="en" />
               <StatusChip tone={e.driverStatus.tone === "wait" ? "wait" : undefined}>{e.driverStatus.text}</StatusChip>
-              {/* No viewport prefetch: three trip payloads would load with every visit to Today. */}
               <Link
                 className="open"
                 href={`/trips/${e.tripId}`}
-                prefetch={false}
                 aria-label={`Evidence for ${e.plate}, trip ${e.tripId}`}
               >
                 Evidence

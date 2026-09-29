@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page, type Route } from "@playwright/test";
+import { expect, test, type Page, type Route } from "./fixtures";
 
 // TSK-12.4 · TKT-12 (TC-026, TC-024 Ask, TC-031): the ⌘K drawer at 1440/768 and the
 // phone dock + chat view at 375. /api/ask is mocked with page.route, so no key is needed.

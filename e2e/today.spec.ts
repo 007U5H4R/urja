@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "./fixtures";
 
 // TSK-04.5 · TKT-04 (TC-006..TC-008 UI, TC-021, TC-022, TC-031): Needs your eyes,
 // the September cards and the trucks table, at 1440 / 768 / 375 (the three projects).

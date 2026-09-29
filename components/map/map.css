@@ -1,0 +1,25 @@
+/* TKT-10 map glue that lamp.css doesn't cover. Imported by HeroCard and TripMap
+   (not by the lazy MapLibre chunk), so the failure overlay is styled even when
+   MapLibre never loads. Tokens come from app/globals.css. */
+
+/* technical-plan §8: "Map unavailable; every event is in the timeline" over the
+   map area; the header (switch, full screen), glass card and rail stay on top. */
+.mapcard .map-fail { position: absolute; left: 16px; top: 64px; max-width: calc(100% - 320px); z-index: 2; padding: 10px 14px;
+  display: flex; align-items: center; gap: 8px; font-size: var(--t-sm); color: var(--fg-muted); }
+.mapcard .map-fail .i { flex: none; color: var(--fg-subtle); }
+.trip-grid .mapcard .map-fail { top: auto; bottom: 120px; max-width: calc(100% - 32px); }
+.mapcard.is-scene .map-fail { visibility: hidden; }
+@media (max-width: 760px) {
+  .mapcard .map-fail { left: 12px; right: 12px; top: 54px; max-width: none; }
+  .trip-grid .mapcard .map-fail { top: 96px; bottom: auto; }
+}
+
+/* MapLibre's stylesheet (unlayered) sets .maplibregl-map { position: relative }, which beats
+   lamp.css's layered .mapcard .map { position: absolute; inset: 0 }. Keep the map box, and the
+   per-mount container MapLibre renders into, filling the card. */
+.mapcard .map.maplibregl-map, .mapcard .map > .maplibregl-map { position: absolute; inset: 0; border-radius: inherit; }
+
+/* lamp.css styles the attribution toggle inside @layer components; MapLibre's own
+   stylesheet is unlayered and would win, so the same value is repeated here, unlayered
+   and more specific. */
+.mapcard .maplibregl-ctrl-attrib-button { filter: invert(1) opacity(.5); }

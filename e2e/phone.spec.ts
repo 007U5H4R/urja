@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "./fixtures";
 
 // TSK-06.4 · TKT-06 (TC-027, TC-022, TC-010 UI, TC-031): the Morning brief and the
 // 7 AM message at 1440 / 768 / 375 (the three projects).
