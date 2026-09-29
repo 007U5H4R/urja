@@ -163,6 +163,24 @@ test.describe("the live scene (debug build, guard bypassed)", () => {
     expect(errors.filter((e) => e.startsWith("pageerror"))).toEqual([]);
   });
 
+  test("TC-030 · the view controls never cover the scene tag, the glass card or the rail box (1440, 1200, 1024)", async ({ page }) => {
+    type Box = { x: number; y: number; width: number; height: number };
+    const overlaps = (a: Box, b: Box) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+    for (const width of [1440, 1200, 1024]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/");
+      await expect(page.locator(".truck3d.ready")).toBeVisible({ timeout: 30_000 });
+      await expect(page.locator(".scene-tag")).toBeVisible();
+      const ctl = await page.locator(".scene-ctl").boundingBox();
+      expect(ctl, `controls at ${width}`).not.toBeNull();
+      for (const other of [".scene-tag", ".floatcard", ".railbox"]) {
+        const box = await page.locator(other).boundingBox();
+        if (!box) continue;
+        expect(overlaps(ctl!, box), `.scene-ctl overlaps ${other} at ${width} px: ${JSON.stringify({ ctl, box })}`).toBe(false);
+      }
+    }
+  });
+
   test("TC-030 · drag stays within the limits, the wheel does not zoom, rotate and reset work from the keyboard", async ({ page }) => {
     const errors = collectErrors(page);
     await page.goto("/");

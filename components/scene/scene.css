@@ -18,10 +18,12 @@
 }
 
 /*
- * Rotate left / right and reset: the keyboard (and touch) equivalents of drag-to-orbit. A column
- * down the left edge, clear of the scene tag and the truck; a row on phones, where the tag is hidden.
+ * Rotate left / right and reset: the keyboard (and touch) equivalents of drag-to-orbit. On desktop,
+ * a row at the bottom left just above the rail box (bottom 14px + ~107px tall), where it never meets
+ * the scene tag or the glass card (the tag rides the truck in the upper left). e2e/scene.spec.ts
+ * checks the boxes at 1440, 1200 and 1024 px. On phones, a row at the top, where the tag is hidden.
  */
-.scene-ctl { position: absolute; left: 16px; top: 64px; z-index: 3; display: flex; flex-direction: column; gap: 6px; }
-@media (max-width: 760px) { .scene-ctl { left: 12px; flex-direction: row; } }
+.scene-ctl { position: absolute; left: 16px; bottom: 134px; z-index: 3; display: flex; flex-direction: row; gap: 6px; }
+@media (max-width: 760px) { .scene-ctl { left: 12px; top: 64px; bottom: auto; } }
 .scene-ctl .iconbtn { background: oklch(0.130 0.003 60 / .7); }
 @media (pointer: coarse) { .scene-ctl .iconbtn { width: 44px; height: 44px; } }
