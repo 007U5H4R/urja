@@ -303,3 +303,8 @@
 - When the brief or message is in Hindi (`lang=hi`), the phone menu items and every visible label in the Ask drawer (title, input placeholder, chips, buttons, state lines, fallback banner, provenance line) are Hindi. Every new Hindi string goes into `docs/exec/hindi-review.md` for the native review.
 - **Accepted exception:** the screen-state copy (`?state=loading|empty|clean|error`) stays English. These states are rare and `final/states.html` is English.
 - **Accessibility fix:** the server sends `<html lang="hi">` on the Hindi /brief and /message on first paint (and `lang="en"` for `?lang=en`), not `lang="en"` corrected after hydration. Today and the other pages stay statically prerendered; public URLs don't change.
+- **How it's built (EXE23 part 2):**
+  - Three root layouts through route groups: `app/(site)` renders `lang="en"` with the top bar; `app/(phone)` (/brief, /message) renders `lang="hi"`; `app/(phone-en)` (internal /en/brief, /en/message) renders `lang="en"`. All three render one shared `app/root-document.tsx`, so fonts, CSS, the icon sprite and the Ask provider can't drift.
+  - `next.config.ts` rewrites (not redirects) `?lang=en` to the English group, so public URLs don't change. Direct hits on /en/* redirect to the public URL.
+  - Unmatched URLs use `app/global-not-found.tsx`. This needs `experimental.globalNotFound` in Next 16.3.6 (pinned exactly); re-check it on any Next upgrade.
+  - Trade-off: a link between root layouts (phone ↔ site, Hindi ↔ English phone) is a full page load. The in-place language toggle is still instant. On the demo path, only Brief → Trip is a full load (about 260 ms locally).
