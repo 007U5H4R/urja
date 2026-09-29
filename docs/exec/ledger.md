@@ -92,6 +92,11 @@ _(one section per milestone, newest last)_
   - TC-055 bundle: **PASS** (no three or maplibre in initial JS; / 188.8 KiB gzip incl. the noModule polyfill; three loads after FCP on / only).
 - **FAIL (DoD performance block):** Lighthouse mobile (simulated) LCP is 7.8 s on / and 7.6 s on /why, against 2.5 s. With DevTools throttling: / 2.0 s, /why 4.1 s, /why CLS 0.101. Causes: a 726 KB Anek Devanagari woff2 preloaded on every route, and the /why poster lazy-loaded while it sits inside the phone viewport.
 - **Action:** gate fix round 1 dispatched. Performance fixes only (font preload and subsets, image formats, eager /why poster, maplibre CSS only with the map). No threshold or Design Freeze change.
+- **Attempt 2 (after fix round 1, 2ec07f9; independent QA, median of 3, Lighthouse 12.8.2 mobile): FAIL.**
+  - Simulated throttling (Lighthouse default): / LCP 4.06 s (FCP 2.41, CLS 0.003, TBT 74 ms; LCP = h1.verdict, render delay 3.6 s); /why LCP 3.31 s (CLS 0.000; LCP = poster).
+  - DevTools throttling: / 1.05 s, /why 0.99 s (CLS 0.078).
+  - Everything else passes again: TC-029, TC-050, TC-055 bundle (/ 189.0 KB gzip incl. the noModule polyfill), /brief in Anek, /why axe, verify 969, check:bundle. e2e: 353 pass / 1 flaky (phone maps reduced-motion; passes 48/48 on rerun).
+  - **Action:** gate fix round 2 (the last): font subsetting and preloading, the inlineCss trade-off, legacy JS, lazy state specimens.
 
 ## Decisions and scope log
 
