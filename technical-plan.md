@@ -656,6 +656,29 @@ The key, the prompt and the full question are never logged.
 - The runner posts to a base URL, paced at 1 request per 12 s (under the 5 per minute limit), and writes `evals/results/*.json` with provenance.
 - One command runs it: `pnpm eval --base-url <url> [--label baseline-v1]`.
 
+### 6.8 Stage 9 amendments (ask-v2, EXE30)
+§6.1–§6.7 stay as written. These changes apply on top of them:
+- **Prompt:** `PROMPT_VERSION = 'ask-v2'`. The §6.3 instruction is unchanged. `ANSWER_RULES` is added as a second system part:
+  - rule 7: cite the `trip` field, never a flag id; cite the trips behind a total; put a named truck's plate in `cited_trucks`;
+  - rule 8: give a trip count as a numeral, a single flag's place and time, and a rate's count and percentage.
+  - The response schema order becomes `out_of_scope, lang, cited_trips, cited_trucks, answer`.
+- **Context:** `yesterday.flaggedTripCount`, `lastWeek.tripCount`, `september.recoveredTrips` and `wrongTrips` are added.
+- **Client:** `maxOutputTokens` goes up to 1024, from 600 in §6.4, so long Hindi answers don't truncate into `bad_json`.
+- **Guard and citations:**
+  - A cite may name a flag id or "trip …"; it is read as its trip id. Unknown ids are still dropped.
+  - A cited fleet plate grounds the answer only when the answer also names that plate.
+  - The safety checks (leaks, forbidden words, unsupported figures) are unchanged and run first.
+  - `missingSpecifics` is diagnostic only. It adds `; missing=count|place|time` to `x-ask-outcome` and the log, and never rewrites an answer.
+- **Off-topic:**
+  - On any non-model path, an off-topic question (weather, sport, price forecasts, prompt extraction) gets a fixed refusal in en or hi, with `mode: "saved"` and `refusal: "out_of_scope" | "injection"`.
+  - The drawer shows the refusal on its own, with no saved banner and no Try again.
+  - `saved` with the "saved" text is now only for in-scope questions with no template.
+- **Fixed-copy language (CR-1):** a Devanagari question gets Hindi copy and an English question English copy. A Hinglish question follows the request's `lang`, and English when there is none.
+- **Runner:**
+  - It records each case's `x-ask-outcome` and the summary's `outcomes`.
+  - It warns for each off-topic pass that isn't a model answer.
+  - The gate is unchanged.
+
 ## 7. Spatial 3D decisions (Design.md §26; t-design spatial-3d §11; TP7)
 **Framework: vanilla three.js in a client component, not R3F.**
 - The approved scene is a 17 KB imperative module that ports almost line for line.

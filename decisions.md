@@ -352,3 +352,23 @@
 - **Findings and fixes:** findings are numbered DES-2 onward (DES-1 is already fixed). Pixel, accessibility, browser and performance findings are fixed on build/stage7 without approval. Anything touching a Design Freeze item is parked for the user.
 - **Browser access:** the sandbox Chromium doesn't trust the agent proxy's CA in this session. The critique helper fetches each request Node-side (`NODE_EXTRA_CA_CERTS`, TLS verified) and fulfils it in the page. TLS checks are never disabled.
 - **Option for the user:** run `bw-design-critique` locally against the preview as well. Its findings join the same DES list.
+
+## EXE30 · Ask ask-v2: grounded citations, trip counts and refusals — judgement call 2026-10-05 (Stage 9; one question for the user)
+- **Why:** baseline-v1 (3ab14d4, Gemini live on the preview) scored 3/10 prepared answers by the model and 1/3 off-topic.
+  - EVAL-002, 005 and 006 left out the count, place or time.
+  - 001, 007, 008 and 009 fell back. The likely cause is that the guard dropped flag-id cites (`0926-11-R3`) to zero citations; 007 and 009 had nothing to cite at all.
+  - 011 and 013 returned "saved", which carries no refusal wording.
+- **Built** (8bcb303, after a spec review and a quality review, with 1 fix round): technical-plan §6.8 lists every change.
+  - The ask-v2 answer rules, plus count fields in the context.
+  - A flag id maps to its trip. A plate grounds an answer only when the answer names it; the reviewer's blocker B1 closed the "any plate" hole.
+  - Off-topic questions get a fixed refusal on non-model paths.
+  - `maxOutputTokens` is 1024.
+  - CR-1 `copyLang`.
+  - The runner records the outcome of each call.
+- **Unchanged:** the scorer, the dataset, every threshold, every golden value, and the §6.3 instruction text.
+- **Residual risk:** an answer that names and cites only a plate passes the guard while making trip-level claims. Its figures are still checked against the data, and EVAL-006 and EVAL-010 still need trip cites.
+- **Known limit:** when the model can't answer, the refusal keywords decide alone. Tests cover both directions: in-scope questions about diesel price or driver instructions are not refused.
+- **For the user (B2):**
+  - Off-topic cases can now pass on the fixed refusal with no model answer. evaluation-plan §4.7 doesn't look at mode, so this is allowed.
+  - The runner now warns on each such pass.
+  - Should off-topic, like prepared (EXE13), count only model answers? Default until you decide: the threshold stays, the warnings are reported, and an off-topic 3/3 is never claimed for the model unless every pass came from the model.

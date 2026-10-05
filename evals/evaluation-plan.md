@@ -154,6 +154,11 @@ A case passes only when every check that applies to it passes.
 
 **Exit code:** non-zero when the gate fails, so CI and the orchestrator can block on it.
 
+**Stage 9 additions (EXE30):**
+- Each case also records `outcome`, the raw `x-ask-outcome` header, and the summary gains `outcomes`, a count per code.
+- The runner warns for every off-topic pass that isn't a `model` answer, in the same way it warns for prepared passes (EXE13).
+- Scoring, thresholds and the gate are unchanged.
+
 ## 6. Baseline and regression
 1. **Baseline first.** Run `--label baseline-v1` as soon as TKT-07 lands, before any prompt tuning (an eval-framework rule).
 2. **Every change gets a run.** After any change to the prompt, model, thinking setting, context builder or guard, run `--label run-vN` and compare it with the baseline. A regression is never accepted silently.
