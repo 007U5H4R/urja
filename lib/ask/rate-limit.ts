@@ -3,6 +3,12 @@
  * - per IP, a token bucket of 5 a minute (one token back every 12 s);
  * - per IP, 40 a day; for everyone, 300 a day (IST days).
  * A refused request spends nothing. The real backstop is the Google-side quota.
+ *
+ * Stage 9 (EXE31): the handler runs the two as separate steps. `takeRequest`
+ * (the minute bucket) runs on every request, cached answers included, for abuse
+ * protection; `spendModelCall` (the daily per-IP and global counts) runs only
+ * when Gemini is about to be called, so the daily caps are a Gemini budget and a
+ * cached answer costs none of it. `take` is both at once.
  */
 import { createHash } from "node:crypto";
 
@@ -36,31 +42,62 @@ export function createRateLimiter({
   const istDay = (t: number) => Math.floor((t + IST_OFFSET_MS) / DAY_MS);
   const toMidnightS = (t: number) => Math.ceil(((istDay(t) + 1) * DAY_MS - IST_OFFSET_MS - t) / 1000);
 
+  const rollDay = (t: number) => {
+    if (istDay(t) !== day) {
+      day = istDay(t);
+      global = 0;
+      daily.clear();
+    }
+  };
+  /** The daily caps, checked without spending. */
+  const dailyCheck = (ip: string, t: number): RateDecision => {
+    rollDay(t);
+    if (global >= globalPerDay) return { ok: false, outcome: "cap", retryAfterS: toMidnightS(t) };
+    if ((daily.get(ip) ?? 0) >= perIpPerDay) return { ok: false, outcome: "rate_limited", retryAfterS: toMidnightS(t) };
+    return { ok: true };
+  };
+  const dailySpend = (ip: string) => {
+    daily.set(ip, (daily.get(ip) ?? 0) + 1);
+    global++;
+  };
+  /** The minute bucket: spends a token when one is there. */
+  const bucketTake = (ip: string, t: number): RateDecision => {
+    const prev = buckets.get(ip) ?? { tokens: perMinute, at: t };
+    const tokens = Math.min(perMinute, prev.tokens + (t - prev.at) / msPerToken);
+    if (tokens < 1) {
+      buckets.set(ip, { tokens, at: t });
+      return { ok: false, outcome: "rate_limited", retryAfterS: Math.max(1, Math.ceil(((1 - tokens) * msPerToken) / 1000)) };
+    }
+    if (buckets.size >= maxTrackedIps && !buckets.has(ip)) {
+      // A full bucket holds nothing a fresh one wouldn't; the daily count lives in `daily`.
+      for (const [k, b] of buckets) if (b.tokens + (t - b.at) / msPerToken >= perMinute) buckets.delete(k);
+    }
+    buckets.set(ip, { tokens: tokens - 1, at: t });
+    return { ok: true };
+  };
+
   return {
+    /**
+     * Both limits at once: the daily caps, then the minute bucket; spends all three only when allowed.
+     * The handler no longer calls it (it uses takeRequest + spendModelCall); kept for the TC-043 unit tests.
+     */
     take(ip: string): RateDecision {
       const t = now();
-      if (istDay(t) !== day) {
-        day = istDay(t);
-        global = 0;
-        daily.clear();
-      }
-      if (global >= globalPerDay) return { ok: false, outcome: "cap", retryAfterS: toMidnightS(t) };
-      if ((daily.get(ip) ?? 0) >= perIpPerDay) return { ok: false, outcome: "rate_limited", retryAfterS: toMidnightS(t) };
-
-      const prev = buckets.get(ip) ?? { tokens: perMinute, at: t };
-      const tokens = Math.min(perMinute, prev.tokens + (t - prev.at) / msPerToken);
-      if (tokens < 1) {
-        buckets.set(ip, { tokens, at: t });
-        return { ok: false, outcome: "rate_limited", retryAfterS: Math.max(1, Math.ceil(((1 - tokens) * msPerToken) / 1000)) };
-      }
-      if (buckets.size >= maxTrackedIps && !buckets.has(ip)) {
-        // A full bucket holds nothing a fresh one wouldn't; the daily count lives in `daily`.
-        for (const [k, b] of buckets) if (b.tokens + (t - b.at) / msPerToken >= perMinute) buckets.delete(k);
-      }
-      buckets.set(ip, { tokens: tokens - 1, at: t });
-      daily.set(ip, (daily.get(ip) ?? 0) + 1);
-      global++;
-      return { ok: true };
+      const d = dailyCheck(ip, t);
+      if (!d.ok) return d;
+      const b = bucketTake(ip, t);
+      if (b.ok) dailySpend(ip);
+      return b;
+    },
+    /** Every request: the per-IP minute bucket only. */
+    takeRequest(ip: string): RateDecision {
+      return bucketTake(ip, now());
+    },
+    /** Before a Gemini call: the per-IP and global daily counts; a refusal spends nothing. */
+    spendModelCall(ip: string): RateDecision {
+      const d = dailyCheck(ip, now());
+      if (d.ok) dailySpend(ip);
+      return d;
     },
     /** How many per-minute buckets are held (for tests and diagnostics). */
     trackedIps(): number {

@@ -6,14 +6,27 @@
  * retryAfterS, and a fallback answer if the question is recognised); 200 for
  * every model, fallback and saved answer. Never 500: any error becomes a
  * fallback or saved answer.
+ *
+ * Frugal on the Gemini free tier (EXE31):
+ * - every request takes a per-IP minute token (abuse protection);
+ * - a repeated question is answered from the answer cache (model answers only),
+ *   with no Gemini call and no daily budget spent; a request with
+ *   `x-ask-cache: bypass` (the eval runner) skips the cache read, so it is always a
+ *   live call under every limit, and its fresh model answer is still written;
+ * - when every model is benched by a cooldown (429 retry hint, 404), the
+ *   deterministic path answers at once, with outcome `cooldown` and no budget spent;
+ * - otherwise the daily budget (per IP and global, ASK_DAILY_MODEL_BUDGET) is
+ *   spent, then Gemini is called.
  */
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { askConfig, type AskConfig } from "./config";
+import { cacheKey, createAnswerCache, type AnswerCache } from "./answer-cache";
+import { askConfig, dailyModelBudget, type AskConfig } from "./config";
 import { AskRequest, type AskResponse } from "./contract";
 import { getAskContext } from "./context";
 import { checkCaveat, fallbackAnswer, refusalAnswer, SAVED_MESSAGE } from "./fallback";
-import { callGeminiWithFallback, type GeminiAttempt } from "./gemini";
+import { createModelCooldowns, type ModelCooldowns } from "./cooldown";
+import { callGeminiWithFallback, canCallGemini, type GeminiAttempt } from "./gemini";
 import { guardAnswer, missingSpecifics, type Specific } from "./guard";
 import { copyLang } from "./intents";
 import { citeLabels } from "./labels";
@@ -35,7 +48,29 @@ export interface AskDeps {
   /** Where GEMINI_API_KEY, ASK_MODEL and ASK_THINKING_LEVEL are read; process.env by default. */
   env?: Partial<Record<string, string | undefined>>;
   sink?: LogSink;
+  /** EXE31: the answer cache; a fresh one by default, `null` for none. */
+  cache?: AnswerCache<CachedAnswer> | null;
+  /** EXE31: the model cooldowns; fresh ones by default. */
+  cooldowns?: ModelCooldowns;
+  /** Wall clock for the default cache, cooldowns and limiter (Date.now by default, as in rate-limit.ts). */
+  now?: () => number;
 }
+
+/** EXE31: what a cache entry keeps of a model answer, to replay it and its log line. */
+export interface CachedAnswer {
+  body: AskResponse;
+  model: string;
+  lang: string;
+  cites: string[];
+  unsupported: number[];
+  missing: Specific[];
+}
+
+/**
+ * The route's answer cache and cooldowns (app/api/ask/route.ts). They live as long
+ * as the server instance; tests clear them between cases.
+ */
+export const routeMemory = { cache: createAnswerCache<CachedAnswer>(), cooldowns: createModelCooldowns() };
 
 const HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } as const;
 
@@ -66,7 +101,11 @@ function joinCaveats(...parts: (string | undefined)[]): string | undefined {
 }
 
 export function createAskHandler(deps: AskDeps = {}) {
-  const limiter = deps.limiter ?? createRateLimiter();
+  const now = deps.now ?? Date.now;
+  // EXE31: the global daily cap is the Gemini budget; ASK_DAILY_MODEL_BUDGET sets it (default 300).
+  const limiter = deps.limiter ?? createRateLimiter({ now, globalPerDay: dailyModelBudget(deps.env ?? process.env) });
+  const cache = deps.cache === undefined ? createAnswerCache<CachedAnswer>({ now }) : deps.cache;
+  const cooldowns = deps.cooldowns ?? createModelCooldowns({ now });
   const sink = deps.sink ?? consoleSink;
   let contextLogged = false;
 
@@ -89,6 +128,7 @@ export function createAskHandler(deps: AskDeps = {}) {
       guard?: string;
       firstAttempt?: string;
       missing?: Specific[];
+      cached?: boolean;
     }) =>
       writeAskLog(
         {
@@ -108,6 +148,7 @@ export function createAskHandler(deps: AskDeps = {}) {
           ...(e.guard ? { guard: e.guard } : {}),
           ...(e.firstAttempt ? { firstAttempt: e.firstAttempt } : {}),
           ...(e.missing?.length ? { missing: e.missing } : {}),
+          ...(e.cached ? { cached: true } : {}),
         },
         sink,
       );
@@ -180,7 +221,9 @@ export function createAskHandler(deps: AskDeps = {}) {
     };
 
     try {
-      const limit = limiter.take(clientIp(req.headers));
+      const ip = clientIp(req.headers);
+      // Every request, cached or not, takes a per-IP minute token (abuse protection).
+      const limit = limiter.takeRequest(ip);
       if (!limit.ok) return degrade(limit.outcome, 429, { retryAfterS: limit.retryAfterS });
 
       const bundle = getAskContext();
@@ -189,10 +232,27 @@ export function createAskHandler(deps: AskDeps = {}) {
         sink(JSON.stringify({ event: "ask_context", buildMs: bundle.buildMs, chars: bundle.json.length, datasetHash: bundle.hash }));
       }
 
+      // EXE31: a repeated question gets the model's own earlier answer: same prompt version, same dataset.
+      const key = cacheKey({ question, lang: qLang, promptVersion: PROMPT_VERSION, datasetHash: bundle.hash });
+      // The eval runner sends `x-ask-cache: bypass`: every case measures the model, never the cache.
+      const bypassCache = req.headers.get("x-ask-cache")?.trim().toLowerCase() === "bypass";
+      const hit = bypassCache ? undefined : cache?.get(key);
+      if (hit) {
+        const body: AskResponse = { ...hit.body, provenance: { ...hit.body.provenance, ms: elapsed() } };
+        log({ mode: "model", outcome: "ok", model: hit.model, question, lang: hit.lang, cites: hit.cites, unsupported: hit.unsupported, missing: hit.missing, cached: true });
+        return json(200, body, { "x-ask-outcome": outcomeHeader("ok; cached", hit.model, undefined, hit.missing) });
+      }
+
       const apiKey = env.GEMINI_API_KEY?.trim();
       if (!apiKey) return degrade("no_key");
 
-      const result = await callGeminiWithFallback({ apiKey, context: bundle.json, question, config, fetchImpl: deps.fetchImpl ?? fetch });
+      // A call that can't succeed isn't made, and spends no budget: callGeminiWithFallback answers `cooldown`.
+      if (canCallGemini(config, cooldowns)) {
+        const budget = limiter.spendModelCall(ip);
+        if (!budget.ok) return degrade(budget.outcome, 429, { retryAfterS: budget.retryAfterS });
+      }
+
+      const result = await callGeminiWithFallback({ apiKey, context: bundle.json, question, config, fetchImpl: deps.fetchImpl ?? fetch, cooldowns, wallClock: now });
       // EXE26: the model that answered (or failed last), and the busy first attempt if the fallback model was asked.
       const answeredBy = result.attempts[result.attempts.length - 1].model;
       const first = result.attempts.length > 1 ? result.attempts[0] : undefined;
@@ -217,6 +277,8 @@ export function createAskHandler(deps: AskDeps = {}) {
       // Stage 9: decisive facts the cited records carry but the answer omits, named for the eval (never rewritten).
       const missing = result.answer.out_of_scope ? [] : missingSpecifics(g.answer, g.cites, bundle.context.flags);
       log({ mode: "model", outcome: "ok", model: result.model, question, lang, cites: g.cites, unsupported: g.unsupported, firstAttempt: first && attemptLog(first), missing });
+      // Only an answer that passed the guard as the model's goes in the cache.
+      cache?.set(key, { body, model: result.model, lang, cites: g.cites, unsupported: g.unsupported, missing });
       return json(200, body, { "x-ask-outcome": outcomeHeader("ok", result.model, first, missing) });
     } catch {
       try {

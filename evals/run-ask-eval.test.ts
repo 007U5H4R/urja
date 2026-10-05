@@ -573,3 +573,101 @@ describe("x-ask-outcome diagnostics (Stage 9)", () => {
     expect(diag.result.summary.gateFailures).toEqual(plain.result.summary.gateFailures);
   });
 });
+
+describe("Stage 9 unit G · first attempts and cached answers (EXE31)", () => {
+  const outcomeFor: Record<string, string> = {
+    "EVAL-001": "http_4xx:404; model=gemini-2.5-flash; after=http_429:429 gemini-3.5-flash",
+    "EVAL-002": "ok; model=gemini-2.5-flash; after=http_429:429 gemini-3.5-flash",
+    "EVAL-003": "ok; cached; model=gemini-3.5-flash",
+    "EVAL-004": "ok; cached; model=gemini-2.5-flash; missing=count",
+    "EVAL-005": "cooldown; model=gemini-2.5-flash; after=cooldown gemini-3.5-flash",
+    "EVAL-011": "timeout; model=gemini-3.5-flash",
+  };
+  const run = () =>
+    runEval(
+      opts(),
+      harness((id) => ({ status: 200, body: { ...good.get(id), provenance: provenance() }, headers: { "x-ask-outcome": outcomeFor[id] ?? "ok; model=gemini-3.5-flash" } })).deps,
+    );
+
+  it("records each case's first-attempt code: after=<code> <model> when the fallback model was asked, else the outcome itself", async () => {
+    const { result } = await run();
+    const byId = new Map(result.cases.map((c) => [c.id, c]));
+    expect(byId.get("EVAL-001")?.firstAttempt).toBe("http_429:429");
+    expect(byId.get("EVAL-002")?.firstAttempt).toBe("http_429:429");
+    expect(byId.get("EVAL-005")?.firstAttempt).toBe("cooldown");
+    expect(byId.get("EVAL-011")?.firstAttempt).toBe("timeout");
+    expect(byId.get("EVAL-006")?.firstAttempt).toBe("ok");
+    // A cached answer made no attempt.
+    expect(byId.get("EVAL-003")?.firstAttempt).toBeNull();
+  });
+
+  it("summarises first attempts beside the final outcomes, so a 429 shows even when the fallback model's 404 came last", async () => {
+    const h = harness((id) => ({ status: 200, body: { ...good.get(id), provenance: provenance() }, headers: { "x-ask-outcome": outcomeFor[id] ?? "ok; model=gemini-3.5-flash" } }));
+    const { result } = await runEval(opts(), h.deps);
+    expect(result.summary.outcomes).toEqual({ ok: 10, "http_4xx:404": 1, cooldown: 1, timeout: 1 });
+    expect(result.summary.firstAttempts).toEqual({ ok: 7, "http_429:429": 2, cached: 2, cooldown: 1, timeout: 1 });
+    expect(h.lines.join("\n")).toMatch(/First attempts: ok 7, http_429:429 2, cached 2, cooldown 1, timeout 1 · cached answers 2/);
+  });
+
+  it("marks cached answers per case (cached: true) and counts them; scoring and the gate are unchanged", async () => {
+    const { result } = await run();
+    const byId = new Map(result.cases.map((c) => [c.id, c]));
+    expect(byId.get("EVAL-003")).toMatchObject({ cached: true, mode: "model" });
+    expect(byId.get("EVAL-004")?.cached).toBe(true);
+    expect(byId.get("EVAL-002")).not.toHaveProperty("cached");
+    expect(result.summary.cached).toBe(2);
+    const plain = await runEval(opts(), harness().deps);
+    expect(result.cases.map((c) => [c.id, c.pass, c.checks])).toEqual(plain.result.cases.map((c) => [c.id, c.pass, c.checks]));
+    expect(result.summary.gate).toBe(plain.result.summary.gate);
+    expect(result.summary.preparedByModel).toBe(plain.result.summary.preparedByModel);
+  });
+
+  it("documents --pace-ms in the usage line", () => {
+    expect(USAGE).toContain("--pace-ms <ms>");
+  });
+});
+
+describe("fix round 1 · B1: the eval measures the model, never the answer cache", () => {
+  it("sends x-ask-cache: bypass on every request", async () => {
+    const h = harness();
+    await runEval(opts(), h.deps);
+    expect(h.calls).toHaveLength(13);
+    for (const c of h.calls) expect(c.headers["x-ask-cache"]).toBe("bypass");
+  });
+
+  it("if a case still comes back cached: a warning per case, 'by the model X (cached Y)', and p50/p90 over uncached cases only", async () => {
+    const cachedIds = new Set(["EVAL-001", "EVAL-002", "EVAL-003"]);
+    // Cached cases answer in 1 ms; live ones take 1000 ms (the harness's step).
+    const h = harness(
+      (id) => ({
+        status: 200,
+        body: { ...good.get(id), provenance: provenance() },
+        headers: { "x-ask-outcome": cachedIds.has(id) ? "ok; cached; model=gemini-3.5-flash" : "ok; model=gemini-3.5-flash" },
+      }),
+      1000,
+    );
+    const { result } = await runEval(opts(), h.deps);
+    expect(result.summary.cached).toBe(3);
+    expect(result.summary.warnings).toEqual(expect.arrayContaining([
+      "EVAL-001 was served from the answer cache",
+      "EVAL-002 was served from the answer cache",
+      "EVAL-003 was served from the answer cache",
+    ]));
+    const out = h.lines.join("\n");
+    expect(out).toMatch(/Warning: EVAL-002 was served from the answer cache/);
+    expect(out).toMatch(/by the model \d+\/10 \(cached 3\)/);
+    // Every case took 1000 ms here, so make the cached ones fast and check they're left out.
+    const fast = result.cases.map((c) => (c.cached ? { ...c, ms: 1 } : c));
+    const { summarise } = await import("./run-ask-eval");
+    const s = summarise(dataset, fast);
+    expect(s.p50Ms).toBe(1000);
+    expect(s.p90Ms).toBe(1000);
+  });
+
+  it("all cases live: no cache warning, and 'cached 0'", async () => {
+    const h = harness();
+    const { result } = await runEval(opts(), h.deps);
+    expect(result.summary.warnings.some((w) => w.includes("answer cache"))).toBe(false);
+    expect(h.lines.join("\n")).toMatch(/by the model \d+\/10 \(cached 0\)/);
+  });
+});

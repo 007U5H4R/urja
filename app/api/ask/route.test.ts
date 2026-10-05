@@ -9,7 +9,9 @@ import { join } from "node:path";
 import { getAskContext } from "@/lib/ask/context";
 import { CHECK_CAVEAT_LINE, REFUSAL, SAVED_MESSAGE, fallbackAnswer } from "@/lib/ask/fallback";
 import { scoreCase, scoringContext, type EvalDataset } from "@/evals/scorers/ask-scorer";
-import { createAskHandler } from "@/lib/ask/handler";
+import { createAnswerCache } from "@/lib/ask/answer-cache";
+import { createModelCooldowns } from "@/lib/ask/cooldown";
+import { createAskHandler, routeMemory } from "@/lib/ask/handler";
 import { createRateLimiter } from "@/lib/ask/rate-limit";
 import { POST, dynamic, runtime } from "./route";
 
@@ -44,6 +46,9 @@ let logs: string[];
 let fetchMock: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
+  // EXE31: the route's answer cache and model cooldowns live as long as the instance; each test starts clean.
+  routeMemory.cache.clear();
+  routeMemory.cooldowns.clear();
   logs = [];
   vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => {
     logs.push(args.map(String).join(" "));
@@ -390,7 +395,8 @@ describe("TC-043 · rate limit and daily cap", () => {
   it("past the per-IP daily cap and the global cap, the model is never called", async () => {
     let t = Date.UTC(2026, 8, 28, 2, 0);
     const limiter = createRateLimiter({ now: () => t, perIpPerDay: 2, globalPerDay: 3 });
-    const handler = createAskHandler({ limiter, fetchImpl: fetchMock as unknown as typeof fetch, env: { GEMINI_API_KEY: KEY } });
+    // No answer cache: every request here must reach the daily budget (cached answers don't; see EXE31 below).
+    const handler = createAskHandler({ limiter, fetchImpl: fetchMock as unknown as typeof fetch, env: { GEMINI_API_KEY: KEY }, cache: null });
     const at = (ip: string) => {
       t += 60_000;
       return handler(ask({ question: RECOGNISED }, ip));
@@ -738,3 +744,200 @@ describe("CR-1 · the request's lang picks the language of deterministic copy fo
   });
 });
 
+
+// ── Stage 9 unit G · frugal on the Gemini free tier (EXE31) ──
+describe("EXE31 · the answer cache: a repeated question is the model's own answer, without a Gemini call", () => {
+  const T0 = Date.UTC(2026, 8, 28, 1, 42);
+
+  it("a repeat (any spacing or case) returns the same body, mode model, the original model, and x-ask-outcome ok; cached", async () => {
+    const first = await read(await POST(ask({ question: RECOGNISED })));
+    expect(first.headers.get("x-ask-outcome")).toBe("ok; model=gemini-3.5-flash");
+    fetchMock.mockClear();
+    const res = await POST(ask({ question: `  ${RECOGNISED.toUpperCase().replace(/ /g, "   ")}  ` }));
+    const again = await read(res);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(again.status).toBe(200);
+    expect(res.headers.get("x-ask-outcome")).toBe("ok; cached; model=gemini-3.5-flash");
+    const { provenance: p1, ...rest1 } = first.body;
+    const { provenance: p2, ...rest2 } = again.body;
+    expect(rest2).toEqual(rest1);
+    expect(AskResponse.parse(again.body).mode).toBe("model");
+    expect({ ...p2, ms: 0 }).toEqual({ ...p1, ms: 0 });
+    expect(p2.ms).toBeGreaterThanOrEqual(0);
+    expect(lastLog()).toMatchObject({ mode: "model", outcome: "ok", cached: true, model: "gemini-3.5-flash", cites: ["0926-04", "0927-02", "0926-11"] });
+    for (const line of logs) expect(line).not.toContain("How much did we earn");
+  });
+
+  it("keeps the fallback model's name on a cached answer it wrote, and keeps missing= diagnostics", async () => {
+    fetchMock.mockImplementation(async (url: string) =>
+      url.includes("/gemini-3.5-flash:")
+        ? new Response("{}", { status: 503 })
+        : geminiJson({ answer: "Yesterday we earned a profit of ₹1,86,400, and ₹11,430 (127 L of diesel) is unaccounted.", lang: "en", cited_trips: ["0926-04", "0927-02", "0926-11"], cited_trucks: [], out_of_scope: false }),
+    );
+    await POST(askCase("EVAL-005"));
+    fetchMock.mockClear();
+    const res = await POST(askCase("EVAL-005"));
+    const { body } = await read(res);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(body.provenance.model).toBe("gemini-2.5-flash");
+    expect(res.headers.get("x-ask-outcome")).toBe("ok; cached; model=gemini-2.5-flash; missing=count");
+  });
+
+  it.each([
+    ["a guard rejection (fallback)", () => geminiJson({ ...MODEL_OK, cited_trips: ["0999-99"] }), RECOGNISED],
+    ["an upstream 500 (fallback)", () => new Response("{}", { status: 500 }), RECOGNISED],
+    ["an upstream 500 (saved)", () => new Response("{}", { status: 500 }), UNRECOGNISED],
+    ["an upstream 500 (off-topic refusal)", () => new Response("{}", { status: 500 }), "What will the weather be in Jaipur tomorrow?"],
+    ["bad JSON", () => new Response("<html>", { status: 200 }), RECOGNISED],
+  ])("never caches %s: the next ask calls Gemini again", async (_label, reply, question) => {
+    fetchMock.mockImplementation(async () => reply());
+    vi.stubEnv("ASK_FALLBACK_MODEL", "off");
+    const first = await read(await POST(ask({ question })));
+    expect(first.body.mode).not.toBe("model");
+    fetchMock.mockImplementation(async () => geminiJson(MODEL_OK));
+    fetchMock.mockClear();
+    const res = await POST(ask({ question }));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(res.headers.get("x-ask-outcome")).not.toContain("cached");
+  });
+
+  it("never caches without a key, and a cached answer is keyed by its copy language", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "");
+    await POST(ask({ question: RECOGNISED }));
+    vi.stubEnv("GEMINI_API_KEY", KEY);
+    await POST(ask({ question: RECOGNISED }));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    // A Hinglish question follows the request's lang (CR-1): each language is its own entry.
+    const hinglish = "kal kitna kamaya aur kitna hisaab nahi mila?";
+    await POST(ask({ question: hinglish, lang: "en" }));
+    await POST(ask({ question: hinglish, lang: "hi" }));
+    await POST(ask({ question: hinglish, lang: "hi" }));
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("ASK_DAILY_MODEL_BUDGET sets the handler's global daily Gemini budget", async () => {
+    const handler = createAskHandler({ fetchImpl: fetchMock as unknown as typeof fetch, env: { GEMINI_API_KEY: KEY, ASK_DAILY_MODEL_BUDGET: "1" } });
+    expect((await handler(ask({ question: RECOGNISED }))).status).toBe(200);
+    expect((await handler(ask({ question: UNRECOGNISED }))).status).toBe(429);
+    expect(lastLog()).toMatchObject({ outcome: "cap" });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("a cache hit spends no daily Gemini budget, but still takes the per-IP minute token", async () => {
+    const t = T0;
+    const limiter = createRateLimiter({ now: () => t, globalPerDay: 1 });
+    const handler = createAskHandler({ limiter, fetchImpl: fetchMock as unknown as typeof fetch, env: { GEMINI_API_KEY: KEY }, now: () => t });
+    expect((await read(await handler(ask({ question: RECOGNISED }, "a")))).body.mode).toBe("model");
+    // The one-call budget is spent, yet a repeat from anyone is still the model's answer.
+    for (const ip of ["b", "c", "a"]) {
+      const res = await handler(ask({ question: RECOGNISED }, ip));
+      expect(res.status, ip).toBe(200);
+      expect(res.headers.get("x-ask-outcome")).toBe("ok; cached; model=gemini-3.5-flash");
+    }
+    // A new question needs Gemini: the global budget refuses it.
+    const fresh = await handler(ask({ question: "Which truck earns least per km, and why?" }, "d"));
+    expect(fresh.status).toBe(429);
+    expect(lastLog()).toMatchObject({ outcome: "cap" });
+    // The minute bucket still applies to cached answers: "a" has used 2 of 5; the 6th in the minute is refused.
+    for (let i = 0; i < 3; i++) expect((await handler(ask({ question: RECOGNISED }, "a"))).status).toBe(200);
+    const limited = await handler(ask({ question: RECOGNISED }, "a"));
+    expect(limited.status).toBe(429);
+    expect(lastLog()).toMatchObject({ outcome: "rate_limited" });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("x-ask-cache: bypass skips the cache read (a live call), still writes the fresh answer, and still spends the budget", async () => {
+    const t = T0;
+    const limiter = createRateLimiter({ now: () => t, globalPerDay: 2 });
+    const handler = createAskHandler({ limiter, fetchImpl: fetchMock as unknown as typeof fetch, env: { GEMINI_API_KEY: KEY }, now: () => t });
+    const bypass = (ip: string) => {
+      const r = ask({ question: RECOGNISED }, ip);
+      r.headers.set("x-ask-cache", "bypass");
+      return r;
+    };
+    await handler(ask({ question: RECOGNISED }, "a"));
+    const live = await handler(bypass("b"));
+    expect(live.headers.get("x-ask-outcome")).toBe("ok; model=gemini-3.5-flash");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    // The budget (2) is spent: a bypassing request is refused like any uncached one…
+    expect((await handler(bypass("c"))).status).toBe(429);
+    expect(lastLog()).toMatchObject({ outcome: "cap" });
+    // …while a normal repeat is still served from the cache the bypass refreshed.
+    expect((await handler(ask({ question: RECOGNISED }, "d"))).headers.get("x-ask-outcome")).toBe("ok; cached; model=gemini-3.5-flash");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("x-ask-cache: bypass still takes the per-IP minute token", async () => {
+    const handler = createAskHandler({ fetchImpl: fetchMock as unknown as typeof fetch, env: { GEMINI_API_KEY: KEY } });
+    const statuses: number[] = [];
+    for (let i = 0; i < 6; i++) {
+      const r = ask({ question: RECOGNISED }, "same-ip");
+      r.headers.set("x-ask-cache", "bypass");
+      statuses.push((await handler(r)).status);
+    }
+    expect(statuses).toEqual([200, 200, 200, 200, 200, 429]);
+    expect(fetchMock).toHaveBeenCalledTimes(5);
+  });
+
+  it("expires after 24 h (injected clock)", async () => {
+    let t = T0;
+    const handler = createAskHandler({ fetchImpl: fetchMock as unknown as typeof fetch, env: { GEMINI_API_KEY: KEY }, now: () => t, cache: createAnswerCache({ now: () => t }) });
+    await handler(ask({ question: RECOGNISED }));
+    t += 24 * 3_600_000 - 1;
+    await handler(ask({ question: RECOGNISED }));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    t += 1;
+    await handler(ask({ question: RECOGNISED }));
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("EXE31 · cooldowns: no Gemini call that can't succeed", () => {
+  const T0 = Date.UTC(2026, 8, 28, 1, 42);
+  const quota429 = () => new Response(JSON.stringify({ error: { code: 429, details: [{ "@type": "type.googleapis.com/google.rpc.RetryInfo", retryDelay: "30s" }] } }), { status: 429 });
+
+  it("primary 429 + fallback 404 → every later question skips both, straight to the deterministic answer, outcome cooldown", async () => {
+    fetchMock.mockImplementation(async (url: string) => (url.includes("/gemini-3.5-flash:") ? quota429() : new Response("{}", { status: 404 })));
+    const first = await POST(ask({ question: RECOGNISED }));
+    expect(first.headers.get("x-ask-outcome")).toBe("http_4xx:404; model=gemini-2.5-flash; after=http_429:429 gemini-3.5-flash");
+    fetchMock.mockClear();
+    const res = await POST(ask({ question: "Show every flag on the Behror stretch" }));
+    const { status, body } = await read(res);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(status).toBe(200);
+    expect(body.mode).toBe("fallback");
+    expect(body.provenance.model).toBeNull();
+    expect(res.headers.get("x-ask-outcome")).toBe("cooldown; model=gemini-2.5-flash; after=cooldown gemini-3.5-flash");
+    expect(lastLog()).toMatchObject({ mode: "fallback", outcome: "cooldown", firstAttempt: "gemini-3.5-flash cooldown" });
+  });
+
+  it("a cooldown skip spends no daily budget, and the primary is asked again once its retry hint has passed", async () => {
+    let t = T0;
+    const limiter = createRateLimiter({ now: () => t, globalPerDay: 2 });
+    const cooldowns = createModelCooldowns({ now: () => t });
+    const handler = createAskHandler({ limiter, cooldowns, fetchImpl: fetchMock as unknown as typeof fetch, env: { GEMINI_API_KEY: KEY, ASK_FALLBACK_MODEL: "off" }, now: () => t });
+    fetchMock.mockImplementation(async () => quota429());
+    expect((await handler(ask({ question: RECOGNISED }))).headers.get("x-ask-outcome")).toBe("http_429:429; model=gemini-3.5-flash");
+    for (let i = 0; i < 5; i++) {
+      const res = await handler(ask({ question: RECOGNISED }));
+      expect(res.status).toBe(200);
+      expect(res.headers.get("x-ask-outcome")).toBe("cooldown; model=gemini-3.5-flash");
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    t += 30_000;
+    fetchMock.mockImplementation(async () => geminiJson(MODEL_OK));
+    const back = await handler(ask({ question: RECOGNISED }));
+    expect(back.headers.get("x-ask-outcome")).toBe("ok; model=gemini-3.5-flash");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("a benched primary sends the question straight to the fallback model", async () => {
+    fetchMock.mockImplementation(async (url: string) => (url.includes("/gemini-3.5-flash:") ? quota429() : geminiJson(MODEL_OK)));
+    await POST(ask({ question: RECOGNISED }));
+    fetchMock.mockClear();
+    const res = await POST(ask({ question: UNRECOGNISED }));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(String(fetchMock.mock.calls[0][0])).toContain("/gemini-2.5-flash:");
+    expect(res.headers.get("x-ask-outcome")).toBe("ok; model=gemini-2.5-flash; after=cooldown gemini-3.5-flash");
+  });
+});

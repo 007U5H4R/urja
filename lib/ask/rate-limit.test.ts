@@ -97,3 +97,39 @@ describe("fix round 1 · bucket eviction", () => {
     expect(rl.take("a").ok).toBe(false);
   });
 });
+
+describe("Stage 9 unit G · the minute limiter and the daily model budget are separate steps", () => {
+  it("takeRequest spends only the per-minute token: it never touches the daily counts", () => {
+    const c = clock();
+    const rl = createRateLimiter({ now: c.now, perIpPerDay: 2, globalPerDay: 3 });
+    for (let i = 0; i < 10; i++) {
+      expect(rl.takeRequest("ip").ok, `request ${i + 1}`).toBe(true);
+      c.advance(MIN / 5);
+    }
+    expect(rl.spendModelCall("ip")).toEqual({ ok: true });
+    expect(rl.spendModelCall("ip")).toEqual({ ok: true });
+    expect(rl.spendModelCall("ip")).toMatchObject({ ok: false, outcome: "rate_limited" });
+    expect(rl.spendModelCall("other")).toEqual({ ok: true });
+    expect(rl.spendModelCall("third")).toMatchObject({ ok: false, outcome: "cap" });
+  });
+
+  it("takeRequest limits the 6th request a minute, whatever the daily budget says", () => {
+    const c = clock();
+    const rl = createRateLimiter({ now: c.now });
+    for (let i = 0; i < 5; i++) expect(rl.takeRequest("ip").ok).toBe(true);
+    expect(rl.takeRequest("ip")).toMatchObject({ ok: false, outcome: "rate_limited", retryAfterS: 12 });
+  });
+
+  it("spendModelCall keeps the per-IP 40 and global caps, resets at IST midnight, and a refusal spends nothing", () => {
+    const c = clock();
+    const rl = createRateLimiter({ now: c.now, globalPerDay: 41 });
+    for (let i = 0; i < 40; i++) expect(rl.spendModelCall("ip").ok).toBe(true);
+    const r = rl.spendModelCall("ip");
+    expect(r).toMatchObject({ ok: false, outcome: "rate_limited" });
+    expect(r.ok === false && r.retryAfterS).toBe(16.8 * 3600);
+    expect(rl.spendModelCall("b").ok).toBe(true);
+    expect(rl.spendModelCall("c")).toMatchObject({ ok: false, outcome: "cap" });
+    c.advance(16.8 * 3600 * 1000);
+    expect(rl.spendModelCall("ip").ok).toBe(true);
+  });
+});

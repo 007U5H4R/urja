@@ -678,6 +678,23 @@ The key, the prompt and the full question are never logged.
   - It records each case's `x-ask-outcome` and the summary's `outcomes`.
   - It warns for each off-topic pass that isn't a model answer.
   - The gate is unchanged.
+- **Frugal on the Gemini free tier (EXE31).** All in memory, per server instance; time from an injected clock (Date.now by default, as in `rate-limit.ts`).
+  - **Order per request:** per-IP minute token → answer cache → key → cooldown check → daily budget → Gemini.
+  - **Answer cache** (`lib/ask/answer-cache.ts`):
+    - Key: the normalised question (NFC, trim, collapsed whitespace, lower-cased Latin, ASCII digits), the request's copy language (`copyLang`: the script, or the `lang` hint for Hinglish), `PROMPT_VERSION` and the dataset hash.
+    - Only answers that passed the guard with `mode: "model"` go in. Fallback, saved, refusal and error answers never do.
+    - LRU of at most 200 entries, TTL 24 h.
+    - A hit returns the same body with `mode: "model"` and the original `provenance.model`; `provenance.ms` is the time taken now. `x-ask-outcome: ok; cached; model=<model>[; missing=…]`. The log line is outcome `ok` with `cached: true`, and still carries no question text.
+    - A request with the header `x-ask-cache: bypass` skips the cache read: it is always a live call, under the minute limit, the daily budget and the cooldowns, and its fresh model answer is still written. The eval runner sends it on every request.
+  - **Limits:** a cache hit takes the per-IP minute token (abuse protection) but spends no daily budget. The per-IP 40/day and global caps are counted only for requests that reach Gemini (`rate-limit.ts` `takeRequest` / `spendModelCall`). The per-IP limits are unchanged.
+  - **Global budget:** `ASK_DAILY_MODEL_BUDGET` (a whole number ≥ 1) sets the global daily Gemini budget; the default stays 300. The free tier ran out after about 40 calls a day (Stage 9), so 300 never binds there and Google's 429 is the real limit; the cooldown below stops the instance from spending calls against it.
+  - **Cooldowns** (`lib/ask/cooldown.ts`, used by `callGeminiWithFallback`):
+    - A 429 benches that model for its retry hint: the `Retry-After` header, else the error body's `google.rpc.RetryInfo.retryDelay` (a bounded read: 16 KB, 500 ms). 60 s without a hint, at most 10 min.
+    - A 404 benches the fallback model for 6 h: the key doesn't have it, so it would 404 again. A 404 on the primary (`ASK_MODEL`) is benched for at most 10 min, so a passing 404 doesn't silence the primary for hours. A redeploy resets both.
+    - `Retry-After: 0` (or `retryDelay: "0s"`) benches for 1 s, not the 60 s default.
+    - A benched primary is skipped (attempt `cooldown`) and the fallback model is asked straight away; a benched fallback isn't asked.
+    - When no model is left to call, the deterministic path answers at once with outcome `cooldown` and no budget is spent: `x-ask-outcome: cooldown; model=<fallback>; after=cooldown <primary>`.
+  - **Runner:** every request carries `x-ask-cache: bypass`, so every case is a live call. Each case records `firstAttempt` (the code in `after=<code> <model>`, else the outcome code; null when cached) and `cached: true` should the server still have served it from the cache. The summary adds `firstAttempts` and `cached`. Belt and braces: a cached case gets a warning ("EVAL-xxx was served from the answer cache"), the report reads "by the model X (cached Y)", and `p50Ms`/`p90Ms` are computed over uncached cases only. Scoring and the thresholds are unchanged: a cached model answer still counts as a model answer.
 
 ## 7. Spatial 3D decisions (Design.md §26; t-design spatial-3d §11; TP7)
 **Framework: vanilla three.js in a client component, not R3F.**

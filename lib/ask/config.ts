@@ -46,7 +46,7 @@ export interface AskConfig {
   timeoutMs: number;
 }
 
-type Env = { ASK_MODEL?: string; ASK_FALLBACK_MODEL?: string; ASK_THINKING_LEVEL?: string; [name: string]: string | undefined };
+type Env = { ASK_MODEL?: string; ASK_FALLBACK_MODEL?: string; ASK_THINKING_LEVEL?: string; ASK_DAILY_MODEL_BUDGET?: string; [name: string]: string | undefined };
 
 /** The model settings. `env` defaults to process.env; tests pass their own. Never reads the key. */
 export function askConfig(env: Env = process.env): AskConfig {
@@ -63,6 +63,19 @@ export function askConfig(env: Env = process.env): AskConfig {
     thinking,
     timeoutMs: ASK_TIMEOUT_MS,
   };
+}
+
+/**
+ * EXE31 · the global daily Gemini budget per instance (rate-limit.ts globalPerDay):
+ * ASK_DAILY_MODEL_BUDGET, a whole number ≥ 1; anything else keeps the default 300.
+ * Only requests that reach Gemini spend it (cached answers and cooldown skips don't).
+ */
+export const DEFAULT_DAILY_MODEL_BUDGET = 300;
+
+export function dailyModelBudget(env: Env = process.env): number {
+  const raw = env.ASK_DAILY_MODEL_BUDGET?.trim() ?? "";
+  const n = /^\d+$/.test(raw) ? Number(raw) : NaN;
+  return Number.isSafeInteger(n) && n >= 1 ? n : DEFAULT_DAILY_MODEL_BUDGET;
 }
 
 function fallbackModel(raw: string | undefined): string | null {

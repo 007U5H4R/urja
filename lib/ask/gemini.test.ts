@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ASK_TIMEOUT_MS, askConfig, thinkingFor } from "./config";
+import { ASK_TIMEOUT_MS, DEFAULT_DAILY_MODEL_BUDGET, askConfig, dailyModelBudget, thinkingFor } from "./config";
+import { createModelCooldowns } from "./cooldown";
 import { callGemini, callGeminiWithFallback } from "./gemini";
 import { ANSWER_RULES, PROMPT_VERSION, SYSTEM_INSTRUCTION } from "./prompt";
 import { RESPONSE_SCHEMA } from "./schema";
@@ -309,3 +310,157 @@ describe("Stage 9 · ask-v2: the answer rules after §6.3, and a decide-then-wri
   });
 });
 
+
+describe("Stage 9 unit G · frugal on the free tier: don't spend calls that can't succeed (EXE31)", () => {
+  const byModel = (replies: Record<string, () => Response | Promise<Response>>) =>
+    vi.fn(async (input: string | URL | Request) => {
+      const url = String(input);
+      const model = Object.keys(replies).find((m) => url.includes(`/${m}:`));
+      if (!model) throw new Error(`unexpected url ${url}`);
+      return replies[model]();
+    });
+  const quota = (retryDelay?: string, headers: Record<string, string> = {}) => () =>
+    new Response(
+      JSON.stringify({ error: { code: 429, status: "RESOURCE_EXHAUSTED", details: retryDelay ? [{ "@type": "type.googleapis.com/google.rpc.RetryInfo", retryDelay }] : [] } }),
+      { status: 429, headers },
+    );
+  const T0 = Date.UTC(2026, 8, 28, 1, 42);
+
+  it("ASK_DAILY_MODEL_BUDGET sets the global daily Gemini budget; the default stays 300", () => {
+    expect(DEFAULT_DAILY_MODEL_BUDGET).toBe(300);
+    expect(dailyModelBudget({})).toBe(300);
+    expect(dailyModelBudget({ ASK_DAILY_MODEL_BUDGET: " 40 " })).toBe(40);
+    for (const bad of ["", "0", "-5", "abc", "1.5"]) expect(dailyModelBudget({ ASK_DAILY_MODEL_BUDGET: bad }), bad).toBe(300);
+  });
+
+  it("callGemini reads a 429's retry hint: the Retry-After header first, else the body's retryDelay", async () => {
+    const header = await callGemini({ apiKey: KEY, context: "{}", question: "q", fetchImpl: byModel({ "gemini-3.5-flash": quota("41s", { "retry-after": "17" }) }) });
+    expect(header).toMatchObject({ ok: false, outcome: "http_429", status: 429, retryAfterMs: 17_000 });
+    const body = await callGemini({ apiKey: KEY, context: "{}", question: "q", fetchImpl: byModel({ "gemini-3.5-flash": quota("41s") }) });
+    expect(body).toMatchObject({ ok: false, outcome: "http_429", retryAfterMs: 41_000 });
+    const none = await callGemini({ apiKey: KEY, context: "{}", question: "q", fetchImpl: byModel({ "gemini-3.5-flash": quota() }) });
+    expect(none).toMatchObject({ ok: false, outcome: "http_429" });
+    expect(none).not.toHaveProperty("retryAfterMs");
+  });
+
+  it("a 429 benches the primary for its hint: the next call goes straight to the fallback model", async () => {
+    let t = T0;
+    const cooldowns = createModelCooldowns({ now: () => t });
+    const fetchMock = byModel({ "gemini-3.5-flash": quota("30s"), "gemini-2.5-flash": () => okResponse(answer) });
+    const call = () => callGeminiWithFallback({ apiKey: KEY, context: "{}", question: "q", fetchImpl: fetchMock, cooldowns, wallClock: () => t });
+    expect(await call()).toMatchObject({ ok: true, model: "gemini-2.5-flash" });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(cooldowns.blocked("gemini-3.5-flash")).toBe(true);
+
+    fetchMock.mockClear();
+    const skipped = await call();
+    expect(skipped).toMatchObject({ ok: true, model: "gemini-2.5-flash" });
+    expect(skipped.attempts).toEqual([
+      { model: "gemini-3.5-flash", outcome: "cooldown" },
+      { model: "gemini-2.5-flash", outcome: "ok" },
+    ]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(String(fetchMock.mock.calls[0][0])).toContain("/gemini-2.5-flash:");
+
+    t += 30_000;
+    fetchMock.mockClear();
+    await call();
+    expect(String(fetchMock.mock.calls[0][0])).toContain("/gemini-3.5-flash:");
+  });
+
+  it("a 429 without a hint benches for 60 s", async () => {
+    let t = T0;
+    const cooldowns = createModelCooldowns({ now: () => t });
+    const fetchMock = byModel({ "gemini-3.5-flash": quota() });
+    await callGeminiWithFallback({ apiKey: KEY, context: "{}", question: "q", config: askConfig({ ASK_FALLBACK_MODEL: "off" }), fetchImpl: fetchMock, cooldowns });
+    t += 59_999;
+    expect(cooldowns.blocked("gemini-3.5-flash")).toBe(true);
+    t += 1;
+    expect(cooldowns.blocked("gemini-3.5-flash")).toBe(false);
+  });
+
+  it("a 404 from the fallback model marks it unavailable: it is never asked again while benched", async () => {
+    const cooldowns = createModelCooldowns({ now: () => T0 });
+    const fetchMock = byModel({ "gemini-3.5-flash": () => new Response("{}", { status: 503 }), "gemini-2.5-flash": () => new Response("{}", { status: 404 }) });
+    const call = () => callGeminiWithFallback({ apiKey: KEY, context: "{}", question: "q", fetchImpl: fetchMock, cooldowns });
+    expect(await call()).toMatchObject({ ok: false, outcome: "http_4xx", status: 404 });
+    expect(cooldowns.blocked("gemini-2.5-flash")).toBe(true);
+    // A 503 is transient: the primary is not benched.
+    expect(cooldowns.blocked("gemini-3.5-flash")).toBe(false);
+    fetchMock.mockClear();
+    const again = await call();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(again).toMatchObject({ ok: false, outcome: "http_5xx", status: 503 });
+    expect(again.attempts).toEqual([{ model: "gemini-3.5-flash", outcome: "http_5xx", status: 503 }]);
+  });
+
+  it("a 404 from the primary benches it for at most 10 min (a fixed ASK_MODEL must come back soon); the fallback's 404 keeps 6 h", async () => {
+    let t = T0;
+    const cooldowns = createModelCooldowns({ now: () => t });
+    const fetchMock = byModel({ "gemini-3.5-flash": () => new Response("{}", { status: 404 }) });
+    await callGeminiWithFallback({ apiKey: KEY, context: "{}", question: "q", fetchImpl: fetchMock, cooldowns });
+    expect(cooldowns.blocked("gemini-3.5-flash")).toBe(true);
+    t += 10 * 60_000 - 1;
+    expect(cooldowns.blocked("gemini-3.5-flash")).toBe(true);
+    t += 1;
+    expect(cooldowns.blocked("gemini-3.5-flash")).toBe(false);
+
+    const fb = byModel({ "gemini-3.5-flash": () => new Response("{}", { status: 503 }), "gemini-2.5-flash": () => new Response("{}", { status: 404 }) });
+    await callGeminiWithFallback({ apiKey: KEY, context: "{}", question: "q", fetchImpl: fb, cooldowns });
+    t += 6 * 3_600_000 - 1;
+    expect(cooldowns.blocked("gemini-2.5-flash")).toBe(true);
+    t += 1;
+    expect(cooldowns.blocked("gemini-2.5-flash")).toBe(false);
+  });
+
+  it("a 429 body that never closes: the hint read gives up within ~500 ms, with no hint, and cancels the stream", async () => {
+    const cancel = vi.fn();
+    const stream = new ReadableStream({ cancel });
+    const started = performance.now();
+    const r = await callGemini({ apiKey: KEY, context: "{}", question: "q", fetchImpl: vi.fn(async () => new Response(stream, { status: 429 })) });
+    const took = performance.now() - started;
+    expect(r).toMatchObject({ ok: false, outcome: "http_429" });
+    expect(r).not.toHaveProperty("retryAfterMs");
+    expect(took).toBeGreaterThanOrEqual(450);
+    expect(took).toBeLessThan(2000);
+    expect(cancel).toHaveBeenCalled();
+  });
+
+  it("a 429 body past 16 KB: the read stops at the cap (an endless body still returns) and cancels the stream", async () => {
+    const cancel = vi.fn();
+    let pulled = 0;
+    const chunk = new TextEncoder().encode("x".repeat(4096));
+    const endless = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        pulled += chunk.byteLength;
+        controller.enqueue(chunk);
+      },
+      cancel,
+    });
+    const r = await callGemini({ apiKey: KEY, context: "{}", question: "q", fetchImpl: vi.fn(async () => new Response(endless, { status: 429 })) });
+    expect(r).toMatchObject({ ok: false, outcome: "http_429" });
+    expect(cancel).toHaveBeenCalled();
+    expect(pulled).toBeLessThan(64 * 1024);
+    // A hint past the cap is not seen: only the first 16 KB is read.
+    const late = JSON.stringify({ pad: "y".repeat(20_000), error: { details: [{ retryDelay: "41s" }] } });
+    const r2 = await callGemini({ apiKey: KEY, context: "{}", question: "q", fetchImpl: vi.fn(async () => new Response(late, { status: 429 })) });
+    expect(r2).not.toHaveProperty("retryAfterMs");
+  });
+
+  it("both models benched (or the primary benched with the fallback off) → outcome cooldown, no call at all", async () => {
+    const cooldowns = createModelCooldowns({ now: () => T0 });
+    cooldowns.busy("gemini-3.5-flash", 30_000);
+    cooldowns.unavailable("gemini-2.5-flash");
+    const fetchMock = byModel({});
+    const both = await callGeminiWithFallback({ apiKey: KEY, context: "{}", question: "q", fetchImpl: fetchMock, cooldowns });
+    expect(both).toMatchObject({ ok: false, outcome: "cooldown" });
+    expect(both.attempts).toEqual([
+      { model: "gemini-3.5-flash", outcome: "cooldown" },
+      { model: "gemini-2.5-flash", outcome: "cooldown" },
+    ]);
+    const off = await callGeminiWithFallback({ apiKey: KEY, context: "{}", question: "q", config: askConfig({ ASK_FALLBACK_MODEL: "off" }), fetchImpl: fetchMock, cooldowns });
+    expect(off).toMatchObject({ ok: false, outcome: "cooldown" });
+    expect(off.attempts).toEqual([{ model: "gemini-3.5-flash", outcome: "cooldown" }]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});

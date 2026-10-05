@@ -24,6 +24,8 @@ export type AskOutcome =
   | "invalid"
   /** A 413: the body was over 8 KB and was not parsed. */
   | "too_large"
+  /** EXE31: no call was made: every model to try is benched (a 429's retry hint, or a 404). */
+  | "cooldown"
   /** An unexpected error inside the handler, answered with fallback or saved instead of a 500. */
   | "error";
 
@@ -47,6 +49,8 @@ export interface AskLogLine {
   firstAttempt?: string;
   /** Stage 9: decisive facts the model answer omitted although its cited records carry them (guard.ts missingSpecifics). */
   missing?: string[];
+  /** EXE31: a model answer replayed from the answer cache (no Gemini call). */
+  cached?: boolean;
 }
 
 /** The first 16 hex of SHA-256(question). */

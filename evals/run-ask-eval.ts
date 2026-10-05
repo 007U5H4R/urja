@@ -14,6 +14,19 @@
  * is checked (and created) before any request. Exits 1 when the gate (§7, plus the §2 blockers)
  * fails, 2 on a usage error or an unreadable --baseline (before any request).
  *
+ * --pace-ms <ms> (default 12000) is the gap between request starts. 12 s keeps
+ * one IP under the route's 5-per-minute bucket; a lower pace gets 429s, and a
+ * 429 that carries retryAfterS is retried once after that wait. 0 disables
+ * pacing (mocked or local runs). --timeout-ms bounds each request.
+ *
+ * Diagnostics only (never scoring or the gate): each case records its
+ * x-ask-outcome, its first Gemini attempt's code (`after=<code> <model>`, else
+ * the outcome itself; EXE26/EXE31) and `cached: true` for an answer the server
+ * replayed from its answer cache. Every request carries `x-ask-cache: bypass`,
+ * so each case is a live call; should one still come back cached, it gets a
+ * warning, is shown as "by the model X (cached Y)", and is left out of
+ * p50/p90. A cached model answer still counts as the model's (EXE31).
+ *
  * No key is read here: the server holds GEMINI_API_KEY. A Vercel preview behind
  * deployment protection is reached with VERCEL_AUTOMATION_BYPASS_SECRET, sent
  * as a header and never printed; answers are written and printed with that value
@@ -154,6 +167,14 @@ export interface CaseResult {
    * it never affects scoring or the gate.
    */
   outcome: string | null;
+  /**
+   * EXE31: the code of the first Gemini attempt: from `after=<code> <model>` when the
+   * fallback model was asked, else the outcome code itself. null for a cached answer
+   * (no attempt) or no header.
+   */
+  firstAttempt: string | null;
+  /** EXE31: the server replayed this model answer from its answer cache ('ok; cached; …'). */
+  cached?: boolean;
   /** Client-side, end to end. */
   ms: number;
   serverMs: number | null;
@@ -208,6 +229,10 @@ export interface Summary {
   modes: Record<string, number>;
   /** Cases per outcome code (the x-ask-outcome part before the first ';'); 'none' when absent. Diagnostic only. */
   outcomes: Record<string, number>;
+  /** EXE31: cases per first-attempt code ('cached' for a cached answer, 'none' without a header). Diagnostic only. */
+  firstAttempts: Record<string, number>;
+  /** EXE31: answers replayed from the server's answer cache. */
+  cached: number;
   failedCases: string[];
   /** One per prepared pass that isn't a model answer, and one per off-topic pass that isn't (a deterministic refusal). */
   warnings: string[];
@@ -328,7 +353,8 @@ export async function runEval(opts: RunOptions, deps: RunDeps = realDeps): Promi
   const bundle = deps.bundle();
   const ctx = scoringContext(dataset, bundle);
   const endpoint = new URL("/api/ask", opts.baseUrl).href;
-  const headers: Record<string, string> = { "content-type": "application/json" };
+  // EXE31: every case is a live call; the server skips its answer cache for this request.
+  const headers: Record<string, string> = { "content-type": "application/json", "x-ask-cache": "bypass" };
   const bypass = deps.env.VERCEL_AUTOMATION_BYPASS_SECRET;
   if (bypass) headers["x-vercel-protection-bypass"] = bypass;
 
@@ -377,6 +403,8 @@ export async function runEval(opts: RunOptions, deps: RunDeps = realDeps): Promi
       model: usable?.provenance?.model ?? null,
       httpStatus: outcome.status,
       outcome: outcome.outcome ?? null,
+      firstAttempt: firstAttemptCode(outcome.outcome),
+      ...(isCached(outcome.outcome) ? { cached: true } : {}),
       ms: outcome.ms,
       serverMs: typeof usable?.provenance?.ms === "number" ? usable.provenance.ms : null,
       checks: score.checks,
@@ -512,7 +540,8 @@ export function summarise(dataset: EvalDataset, cases: CaseResult[]): Summary {
   const keyLeaks = cases.filter((c) => c.keyLeak).map((c) => c.id);
   const notHindi = cases.filter((c) => hiCases.has(c.id) && c.mode !== "error" && c.checks.lang === false).map((c) => c.id);
   const offtopicPass = offtopic.filter((c) => c.pass).length;
-  const ms = cases.map((c) => c.ms);
+  // EXE31: latency is the model's; a case the server still served from its answer cache is left out.
+  const ms = cases.filter((c) => !c.cached).map((c) => c.ms);
   const p50Ms = percentile(ms, 50);
   const forbiddenHits = cases.reduce((n, c) => n + c.forbiddenHits, 0);
   const unsupportedNumbers = cases.reduce((n, c) => n + c.unsupported.length, 0);
@@ -520,10 +549,14 @@ export function summarise(dataset: EvalDataset, cases: CaseResult[]): Summary {
   const modes: Record<string, number> = {};
   for (const c of cases) modes[c.mode] = (modes[c.mode] ?? 0) + 1;
   const outcomes: Record<string, number> = {};
+  const firstAttempts: Record<string, number> = {};
   for (const c of cases) {
     const code = outcomeCode(c.outcome);
     outcomes[code] = (outcomes[code] ?? 0) + 1;
+    const first = c.cached ? "cached" : (c.firstAttempt ?? "none");
+    firstAttempts[first] = (firstAttempts[first] ?? 0) + 1;
   }
+  const byCount = (counts: Record<string, number>) => Object.fromEntries(Object.entries(counts).sort((x, y) => y[1] - x[1]));
 
   const gateFailures = [
     prepared.length !== g.prepared_total ? `ran ${prepared.length} prepared cases, the gate expects ${g.prepared_total}` : "",
@@ -555,12 +588,16 @@ export function summarise(dataset: EvalDataset, cases: CaseResult[]): Summary {
     unsupportedOnPassing,
     modes,
     // Most frequent first; ties keep the order the cases ran in.
-    outcomes: Object.fromEntries(Object.entries(outcomes).sort((x, y) => y[1] - x[1])),
+    outcomes: byCount(outcomes),
+    firstAttempts: byCount(firstAttempts),
+    cached: cases.filter((c) => c.cached).length,
     failedCases: cases.filter((c) => !c.pass).map((c) => c.id),
     warnings: [
       ...prepared.filter((c) => c.pass && c.mode !== "model").map((c) => `${c.id} passed on a ${c.mode} answer, not the model`),
       // Informational: off-topic counting is unchanged (a deterministic refusal still counts).
       ...offtopic.filter((c) => c.pass && c.mode !== "model").map((c) => `${c.id} passed on a deterministic refusal, not the model`),
+      // EXE31: the runner sends x-ask-cache: bypass, so a cached case means the server ignored it.
+      ...cases.filter((c) => c.cached).map((c) => `${c.id} was served from the answer cache`),
     ],
     gate: gateFailures.length ? "FAIL" : "PASS",
     gateFailures,
@@ -611,9 +648,10 @@ export function report(r: EvalResult): string[] {
   const s = r.summary;
   const p = r.provenance;
   out.push(
-    `Prepared ${s.prepared} (by the model ${s.preparedByModel}) · off-topic ${s.offtopic} · p50 ${s.p50Ms} ms · p90 ${s.p90Ms} ms · forbidden ${s.forbiddenHits} · unsupported ${s.unsupportedNumbers} (on passing ${s.unsupportedOnPassing})`,
+    `Prepared ${s.prepared} (by the model ${s.preparedByModel} (cached ${s.cached ?? 0})) · off-topic ${s.offtopic} · p50 ${s.p50Ms} ms · p90 ${s.p90Ms} ms · forbidden ${s.forbiddenHits} · unsupported ${s.unsupportedNumbers} (on passing ${s.unsupportedOnPassing})`,
     `Modes: ${Object.entries(s.modes).map(([k, v]) => `${k} ${v}`).join(", ")}`,
     `Outcomes: ${Object.entries(s.outcomes ?? {}).map(([k, v]) => `${k} ${v}`).join(", ")}`,
+    `First attempts: ${Object.entries(s.firstAttempts ?? {}).map(([k, v]) => `${k} ${v}`).join(", ")} · cached answers ${s.cached ?? 0}`,
     `Provenance: ${p.commit.slice(0, 7)}${p.dirty ? " (dirty)" : ""} on ${p.branch} · ${p.baseUrlHost} · ${modelText(p)} · ${p.promptVersion} · dataset ${p.datasetVersion} · hash ${p.datasetHash ?? "none"}`,
   );
   for (const w of [...s.warnings, ...p.warnings]) out.push(`Warning: ${w}`);
@@ -657,6 +695,25 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
 /** 'guard:no_cites' from 'guard:no_cites; model=gemini-3.5-flash'; 'none' when there was no header. */
 export function outcomeCode(outcome: string | null | undefined): string {
   return outcome?.split(";")[0].trim() || "none";
+}
+
+/** The x-ask-outcome parts: "ok; model=x; after=http_429:429 y" → ["ok", "model=x", "after=http_429:429 y"]. */
+const outcomeParts = (outcome: string | null | undefined) => (outcome ?? "").split(";").map((p) => p.trim()).filter(Boolean);
+
+/** EXE31: 'ok; cached; model=…' marks an answer replayed from the server's answer cache. */
+export function isCached(outcome: string | null | undefined): boolean {
+  return outcomeParts(outcome).includes("cached");
+}
+
+/**
+ * EXE31: the first Gemini attempt's code: 'http_429:429' from '…; after=http_429:429 gemini-3.5-flash',
+ * else the outcome code itself; null for a cached answer (no attempt) or no header.
+ */
+export function firstAttemptCode(outcome: string | null | undefined): string | null {
+  const parts = outcomeParts(outcome);
+  if (!parts.length || parts.includes("cached")) return null;
+  const after = parts.map((p) => /^after=(\S+)\s+\S+$/.exec(p)).find(Boolean);
+  return after ? after[1] : parts[0];
 }
 
 function countModels(models: (string | null)[]): Record<string, number> {

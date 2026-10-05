@@ -1,15 +1,17 @@
 /**
  * POST /api/ask: Ask Urja (technical-plan §6). The handler lives in
  * lib/ask/handler.ts; GEMINI_API_KEY is read there from process.env, on the
- * server only. The rate limiter is per server instance (TP6).
+ * server only. The rate limiter, the answer cache and the model cooldowns are
+ * per server instance (TP6, EXE31).
  */
 import { getAskContext } from "@/lib/ask/context";
-import { createAskHandler } from "@/lib/ask/handler";
+import { createAskHandler, routeMemory } from "@/lib/ask/handler";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const handle = createAskHandler();
+// EXE31: the answer cache and the model cooldowns live as long as this instance.
+const handle = createAskHandler(routeMemory);
 
 // Warm the context (dataset + JSON, ~0.8 s) when the instance loads, so the
 // first question doesn't pay for it. A failure here must never break the

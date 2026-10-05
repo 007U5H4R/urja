@@ -372,3 +372,16 @@
   - Off-topic cases can now pass on the fixed refusal with no model answer. evaluation-plan §4.7 doesn't look at mode, so this is allowed.
   - The runner now warns on each such pass.
   - Should off-topic, like prepared (EXE13), count only model answers? Default until you decide: the threshold stays, the warnings are reported, and an off-topic 3/3 is never claimed for the model unless every pass came from the model.
+
+## EXE31 · Ask is frugal on the Gemini free tier: answer cache, cooldowns, a budget env — judgement call 2026-10-05 (Stage 9 unit G; free tier per the user's decision)
+- **Why:** the user decided to stay on Gemini's free tier. After about 40 calls in a day, `gemini-3.5-flash` answered 429 to every call, and the fallback `gemini-2.5-flash` answers 404 for this key, so each question spent two calls that couldn't succeed. A live demo asks the same chip questions again and again.
+- **Built** (technical-plan §6.8 has the details):
+  - **Answer cache:** in memory per instance, LRU 200, TTL 24 h. Only guarded `mode: "model"` answers go in, keyed by the normalised question, its copy language, `PROMPT_VERSION` and the dataset hash. A hit keeps `mode: "model"` and the original `provenance.model`, and says `ok; cached; model=…` in `x-ask-outcome` (extends EXE24/EXE26). The log line gets `cached: true`; the question stays out of logs.
+  - **Limits:** a hit takes the per-IP minute token (abuse protection) but spends no daily budget: the per-IP 40/day and the global cap now count only requests that reach Gemini. The per-IP limits are not lowered.
+  - **Cooldowns:** a 429 benches that model for its `Retry-After` or `retryDelay` (60 s without one, clamped to 1 s – 10 min); a 404 benches the fallback model for 6 h and the primary for at most 10 min. Benched models are skipped without a call; with none left, the deterministic answer goes out at once with outcome `cooldown`, and no budget is spent.
+  - **Budget env:** `ASK_DAILY_MODEL_BUDGET` sets the global daily Gemini budget; the default stays 300.
+  - **Runner:** it sends `x-ask-cache: bypass` on every request; the handler then skips the cache read (it still writes fresh model answers, and every limit, budget and cooldown applies), so each eval case is a live call that measures the model. It records each case's first-attempt code (so a 429 shows even when the fallback's 404 came last) and `cached: true`, plus summary `firstAttempts` and `cached`. Should a case still come back cached, it is warned per case, shown as "by the model X (cached Y)", and left out of p50/p90.
+- **Cached answers count as model answers (EXE13 unchanged):** a cached answer is the model's own answer, written for the same prompt version over the same static dataset, and it passed the same guard. No threshold, golden value, dataset or scorer changed.
+- **Known limits:**
+  - The cache and cooldowns are per instance, so a cold start or a second instance asks Gemini again.
+  - Identical concurrent requests both call Gemini: there is no in-flight dedupe.
