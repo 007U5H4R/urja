@@ -63,6 +63,36 @@ test("the market is a real table with column and row headers", async ({ page }) 
   await expect(table.locator("tbody th[scope='row']")).toHaveText(["Fleetx", "Intangles", "LocoNav", "Samsara", "Urja"]);
 });
 
+test("DES-27 · chapter 03 keeps what the owner still lacks at every width: a column, or a muted line under 860 px", async ({ page }) => {
+  await page.goto("/why");
+  const table = page.getByRole("table");
+  const narrow = page.viewportSize()!.width <= 860;
+  const column = table.locator("tbody td.hide-sm");
+  const lines = table.locator("tbody td .lacks");
+  for (const gap of ["Needs an extra fuel sensor", "Scores drivers without asking their side", "Not built for Indian roads, Hindi, or FASTag"]) {
+    await expect((narrow ? lines : column).filter({ hasText: gap })).toBeVisible();
+    await expect((narrow ? column : lines).filter({ hasText: gap })).toBeHidden();
+  }
+  await expect(lines).toHaveCount(4);
+  if (narrow) {
+    // Muted, under the "does well" text, and the table still fits its card.
+    const [line, does] = await lines.first().evaluate((el) => [getComputedStyle(el).color, getComputedStyle(el.parentElement!).color]);
+    expect(line).not.toBe(does);
+    const fits = await page.locator(".cmpcard").evaluate((card) => card.querySelector("table")!.offsetWidth <= card.clientWidth);
+    expect(fits).toBe(true);
+  }
+});
+
+test("DES-28 · with text-only zoom at 200%, the metric figures wrap inside their tiles", async ({ page }, info) => {
+  test.skip(info.project.name !== "phone", "the 375 px case");
+  await page.goto("/why");
+  await page.evaluate(() => (document.documentElement.style.fontSize = "200%"));
+  const over = await page.locator(".tile .big .n").evaluateAll((ns) =>
+    ns.filter((n) => n.getBoundingClientRect().right > n.closest(".tile")!.getBoundingClientRect().right + 0.5).map((n) => n.textContent),
+  );
+  expect(over).toEqual([]);
+});
+
 test("chapter 01 labels its four quotes as illustrative, not from interviews, and shows no placeholder", async ({ page }) => {
   await page.goto("/why");
   const c1 = page.locator("section[aria-labelledby='c1']");

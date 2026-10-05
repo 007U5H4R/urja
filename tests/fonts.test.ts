@@ -12,6 +12,8 @@ import { describe, expect, it } from "vitest";
  *   and advance as the Google file it came from, and keep the variable axes. (fontkit can't
  *   instance a woff2, so variations were checked when the subsets were cut: gvar is copied
  *   per glyph, unchanged. The other faces are Google's files, byte for byte.)
+ * - DES-14: the arrows (U+2190–2193) all render in Inter. Google's latin subset skips ← and →, so
+ *   one extra face, Google's own text= cut of the same build, takes exactly those two.
  */
 
 type FontkitFont = {
@@ -61,6 +63,11 @@ const GOOGLE: Record<string, { file: string; range: string }[]> = {
       range: "U+0-FF,U+131,U+152-153,U+2BB-2BC,U+2C6,U+2DA,U+2DC,U+304,U+308,U+329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD",
     },
   ],
+};
+
+/** Code points Google's subsets leave out that a face adds (DES-14), and the face that adds them. */
+const EXTRA: Record<string, { file: string; range: string }> = {
+  Inter: { file: "inter-arrows", range: "U+2190,U+2192" },
 };
 
 /** The subsets cut for M-004, and the Google file each one's glyphs come from, per code point. */
@@ -124,7 +131,7 @@ describe("self-hosted font faces (M-004, EXE18)", () => {
   const all = faces();
 
   it("declares every face as Inter, Anek Devanagari or the plates' Anek Plate, from a file in app/fonts", () => {
-    expect(all.length).toBe(13);
+    expect(all.length).toBe(14);
     for (const f of all) {
       expect(["Inter", "Anek Devanagari", "Anek Plate"]).toContain(f.family);
       expect(existsSync(fontFile(f.file)), f.file).toBe(true);
@@ -140,8 +147,14 @@ describe("self-hosted font faces (M-004, EXE18)", () => {
         mine.set(cp, f.file);
       }
     }
-    expect([...mine.keys()].sort((a, b) => a - b)).toEqual([...win.keys()].sort((a, b) => a - b));
+    const extra = EXTRA[family] ? parseRange(EXTRA[family].range) : [];
+    for (const cp of extra) expect(win.has(cp), `U+${cp.toString(16)} is Google's already`).toBe(false);
+    expect([...mine.keys()].sort((a, b) => a - b)).toEqual([...win.keys(), ...extra].sort((a, b) => a - b));
     for (const [cp, file] of mine) {
+      if (extra.includes(cp)) {
+        expect(file, `U+${cp.toString(16)}`).toBe(EXTRA[family].file);
+        continue;
+      }
       const google = win.get(cp)!;
       // A subset face may take code points from the Google file it was cut from.
       const from = file in SUBSETS ? null : file;
@@ -168,6 +181,33 @@ describe("self-hosted font faces (M-004, EXE18)", () => {
     }
     expect(compared).toBe(face.range.filter((cp) => cp >= 0x20 && font(win.get(cp)!).hasGlyphForCodePoint(cp)).length);
     expect(compared).toBeGreaterThan(0);
+  });
+
+  it("draws all four arrows U+2190–2193 in Inter: ← → from inter-arrows, the same build as Google's files (DES-14)", () => {
+    const inter = all.filter((f) => f.family === "Inter");
+    for (const cp of parseRange("U+2190-2193")) {
+      const face = inter.find((f) => f.range.includes(cp));
+      expect(face, `U+${cp.toString(16)} has an Inter face`).toBeDefined();
+      expect(font(face!.file).hasGlyphForCodePoint(cp), `${face!.file} draws U+${cp.toString(16)}`).toBe(true);
+    }
+    const arrows = all.find((f) => f.file === "inter-arrows")!;
+    expect(arrows.range).toEqual([0x2190, 0x2192]);
+    expect(arrows.preload).toBe(false);
+    const sub = font("inter-arrows");
+    expect(sub.familyName).toBe(font("inter-latin").familyName);
+    // The glyphs it shares with Google's latin file (↑ ↓) are identical, so ← → are cut from the
+    // same Inter as the text around them.
+    let shared = 0;
+    for (const ch of "↑↓") {
+      const cp = ch.codePointAt(0)!;
+      expect(sub.hasGlyphForCodePoint(cp), ch).toBe(true);
+      const ga = sub.glyphForCodePoint(cp);
+      const gb = font("inter-latin").glyphForCodePoint(cp);
+      expect(ga.path.toSVG(), ch).toBe(gb.path.toSVG());
+      expect(ga.advanceWidth, ch).toBe(gb.advanceWidth);
+      shared++;
+    }
+    expect(shared).toBe(2);
   });
 
   it("keeps the variable axes: Inter opsz and wght, Anek Devanagari wght and wdth", () => {

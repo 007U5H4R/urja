@@ -110,7 +110,12 @@
     .essay .node:not(:last-child)::after { top: calc(100% + 1px); left: 26px; width: 1px; height: 14px; }
     .essay .node.new::after, .essay .node:has(+ .new)::after { width: 2px; height: 14px; margin-top: 0; z-index: 2; background: linear-gradient(180deg, var(--lamp-deep), var(--cream)); }
   }
-  @media (max-width: 860px) { .essay .cmp .hide-sm { display: none; } }
+  /* DES-27: ≤860px the last column hides; its text shows as a muted line under "does well". */
+  .essay .cmp .lacks { display: none; }
+  @media (max-width: 860px) {
+    .essay .cmp .hide-sm { display: none; }
+    .essay .cmp .lacks { display: block; margin-top: 4px; color: var(--fg-subtle); }
+  }
   @media (max-width: 760px) {
     .essay .tiles { grid-template-columns: minmax(0, 1fr); }
     .essay .tile { padding: 18px 18px 20px; }
@@ -120,5 +125,10 @@
     .essay .plan li:not(:last-child)::after { left: 5px; right: auto; top: 22px; bottom: -16px; width: 1px; height: auto; }
     .essay .cmp th, .essay .cmp td { padding: 12px 12px; }
   }
-  @media (max-width: 420px) { .topbar .btn { padding: 0 12px; } }
+  @media (max-width: 420px) {
+    .topbar .btn { padding: 0 12px; }
+    /* DES-28: with text-only zoom at 200% the tile figures overflow a phone; let them wrap, inside
+       a word only when one word alone is wider than the tile. */
+    .essay .tile .big .n { white-space: normal; overflow-wrap: anywhere; }
+  }
 }

@@ -43,7 +43,8 @@ export function Chat({ copy, host }: { copy: Record<Lang, MessageCopy>; host: st
         <div className="bubble">
           <PreviewCard href={c.briefHref} label={c.open} preview={c.preview} host={host} />
           <div className="txt">
-            <h3>{c.headline}</h3>
+            {/* DES-25: the bubble's headline is the page's first visible heading under the sr-only h1. */}
+            <h2>{c.headline}</h2>
             <p>{c.intro}</p>
             {c.items.length > 0 && (
               <ol>

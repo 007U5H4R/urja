@@ -181,6 +181,58 @@ test("TC-024 · /trips/0926-04?state=error says what happened, that nothing is l
   await expect(page.locator(".triphead h1")).toBeFocused();
 });
 
+test("DES-19 · the brief's clean day looks like Today's: bright headline, the card's own spacing and rail", async ({ page }) => {
+  const look = async (url: string) => {
+    await page.goto(url);
+    const c = page.locator("main section.state.clean");
+    await expect(c).toBeVisible();
+    return c.evaluate((sec) => {
+      const cs = getComputedStyle(sec);
+      const h1 = getComputedStyle(sec.querySelector("h1:not(.st-tag)")!);
+      const rail = getComputedStyle(sec.querySelector(".rail svg")!);
+      return {
+        h1: [h1.color, h1.fontSize],
+        card: [cs.color, cs.fontSize, cs.padding, cs.gap, cs.alignItems],
+        rail: [rail.color, rail.marginTop, rail.flex],
+      };
+    });
+  };
+  const today = await look("/?state=clean");
+  const brief = await look("/brief?state=clean");
+  expect(brief).toEqual(today);
+  // --fg, not --fg-muted: the same colour as the plain text of the page.
+  expect(today.h1[0]).toBe(await page.evaluate(() => getComputedStyle(document.body).color));
+});
+
+test("DES-24 · the trip error heading takes focus without drawing a focus ring", async ({ page }) => {
+  await page.goto("/trips/0926-04?state=error");
+  const h1 = page.locator("h1");
+  await expect(h1).toBeFocused();
+  expect(await h1.evaluate((el) => getComputedStyle(el).outlineStyle)).toBe("none");
+  // The buttons keep theirs.
+  const retry = page.getByRole("button", { name: "Try again" });
+  await page.keyboard.press("Tab");
+  await expect(retry).toBeFocused();
+  expect(await retry.evaluate((el) => getComputedStyle(el).outlineStyle)).toBe("solid");
+});
+
+test("DES-4 · on a coarse pointer the state actions are 44 px tall (TC-023)", async ({ page }, info) => {
+  test.skip(info.project.name !== "phone", "pointer: coarse only");
+  const urls = ["/?state=empty", "/?state=error", "/brief?state=empty", "/brief?state=clean", "/brief?state=error"];
+  for (const url of urls) {
+    await page.goto(url);
+    expect(await page.evaluate(() => matchMedia("(pointer: coarse)").matches)).toBe(true);
+    const buttons = page.locator("main.st-view .actions .btn");
+    await expect(buttons.first(), url).toBeVisible();
+    for (const h of await buttons.evaluateAll((els) => els.map((el) => el.getBoundingClientRect().height))) expect(h, url).toBeGreaterThanOrEqual(44);
+  }
+  await page.goto("/trips/0926-04?state=error");
+  const tripButtons = page.locator("main .btn");
+  await expect(tripButtons).toHaveCount(2);
+  await expect(tripButtons.first()).toBeVisible();
+  for (const h of await tripButtons.evaluateAll((els) => els.map((el) => el.getBoundingClientRect().height))) expect(h).toBeGreaterThanOrEqual(44);
+});
+
 test("TC-024 · unknown or unsupported ?state= renders the normal view", async ({ page }) => {
   const errors = collectErrors(page);
   await page.goto("/?state=foo");

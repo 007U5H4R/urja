@@ -14,7 +14,8 @@ import { MENU_COPY, isCurrent, isWhyRoute, menuLinks } from "./nav";
  * when a destination is chosen, and when the route changes.
  * On /why there is no Ask item, as in final/why.html line 136.
  * `lang` is set only by the phone screens (EXE23): Hindi items on a Hindi
- * screen, with `lang` on the list; the shell's menu is English.
+ * screen, with `lang` on the list; the shell's menu is English. On an English
+ * phone screen, Morning brief opens the English brief (DES-21).
  */
 export function MobileMenu({ onAskOpen = openAsk, lang }: { onAskOpen?: () => void; lang?: Lang }) {
   const copy = MENU_COPY[lang ?? "en"];
@@ -67,7 +68,7 @@ export function MobileMenu({ onAskOpen = openAsk, lang }: { onAskOpen?: () => vo
         <Icon name="menu" />
       </summary>
       <nav aria-label={copy.nav} lang={lang}>
-        {menuLinks(lang ?? "en").map((l) => (
+        {menuLinks(lang ?? "en", { phone: lang !== undefined }).map((l) => (
           <Link
             key={l.href}
             href={l.href}

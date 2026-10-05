@@ -118,9 +118,10 @@ test("with scripts, the English phone screens hydrate cleanly and move between e
   await expect(page.locator("main .greet")).toHaveText("Good morning, Sharma ji");
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await page.waitForLoadState("networkidle");
-  // The phone menu marks the brief as the current page, the same on the server and the client.
+  // The phone menu marks the brief as the current page, the same on the server and the client;
+  // on the English screen it links to the English brief (DES-21).
   const menu = page.locator("details.m-menu").first();
-  await expect(menu.locator('a[aria-current="page"]')).toHaveAttribute("href", "/brief");
+  await expect(menu.locator('a[aria-current="page"]')).toHaveAttribute("href", "/brief?lang=en");
   expect(errors).toEqual([]);
 });
 

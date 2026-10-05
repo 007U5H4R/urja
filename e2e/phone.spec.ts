@@ -82,7 +82,7 @@ test.describe("TC-027 · language toggle", () => {
     await page.goto(`${baseURL}/message?lang=en`);
     await expect(page).toHaveTitle("7 AM message · Urja");
     await expect(page.locator("main")).toHaveAttribute("lang", "en");
-    await expect(page.locator(".bubble h3")).toHaveText("Yesterday: ₹1,86,400 earned · ₹11,430 doesn’t add up");
+    await expect(page.locator(".bubble h2")).toHaveText("Yesterday: ₹1,86,400 earned · ₹11,430 doesn’t add up");
     await context.close();
   });
 
@@ -125,7 +125,7 @@ test.describe("TC-027 · language toggle", () => {
     await clickUntil(page, "EN", () => expect(main).toHaveAttribute("lang", "en", { timeout: 500 }));
     await expect(page).toHaveURL(/\/message\?lang=en$/);
     await expect(page).toHaveTitle("7 AM message · Urja");
-    await expect(page.locator(".bubble h3")).toHaveText("Yesterday: ₹1,86,400 earned · ₹11,430 doesn’t add up");
+    await expect(page.locator(".bubble h2")).toHaveText("Yesterday: ₹1,86,400 earned · ₹11,430 doesn’t add up");
     await expect(page.getByRole("link", { name: "Open today’s brief" }).first()).toHaveAttribute("href", "/brief?lang=en");
   });
 });
@@ -187,11 +187,66 @@ test.describe("the 7 AM message", () => {
     await expect(meta).toContainText(new URL(baseURL!).hostname);
     await expect(meta).not.toContainText("urja.app");
     const bars = page.locator(".pv-art svg rect");
-    // 0926-04 runs 575 min: one bar per 10 min, plus the last reading.
-    await expect(bars).toHaveCount(59);
+    // 0926-04 runs 575 min: 59 readings (one per 10 min, plus the last), drawn as 20 bars of up to
+    // three readings each, the mockup's density (DES-23).
+    await expect(bars).toHaveCount(20);
     const fills = await bars.evaluateAll((rs) => rs.map((r) => (r as SVGElement).style.fill));
     expect(fills.filter((f) => f === "var(--loss)").length).toBeGreaterThan(0);
-    expect(fills.filter((f) => f === "var(--cream)").length).toBeGreaterThan(0);
+    expect(fills.filter((f) => f === "var(--cream)").length).toBe(1);
+    // Each bar is drawn about 5.5 px wide in its 7.5 px slot, not as a hairline.
+    for (const w of await bars.evaluateAll((rs) => rs.map((r) => r.getBoundingClientRect().width))) expect(w).toBeGreaterThan(4);
+  });
+
+  test("the bubble's headline is the h2 under the page's h1, balanced, with the mockup's size (DES-25, DES-31)", async ({ page }) => {
+    await page.goto("/message");
+    const levels = await page.locator("main").evaluate((m) => [...m.querySelectorAll("h1, h2, h3, h4, h5, h6")].map((h) => h.tagName));
+    expect(levels).toEqual(["H1", "H2"]);
+    const h2 = page.locator(".bubble .txt h2");
+    await expect(h2).toHaveText("कल: ₹1,86,400 कमाए · ₹11,430 का हिसाब नहीं");
+    const look = await h2.evaluate((el) => {
+      const cs = getComputedStyle(el);
+      return { size: cs.fontSize, weight: cs.fontWeight, wrap: cs.textWrapStyle || cs.textWrap };
+    });
+    expect(look).toEqual({ size: `${1.02 * 16}px`, weight: "600", wrap: "balance" });
+  });
+
+  test("the chat header's subtitle: one line where it fits, never cut, and a 44 px toggle (DES-20)", async ({ page }, info) => {
+    const widths = info.project.name === "phone" ? [320, 360, 375, 390] : [page.viewportSize()!.width];
+    for (const width of widths) {
+      await page.setViewportSize({ width, height: 800 });
+      for (const path of ["/message", "/message?lang=en"]) {
+        await page.goto(path);
+        await page.evaluate(() => document.fonts.ready);
+        const m = await page.evaluate(() => {
+          const small = document.querySelector(".chat-top small")!;
+          const range = document.createRange();
+          range.selectNodeContents(small);
+          const buttons = [...document.querySelectorAll(".chat-top .lang button")].map((b) => b.getBoundingClientRect());
+          return {
+            lines: new Set([...range.getClientRects()].map((r) => Math.round(r.top))).size,
+            clipped: small.scrollWidth > small.clientWidth || getComputedStyle(small).textOverflow !== "clip",
+            header: document.querySelector<HTMLElement>(".chat-top")!.offsetHeight,
+            toggleH: Math.min(...buttons.map((b) => b.height)),
+            toggleW: Math.min(...buttons.map((b) => b.width)),
+            coarse: matchMedia("(pointer: coarse)").matches,
+            sw: document.documentElement.scrollWidth,
+          };
+        });
+        const at = `${path} at ${width}`;
+        // The firm's name is never cut: at most a second line where one line can't hold it.
+        expect(m.clipped, at).toBe(false);
+        expect(m.lines, at).toBeLessThanOrEqual(2);
+        // The Hindi subtitle (the default screen) fits on one line from 360 px, and the header stays
+        // short (it was 89 px when the subtitle broke into two or three lines).
+        if (path === "/message" && width >= 360) {
+          expect(m.lines, at).toBe(1);
+          expect(m.header, at).toBeLessThan(80);
+        }
+        expect(m.toggleH, at).toBeGreaterThanOrEqual(m.coarse ? 44 : 34);
+        if (m.coarse) expect(m.toggleW, at).toBeGreaterThanOrEqual(44);
+        expect(m.sw).toBeLessThanOrEqual(width);
+      }
+    }
   });
 
   test("the quick replies go to Ramesh's side of trip 0926-04 and to the High-only brief", async ({ page }) => {
@@ -236,6 +291,8 @@ test.describe("EXE12 · the phone screens keep their own top bar (its menu in th
       }).toPass();
       await expect(menu).toHaveAttribute("lang", lang);
       await expect(menu.getByRole("link")).toHaveText([...m.items]);
+      // DES-21: Morning brief keeps the screen's language.
+      await expect(menu.getByRole("link").first()).toHaveAttribute("href", lang === "en" ? "/brief?lang=en" : "/brief");
       const { scrollWidth, innerWidth } = await page.evaluate(() => ({
         scrollWidth: document.documentElement.scrollWidth,
         innerWidth: window.innerWidth,
@@ -252,4 +309,55 @@ test.describe("EXE12 · the phone screens keep their own top bar (its menu in th
       expect(errors).toEqual([]);
     });
   }
+});
+
+test("DES-21 · on the English message, the menu's Morning brief opens the English brief", async ({ page }) => {
+  const errors = collectErrors(page);
+  await page.goto("/message?lang=en");
+  const toggle = page.locator('.chat-top details.m-menu > summary[aria-label="Menu"]');
+  const menu = page.getByRole("navigation", { name: "Main (mobile)" });
+  await expect(async () => {
+    if (!(await menu.isVisible())) await toggle.click();
+    await expect(menu).toBeVisible({ timeout: 500 });
+  }).toPass();
+  await menu.getByRole("link", { name: "Morning brief" }).click();
+  await expect(page).toHaveURL(/\/brief\?lang=en$/);
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.locator("main")).toHaveAttribute("lang", "en");
+  expect(errors).toEqual([]);
+});
+
+test("DES-4 · on a coarse pointer the Ask sheet's close button and Try again are 44 px (TC-023)", async ({ page }, info) => {
+  test.skip(info.project.name !== "phone", "pointer: coarse only");
+  const saved = "Your question is saved. Try again in a minute for a written answer.";
+  await page.route("**/api/ask", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        mode: "saved",
+        answer: saved,
+        lang: "en",
+        cites: [],
+        provenance: { scope: "", model: null, ms: 30, promptVersion: "ask-v1", datasetHash: "h" },
+      }),
+    }),
+  );
+  await page.goto("/brief?lang=en");
+  await page.waitForLoadState("networkidle");
+  const dockInput = page.locator(".dock").getByRole("textbox");
+  const drawer = page.getByRole("dialog", { name: "Ask Urja" });
+  await expect(async () => {
+    await dockInput.fill("How much diesel went unaccounted last week?");
+    await dockInput.press("Enter");
+    await expect(drawer).toBeVisible({ timeout: 500 });
+  }).toPass();
+  const retry = drawer.getByRole("button", { name: "Try again" });
+  await expect(retry).toBeVisible();
+  const close = drawer.getByRole("button", { name: "Close Ask Urja" });
+  for (const b of [close, retry]) {
+    const box = (await b.boundingBox())!;
+    expect(box.height).toBeGreaterThanOrEqual(44);
+  }
+  expect((await close.boundingBox())!.width).toBeGreaterThanOrEqual(44);
 });

@@ -7,7 +7,15 @@ export type MenuHref = (typeof MENU_HREFS)[number];
 export type PillHref = Exclude<MenuHref, "/brief">;
 
 export type NavPill = { href: PillHref; label: string; icon: IconName };
+/**
+ * DES-21: on an English phone screen the menu's Morning brief opens the English brief. `?lang=en` is
+ * rewritten to the English phone layout (EXE23), a full page load, which the menu's links already
+ * don't prefetch.
+ */
+export const BRIEF_EN_HREF = "/brief?lang=en";
 export type MenuLink = { href: MenuHref; label: string };
+/** A link as the menu renders it: a destination, or the English brief on an English phone screen. */
+export type MenuItem = { href: MenuHref | typeof BRIEF_EN_HREF; label: string };
 
 // The top-bar pills keep Next's default prefetch. The phone menu's links pass
 // prefetch={false}: they are only in view once the menu is opened, and the
@@ -44,10 +52,15 @@ const MENU_LABEL_HI: Record<MenuHref, string> = {
 };
 
 const MENU_LINKS_HI: readonly MenuLink[] = MENU_LINKS.map(({ href }) => ({ href, label: MENU_LABEL_HI[href] }));
+const MENU_LINKS_PHONE_EN: readonly MenuItem[] = MENU_LINKS.map((l) => (l.href === "/brief" ? { ...l, href: BRIEF_EN_HREF } : l));
 
-/** The menu's destinations in `lang`: the same hrefs, in the same order. */
-export function menuLinks(lang: Lang): readonly MenuLink[] {
-  return lang === "hi" ? MENU_LINKS_HI : MENU_LINKS;
+/**
+ * The menu's destinations in `lang`, in the same order. On a phone screen in English (`phone`),
+ * Morning brief keeps the screen's language; elsewhere the hrefs are the same in both languages.
+ */
+export function menuLinks(lang: Lang, { phone = false }: { phone?: boolean } = {}): readonly MenuItem[] {
+  if (lang === "hi") return MENU_LINKS_HI;
+  return phone ? MENU_LINKS_PHONE_EN : MENU_LINKS;
 }
 
 /** The menu's own labels: the toggle's aria-label, the list's aria-label and the Ask item. */
@@ -56,9 +69,10 @@ export const MENU_COPY: Record<Lang, { toggle: string; nav: string; ask: string 
   hi: { toggle: "मेनू", nav: "मुख्य मेनू", ask: "Urja से पूछें" },
 };
 
-/** Whether `href` is the page at `pathname`. In-page anchors are never current. */
+/** Whether `href` is the page at `pathname`. In-page anchors are never current; a query is ignored. */
 export function isCurrent(href: string, pathname: string): boolean {
   if (href.includes("#")) return false;
+  href = href.split("?")[0];
   if (href === "/") return pathname === "/";
   return pathname === href || pathname.startsWith(`${href}/`);
 }

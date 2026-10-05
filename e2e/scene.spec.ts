@@ -110,6 +110,28 @@ test("TC-029 · on a software GPU the poster stays, labelled, with 0 console err
   expect(errors).toEqual([]);
 });
 
+test("DES-30 · in the fallback the scene tag never meets the glass card (1021, 1024, 1030, 1100, 1440)", async ({ page }, info) => {
+  test.skip(info.project.name !== "desktop", "one viewport sweep is enough; phones hide the tag");
+  type Box = { x: number; y: number; width: number; height: number };
+  const overlaps = (a: Box, b: Box) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+  for (const width of [1021, 1024, 1030, 1100, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/");
+    await expect(sceneBox(page)).toHaveAttribute("data-scene", "fallback", { timeout: 15_000 });
+    const tag = sceneBox(page).locator(".scene-tag");
+    await expect(tag).toBeVisible();
+    await expect(tag).toContainText("Reconstruction from GPS + fuel sensor");
+    const t = (await tag.boundingBox())!;
+    const card = (await page.locator(".floatcard").boundingBox())!;
+    expect(overlaps(t, card), `.scene-tag meets .floatcard at ${width} px: ${JSON.stringify({ t, card })}`).toBe(false);
+    // Clear of it, not just touching: the tag ends at least 12 px before the card.
+    expect(card.x - (t.x + t.width), `gap at ${width} px`).toBeGreaterThanOrEqual(12);
+    // And still inside the hero card.
+    const hero = (await sceneBox(page).boundingBox())!;
+    expect(t.y + t.height).toBeLessThanOrEqual(hero.y + hero.height);
+  }
+});
+
 test("TC-055 · three.js is in no initial script of / or the trip page, and the trip page never loads it", async ({ page, request }) => {
   for (const path of ["/", TRIP]) {
     const srcs = await initialScripts(request, path);

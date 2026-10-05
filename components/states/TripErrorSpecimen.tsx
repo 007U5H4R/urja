@@ -12,12 +12,15 @@ export function TripErrorSpecimen() {
   useEffect(() => {
     focusPageHeading();
   }, []);
+  // The wrapper (display: contents) scopes the card's touch-size rule (states.css, DES-4).
   return (
-    <TripError
-      onRetry={() => {
-        router.replace(workingHref(window.location.href));
-        void focusNextPageHeading();
-      }}
-    />
+    <div className="st-trip-error">
+      <TripError
+        onRetry={() => {
+          router.replace(workingHref(window.location.href));
+          void focusNextPageHeading();
+        }}
+      />
+    </div>
   );
 }

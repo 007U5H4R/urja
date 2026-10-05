@@ -181,6 +181,20 @@ describe("WhyEssay (chapters 01–07)", () => {
     expect(table.querySelectorAll("tbody td.hide-sm")).toHaveLength(5);
   });
 
+  it("DES-27: repeats each gap inside its 'does well' cell, for the ≤860px table that hides the last column", () => {
+    renderEssay();
+    const table = screen.getByRole("table");
+    const rows = [...table.querySelectorAll("tbody tr")];
+    const lines = rows.map((tr) => tr.querySelector("td:not(.hide-sm) .lacks"));
+    // Every competitor's gap, word for word as in its own column; Urja's row has none.
+    expect(lines.slice(0, 4).map((l) => norm(l?.textContent))).toEqual(
+      rows.slice(0, 4).map((tr) => `What the small-fleet owner still lacks: ${norm(tr.querySelector("td.hide-sm")!.textContent)}`),
+    );
+    expect(lines[4]).toBeNull();
+    // The column's name is read before the line, not shown.
+    for (const l of lines.slice(0, 4)) expect(l!.querySelector(".sr")!.textContent).toBe("What the small-fleet owner still lacks: ");
+  });
+
   it("lights only the two new pipeline nodes", () => {
     const { container } = renderEssay();
     const pipe = container.querySelector("ol.pipe")!;

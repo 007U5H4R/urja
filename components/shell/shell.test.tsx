@@ -43,6 +43,8 @@ describe("nav destinations (technical-plan §3)", () => {
     ["/why", "/why", true],
     ["/brief", "/brief", true],
     ["/brief", "/", false],
+    ["/brief?lang=en", "/brief", true],
+    ["/brief?lang=en", "/", false],
   ])("isCurrent(%s, %s) is %s", (href, path, expected) => {
     expect(isCurrent(href, path)).toBe(expected);
   });
@@ -139,6 +141,22 @@ describe("TopBar (TKT-03 AC2)", () => {
     expect(menuLinks("hi").map((l) => l.href)).toEqual(MENU_LINKS.map((l) => l.href));
     expect(menuLinks("en")).toBe(MENU_LINKS);
     expect(MENU_LINKS.map((l) => l.href)).toEqual([...MENU_HREFS]);
+  });
+
+  it("DES-21: on an English phone screen, Morning brief opens the English brief; the shell's menu keeps /brief", () => {
+    pathname = "/brief";
+    const { container } = render(<MobileMenu lang="en" />);
+    const nav = within(container).getByRole("navigation", { name: "Main (mobile)", hidden: true });
+    const links = within(nav).getAllByRole("link", { hidden: true });
+    expect(links.map((a) => a.getAttribute("href"))).toEqual(["/brief?lang=en", "/", "/#trucks", "/trips", "/why", "/?ask"]);
+    expect(links[0].getAttribute("aria-current")).toBe("page");
+    expect(menuLinks("en", { phone: true }).map((l) => l.label)).toEqual(MENU_LINKS.map((l) => l.label));
+    cleanup();
+    // The site's own (English) menu, and the brief's English-only state screens, keep the default brief.
+    render(<MobileMenu />);
+    const shell = screen.getByRole("navigation", { name: "Main (mobile)", hidden: true });
+    expect(within(shell).getAllByRole("link", { hidden: true })[0].getAttribute("href")).toBe("/brief");
+    expect(menuLinks("hi", { phone: true }).map((l) => l.href)).toEqual(MENU_LINKS.map((l) => l.href));
   });
 
   it("is English, with no lang of its own, unless told otherwise", () => {

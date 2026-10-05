@@ -94,7 +94,8 @@ test("the Inter and Anek stacks fall back to metric-matched faces, then sans-ser
 // M-004 perf (EXE18): what Today and Why Urja fetch before they can paint.
 const FIRST_LOAD = [
   // Today's plates are drawn in the small Anek plate face; nothing else of Anek.
-  { path: "/", fonts: ["anek_plate", "inter_core", "inter_rupee"], stylesheets: 1 },
+  // Its route arrows (→) are drawn in the small Inter arrows face (DES-14).
+  { path: "/", fonts: ["anek_plate", "inter_arrows", "inter_core", "inter_rupee"], stylesheets: 1 },
   { path: "/why", fonts: ["inter_core", "inter_rupee"], stylesheets: 2 },
 ];
 

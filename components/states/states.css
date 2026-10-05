@@ -50,6 +50,26 @@
   .st-view .state.clean .rail svg { filter: drop-shadow(0 0 6px var(--glow)); }
   .st-view .state.clean .rail-ends { color: var(--fg-muted); }
 
+  /* DES-19: on the brief (main.m.st-view) the brief's own line rule `.m .clean` (app/globals.css,
+     the "other trips add up" line) also matches this card and its rail: it dimmed the headline to
+     --fg-muted and changed the card's gap and alignment and the rail's colour. The card keeps its
+     own look, as on Today's clean state. */
+  .m.st-view .state.clean { gap: normal; align-items: normal; padding: 22px; font-size: inherit; color: var(--fg); }
+  .m.st-view .state.clean .rail svg { color: inherit; margin-top: 0; flex: 0 1 auto; }
+
+  /* DES-4: the state actions are primary phone actions, 44px on touch (Design.md §14, TC-023).
+     .st-trip-error is TripErrorSpecimen's wrapper, there only to scope this rule. */
+  .st-trip-error { display: contents; }
+  @media (pointer: coarse) {
+    .st-view .actions .btn, .st-trip-error .btn { height: 44px; }
+  }
+
+  /* DES-24: a state moves focus to its heading (focus.ts) for screen readers. The heading is not a
+     control (tabindex="-1" keeps it out of the tab order), so it draws no focus ring. Intentionally
+     global, not under .st-view: the route error page (app/(site)/error.tsx) and the working views
+     that recovery focuses use the same programmatic heading focus. */
+  :is(h1, h2, h3)[tabindex="-1"]:focus { outline: none; }
+
   @media (max-width: 900px) { .st-view .states { grid-template-columns: minmax(0, 1fr); } }
-  @media (max-width: 760px) { .st-view .state { padding: 18px 16px; } .st-view .st-head { padding-top: 22px; } }
+  @media (max-width: 760px) { .st-view .state, .m.st-view .state.clean { padding: 18px 16px; } .st-view .st-head { padding-top: 22px; } }
 }

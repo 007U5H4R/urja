@@ -4,13 +4,20 @@ import localFont from "next/font/local";
  * Design.md §12 typography, self-hosted (M-004 perf, EXE18). The same Inter (opsz, wght) and Anek
  * Devanagari (wght, wdth) that next/font/google served, as Google's own files, split so a page
  * downloads only the glyphs it draws. tests/fonts.test.ts checks that the faces' unicode-ranges
- * partition Google's exactly and that the subsets draw Google's glyphs.
+ * partition Google's exactly (plus ← →, which Google's subsets skip) and that the subsets draw
+ * Google's glyphs.
  *
  * - `inter-core` (preloaded, 42 KB of Google's 73 KB latin file): ASCII except the symbols no page
  *   draws ($ * > @ \ ^ _ ` { | } ~, left on Google's file), and the copy's punctuation
  *   (nbsp ± · × – — ‘ ’ “ ” … −).
  * - `inter-rupee` (preloaded, 2 KB): ₹. Google keeps it in latin-ext (131 KB), so every page with
  *   a rupee fetched that file for one glyph.
+ * - `inter-arrows` (3 KB): ← and →. Google's latin subset keeps ↑ ↓ but skips U+2190 and U+2192, so
+ *   the route arrows ("Jaipur → Delhi", "168 → 130 L") fell back to Arial (DES-14). The file is
+ *   Google's own `text=` cut of the same Inter build (4.001), byte for byte: the four arrows and the
+ *   space. Its unicode-range takes only the two arrows Google left out, so ↑ ↓ stay with Google's
+ *   latin face. (A cut that also carried the autohinter's Latin reference letters rendered the
+ *   arrows pixel for pixel the same in Chromium on Linux, at three times the size.)
  * - `anek-plate` (25 KB of Google's 114 KB Anek latin file): the number plates' glyphs (space, 0–9
  *   and the fleet's series letters A B C G J R) as their own family, "Anek Plate", which only
  *   `.plate` and the 3D scene's plate use (--font-plate). Hindi text keeps the whole Anek Devanagari
@@ -55,6 +62,19 @@ export const interRupee = localFont({
   declarations: [
     { prop: "font-family", value: "Inter" },
     { prop: "unicode-range", value: "U+20B9" },
+  ],
+});
+
+export const interArrows = localFont({
+  src: "./fonts/inter-arrows.woff2",
+  weight: "100 900",
+  style: "normal",
+  display: "swap",
+  preload: false,
+  adjustFontFallback: false,
+  declarations: [
+    { prop: "font-family", value: "Inter" },
+    { prop: "unicode-range", value: "U+2190,U+2192" },
   ],
 });
 

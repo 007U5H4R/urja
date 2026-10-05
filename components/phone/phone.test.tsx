@@ -4,8 +4,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ASK_OPEN_EVENT } from "@/lib/ask-events";
 import { renderBrief, renderMessage } from "@/lib/brief/template";
+import type { WaveKind } from "@/lib/data/views/trip";
 import { Brief } from "./Brief";
 import { Chat } from "./Chat";
+import { bucketTrace } from "./PreviewCard";
 
 // TKT-06 (TSK-06.2, TSK-06.3): final/brief.html and final/message.html, copy from lib/brief.
 
@@ -183,6 +185,40 @@ describe("the phone screens' own menu (EXE12), in the screen's language (EXE23)"
   });
 });
 
+describe("bucketTrace (the preview's fuel trace, DES-23)", () => {
+  it("keeps a short trace as it is", () => {
+    expect(bucketTrace([5, 4, 3], ["move", "flag", "fuel"])).toEqual([
+      { litres: 5, kind: "move" },
+      { litres: 4, kind: "flag" },
+      { litres: 3, kind: "fuel" },
+    ]);
+  });
+
+  it("buckets a long trace to at most 20 bars: flagged buckets take the minimum, the rest the mean", () => {
+    const fuel = Array.from({ length: 59 }, (_, i) => 200 - i);
+    const kind = fuel.map((_, i) => (i === 31 ? "flag" : i === 37 ? "fuel" : "move") as WaveKind);
+    const bars = bucketTrace(fuel, kind);
+    expect(bars).toHaveLength(20);
+    // Buckets of 3 readings: 31 falls in bucket 10 (readings 30–32), 37 in bucket 12 (36–38).
+    expect(bars[10]).toEqual({ litres: 168, kind: "flag" });
+    expect(bars[12]).toEqual({ litres: 163, kind: "fuel" });
+    expect(bars[0]).toEqual({ litres: 199, kind: "move" });
+    // The last bucket holds the last two readings (57, 58).
+    expect(bars[19]).toEqual({ litres: 142.5, kind: "move" });
+    expect(bars.filter((b) => b.kind === "flag")).toHaveLength(1);
+    expect(bars.filter((b) => b.kind === "fuel")).toHaveLength(1);
+  });
+
+  it("marks a bucket flagged when any of its readings is, even beside a refuel", () => {
+    const fuel = Array.from({ length: 40 }, () => 100);
+    const kind = fuel.map((_, i) => (i === 4 ? "flag" : i === 5 ? "fuel" : "move") as WaveKind);
+    fuel[4] = 60;
+    const bars = bucketTrace(fuel, kind);
+    expect(bars).toHaveLength(20);
+    expect(bars[2]).toEqual({ litres: 60, kind: "flag" });
+  });
+});
+
 describe("Chat (the 7 AM message)", () => {
   it("shows the real host in the preview card, never urja.app", () => {
     const { container } = render(<Chat copy={message()} host="urja.vercel.app" />);
@@ -195,15 +231,26 @@ describe("Chat (the 7 AM message)", () => {
     expect(container.innerHTML).not.toMatch(/urja\.app(?!\w)/);
   });
 
-  it("draws 0926-04's 10-min fuel trace: the drop in loss red, the refuel lit", () => {
+  it("draws 0926-04's fuel trace in about 20 bars: the drop in loss red, the refuel lit (DES-23)", () => {
     const c = message();
     const { container } = render(<Chat copy={c} host="localhost:3000" />);
+    const trace = c.hi.preview.trace!;
+    const bars = bucketTrace(trace.fuel, trace.kind);
     const rects = [...container.querySelectorAll(".pv-art svg rect")];
-    expect(rects).toHaveLength(c.hi.preview.trace!.fuel.length);
+    // The mockup's density: 20 bars, 5.5 wide in 7.5 slots, not 59 hairlines.
+    expect(trace.fuel.length).toBe(59);
+    expect(rects).toHaveLength(20);
+    expect(rects).toHaveLength(bars.length);
+    for (const r of rects) expect(Number(r.getAttribute("width"))).toBeCloseTo(5.5, 1);
     const fills = rects.map((r) => (r as SVGElement).style.fill);
-    const kinds = c.hi.preview.trace!.kind;
-    expect(fills.filter((f) => f === "var(--loss)")).toHaveLength(kinds.filter((k) => k === "flag").length);
-    expect(fills.filter((f) => f === "var(--cream)")).toHaveLength(kinds.filter((k) => k === "fuel").length);
+    expect(fills).toEqual(bars.map((b) => ({ flag: "var(--loss)", fuel: "var(--cream)", move: "oklch(0.48 0.008 60)" })[b.kind]));
+    expect(fills.filter((f) => f === "var(--loss)").length).toBeGreaterThanOrEqual(1);
+    expect(fills.filter((f) => f === "var(--cream)")).toHaveLength(1);
+    // The drop reads as a step down: the last flagged bar stands lower than every bar before the drop.
+    const heights = rects.map((r) => Number(r.getAttribute("height")));
+    const firstFlag = bars.findIndex((b) => b.kind === "flag");
+    const lastFlag = bars.findLastIndex((b) => b.kind === "flag");
+    expect(heights[lastFlag]).toBeLessThan(Math.min(...heights.slice(0, firstFlag)));
   });
 
   it("links the quick replies per §5.5 and the brief action, in the current language", () => {

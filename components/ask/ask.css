@@ -36,10 +36,15 @@
   .drawer .fallback .cite { margin-left: 0; font-size: var(--t-xs); }
   .drawer .fallback .saved { font-size: var(--t-sm); color: var(--fg-muted); border-top: 1px solid var(--line-soft); padding-top: 10px; }
   .drawer .actions { display: flex; gap: 8px; }
+  /* Try again waits out a 429 countdown disabled; it reads as unavailable, not broken. */
+  .drawer .actions .btn:disabled { opacity: .55; cursor: not-allowed; }
 
-  /* Touch: the composer's button and the chips reach 44px (Design.md §14, TC-023). */
+  /* Touch: the composer's button, the chips, the close button (the phone sheet's only way out)
+     and Try again reach 44px (Design.md §14, TC-023, DES-4). */
   @media (pointer: coarse) {
     .drawer .composer .btn, .drawer .composer input { height: 44px; }
+    .drawer header .iconbtn { width: 44px; height: 44px; }
+    .drawer .actions .btn { height: 44px; }
     .drawer .sugg button { min-height: 44px; }
     .drawer .cite { min-height: 24px; }
   }

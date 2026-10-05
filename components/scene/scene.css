@@ -16,6 +16,13 @@
   .truck3d.fallback .scene-tag { display: flex; left: 16px; top: 64px; transform: none !important; }
   .truck3d.fallback .scene-tag::after { display: none; }
 }
+/*
+ * DES-30: where the hero card is narrowest (two columns down to 1021px) the tag would reach the
+ * glass card (right 16px, 272px wide). It stops 20px short of it and wraps instead.
+ */
+@media (min-width: 761px) and (max-width: 1100px) {
+  .truck3d.fallback .scene-tag { max-width: calc(100% - 16px - 272px - 16px - 20px); white-space: normal; }
+}
 
 /*
  * Rotate left / right and reset: the keyboard (and touch) equivalents of drag-to-orbit. On desktop,

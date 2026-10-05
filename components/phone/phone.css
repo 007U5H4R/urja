@@ -16,6 +16,25 @@
   .p-message .chat-top .lang { margin-left: 0; }
   .p-brief .m-menu, .p-message .m-menu { display: block; }
 
+  /* DES-20: the chat header's subtitle stays on one line where it fits, as in final/message.html.
+     The menu (EXE12) and the 44px toggle take room the mockup's header doesn't spend, so on narrow
+     phones the gaps and the page padding tighten; the toggle keeps its 44px target. That fits the
+     Hindi subtitle from 360px. Where it still can't fit (English under about 400px), it wraps to a
+     second line rather than cutting the firm's name. */
+  .p-message .chat-top > div:not(.m-top-end) { min-width: 0; }
+  .p-message .chat-top small { display: block; }
+  @media (max-width: 420px) {
+    .p-message .chat-top { gap: 8px; padding-inline: 10px; }
+    .p-message .chat-top .m-top-end { gap: 4px; }
+    .p-message .chat-top .lang { padding: 2px; }
+    .p-message .chat-top .lang button { min-width: 44px; padding: 0 6px; }
+  }
+
+  /* DES-25: the bubble's headline is an h2 (heading order under the page's sr-only h1) with the
+     mockup's h3 look (app/globals.css `.bubble h3`); DES-31: balanced, so the Hindi line doesn't
+     leave "नहीं" alone on the second line. */
+  .p-message .bubble .txt h2 { font-size: 1.02rem; font-weight: 600; text-wrap: balance; }
+
   /* §5.5: the quick replies are links to /trips/…#driver and /brief?only=high, with the mockup's button look. */
   .p-message .replies a { display: inline-flex; align-items: center; height: 40px; padding: 0 14px; border-radius: 20px; background: var(--surface-1); border: 1px solid var(--lamp-line); color: var(--cream); font-size: var(--t-sm); }
 
