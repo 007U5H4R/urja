@@ -6,7 +6,7 @@
 - **B:** the phone screens, Ask and states;
 - **C:** Why Urja, OG, and the §17 Stage 8 accessibility items.
 
-Their 40 raw findings (A1–A14, B1–B13, C1–C13) merge into DES-2…DES-38 below. DES-1 was fixed in f634a0e.
+Their 40 raw findings (A1–A14, B1–B13, C1–C13) merge into DES-2…DES-39 below. DES-1 was fixed in f634a0e.
 **Freeze:** no finding needs a Design Freeze change. Every fix restores the frozen spec or is a pixel, accessibility, browser or copy fix.
 **Fix units:** S1 (global CSS, shell, Today, Trip), S2 (phone, states, scene, Why, fonts), S3 (Ask server and copy, maps). Each has one implementer with TDD, a spec review and a quality review, at most 2 fix rounds, and one commit.
 
@@ -30,7 +30,7 @@ Their 40 raw findings (A1–A14, B1–B13, C1–C13) merge into DES-2…DES-38 b
 | DES-17 | minor | B2 | Ask cited-trip rows identical (plate · route); the mockup shows date and litres | fix | S3 |
 | DES-18 | minor | B3 | Ask 429 state blames the AI, shows two retry times, and leaves Try again enabled | fix | S3 |
 | DES-19 | minor | B4 | `/brief?state=clean` headline dimmed by the brief's `.m .clean` rule | fix | S2 |
-| DES-20 | minor | B5 | `/message` header subtitle wraps to 2–3 lines at 320–390 px | fix | S2 |
+| DES-20 | minor | B5 | `/message` header subtitle wraps to 2–3 lines at 320–390 px | fixed in part: Hindi is one line from 360 px; English wraps to 2 lines below 414 px rather than cutting off the firm name (orchestrator's choice; 44 px toggle kept) | S2 |
 | DES-21 | minor | B7 | The English phone menu's "Morning brief" opens the Hindi brief | fix | S2 |
 | DES-22 | minor | B8 | Hindi status "पक्का किया" collides with the High word "पक्का"; fallback Hindi missing from hindi-review.md | fix | S3 |
 | DES-23 | minor | B9 | `/message` preview trace: 59 hairline bars hide the fuel drop | fix | S2 |
@@ -49,6 +49,7 @@ Their 40 raw findings (A1–A14, B1–B13, C1–C13) merge into DES-2…DES-38 b
 | DES-36 | minor | A12 | R4 trip map doesn't show the 92.5 km deviation | **park** (R4 isn't on the demo path; Stage 9 candidate) | — |
 | DES-37 | nit | B13 | `/message` link card shows the per-deploy preview host | **park** (production shows the production host; set `NEXT_PUBLIC_SITE_URL` if the demo runs on a preview) | — |
 | DES-38 | nit | A8 (rest) | With the arrow glyph fixed (DES-14), the 1440 glass-card route line "Ramesh Kumar · Jaipur → Delhi (Okhla)" still wraps: it needs 244–267 px in a 242 px box | **park** (a wider `.floatcard` would cover the hero camera's fitted area and touch the hero composition, a freeze item; the copy stays) | — |
+| DES-39 | minor | QA (unit F review) | With text-only 200%, /why still scrolls sideways at 421–~470 px (the essay metric `.n.lit`) and at 320 px (`table.cmp`). Page zoom is fine | **park** (WCAG 1.4.4 is met through page zoom; Stage 10/11 polish candidate) | — |
 
 **Still open from the Stage 7 candidates, re-confirmed and parked:**
 - balancer-trip outliers in route normals (EXE9);

@@ -1,5 +1,79 @@
 # Stage 7 execution ledger — Urja
 
+## Stages 8–9 (2026-10-05, cloud session 1, resumed)
+**Status:**
+- **Stage 8 (TSK-15.1): done.** The user asked to move straight on to Stage 9 without waiting for approval.
+- **Stage 9 (TSK-15.2): in progress.**
+  - The code review and the TC matrix are done.
+  - The Ask improvements (ask-v2, EXE30) are merged.
+  - The final eval is **BLOCKED on Gemini quota**: every call got 429. A retry is scheduled for 18:45 UTC.
+- build/stage7 head: 55c8e1a. `main` is untouched.
+
+### Stage 8 gate report (design critique, TSK-15.1)
+- **Method (EXE29):** `bw-design-critique` isn't installed here. Instead, three fresh critic subagents compared the preview at 68aced0 with Design.md and `.design/exploration/final/`. Their 40 findings merge into DES-2…DES-39 in `docs/exec/stage8-critique.md`. No finding needed a Design Freeze change.
+- **Fix units:** each had TDD, a spec review and a quality review, with at most 2 fix rounds.
+
+  | Unit | Commit | DES items | Reviews |
+  |---|---|---|---|
+  | S2: phone, states, scene, Why, fonts | aa6a941 | 4 (part), 14, 19, 20 (part), 21, 23, 24, 25 (part), 27, 28 (part), 30, 31 | spec PASS; quality FAIL → 1 round (toggle 44 px, flaky test) |
+  | S3: Ask, maps | 1ae4f84 | 8, 9, 11, 12, 13, 17, 18, 22, 25 (part), 26 | quality PASS; spec FAIL → 1 round (attribution visible at load) |
+  | S1: global CSS, shell, Today, Trip | 5406f86 | 2, 3, 4, 5, 6, 7, 10, 15, 16, 28, 29, 32, 33 | spec PASS; quality FAIL → 1 round (stretch at 100% text) |
+  | F: QA follow-ups | 55c8e1a | 28 (rest at 375), axe `landmark-unique` from DES-3 | combined review PASS |
+
+- **Independent QA on the preview at 5406f86** (`docs/exec/qa/stage8-qa.md`): 30 of 32 fixed DES items passed.
+  - Unit F closed DES-28 at 375 and the new `landmark-unique` finding.
+  - DES-20 is fixed in part: English wraps to 2 lines below 414 px rather than cutting off the firm name.
+  - No regression against the mockups: hero composition, CTA hierarchy and Today grid are unchanged.
+  - Wording is clean on 20 routes.
+- **Design.md §17 Stage 8 items:**
+  - 320 px reflow: PASS on all 7 routes.
+  - 200% page zoom: PASS on all 7.
+  - Text-only 200%: PASS at 1280; at 375, PASS on 6 of 7 at QA, then `/why` too after unit F. DES-39 is parked for 430 px and 320 px.
+  - Keyboard-only TC-020 path: PASS on all 6 steps.
+- **Checks on 55c8e1a:**
+  - `pnpm verify`: 87 files, 1176 passed, 1 skipped.
+  - `pnpm build` + `pnpm check:bundle`: clean.
+  - `pnpm test:e2e`: 515 passed, 115 skipped by viewport project, 0 failed.
+  - The e2e axe checks now run the wcag21 and wcag22aa tags, so `target-size` is included.
+- **Parked:**
+  - **DES-34 (user decision):** trip 0927-09 shows "189.89 L" next to "190 L". Option a: show "189.9 L" on both. Option b: drop "× ₹90" on fractional rows.
+  - **DES-35 (user decision):** 8 hidden trucks show the same 5,924 km. Fixing it needs a generator change.
+  - **DES-36:** the R4 map deviation; not on the demo path.
+  - **DES-37:** the preview host on the link card.
+  - **DES-38:** the 1440 glass-card route wrap; widening the card would touch the hero composition.
+  - **DES-39:** text-only 200% on `/why` at 430 px and 320 px.
+- **Screenshots** (app vs mockup, side by side) are in the session scratchpad, `critique/qa8/shots/sbs-*.png`; the list is in the QA report.
+
+### Stage 9 progress (TSK-15.2)
+- **Code review (CR-), `/code-review` over main...build/stage7 (357 files):** 1 finding.
+  - **CR-1:** Ask ignored the request's `lang`. Fixed in 8bcb303 (`copyLang`).
+- **TC matrix** (`docs/exec/qa/tc-matrix.md`, at 5406f86): 40 TCs.
+  - 35 PASS.
+  - 4 PARTIAL:
+    - TC-020: the full path on production and Fast 3G is open.
+    - TC-030: Mac rows 4–7, 9–12 and 15 are pending.
+    - TC-032: the manual re-run is pending.
+    - TC-055: re-measure on the current preview.
+  - 1 BLOCKED: TC-051, until production.
+- **Ask eval** (`evals/reports/eval-report-v1.md`):
+  - **baseline-v1** (3ab14d4, at 1395e7c): prepared 7/10, 3/10 by the model; off-topic 1/3; p50 2.6 s, p90 4.5 s; gate FAIL.
+  - **ask-v2** (8bcb303, EXE30): fixes the three failure classes the baseline showed:
+    - missing count, place and time;
+    - flag-id cites being dropped;
+    - off-topic questions answered "saved".
+
+    Two reviews, with 1 fix round on blockers B1 (any plate grounded an answer) and B2 (unflagged deterministic off-topic passes). Docs: technical-plan §6.8, TC-041 and TC-044, evaluation-plan §5.
+  - **final-v1 attempt 1** (8376c5d, at 73da37a): every call got `gemini-3.5-flash` **429** (quota), then the fallback model's 404. Prepared 10/10 but 0/10 by the model; off-topic 3/3 on refusals; gate FAIL. **BLOCKED: Gemini quota or billing (the user's item).**
+  - The retry is scheduled for 2026-10-05 18:45 UTC, after both quotas reset.
+- **Open for the user:**
+  - Gemini billing or quota on the Vercel key (the main blocker).
+  - EXE30 B2: should off-topic cases count only model answers?
+  - DES-34 and DES-35.
+  - EXE29: is the substitute critique OK?
+  - TC-030 and TC-032 manual runs.
+  - The native Hindi review (311 strings).
+
+
 ## Stage 7 summary (updated 2026-09-29, second cloud session)
 **Status: Stage 7 is complete on `build/stage7`** (PR [007U5H4R/urja#1](https://github.com/007U5H4R/urja/pull/1), not merged; `main` untouched). TKT-15 and TKT-16 (Stages 8–11) are out of scope.
 
@@ -130,7 +204,9 @@ Vercel: each row records the pushed SHA. Since 2026-09-29 the VM reaches the pre
 | TASK-18 | DES-1 scene controls | done | f634a0e | e2e scene.spec: the controls don't intersect the tag, the glass card or the rail box at 1440, 1200 and 1024 px (red before the fix, green after); scene.spec 14 pass; today, today-head and smoke 39 pass | pushed | Found in TC-030 run 1 on the Mac. CSS only. |
 | TASK-10 | EXE27 Hindi H1–H10 | done | 1d92c67 | copy, fallback (both chip 2 wordings → 217 L answer), hindi-review generator, TC-015 mockup parity; `pnpm verify` 1039 pass; e2e why, ask, phone, trip, today, html-lang 222 pass | pushed | Implementer in a worktree. Orchestrator check: diff is wording and formatting only, and no number changed. No separate subagent reviews, to save usage. |
 | TASK-12 | EXE28 illustrative quotes | done | a528994 | why tests: the label renders when any quote is illustrative; e2e why.spec | pushed | The placeholder no longer shows. Open question: chapter 01 title (EXE28). |
-| TASK-19 | TSK-15.* | todo (out of Stage 7 scope) | — | — | — | TKT-15 Stages 8–10 (local @claude) |
+| TASK-19 | TSK-15.1 (Stage 8) | done | aa6a941, 1ae4f84, 5406f86, 55c8e1a | verify 1176; e2e 515 pass / 0 fail; QA on preview 30/32 → closed by unit F | docs/exec/stage8-critique.md, docs/exec/qa/stage8-qa.md | DES-2…39; EXE29. Parked DES-34…39 (34 and 35 need user decisions). |
+| TASK-19 | TSK-15.2 (Stage 9) | doing | 8bcb303, 73da37a, 3ab14d4, 8376c5d, f2a7753 | CR-1 fixed; TC matrix 35/4/1; eval baseline-v1 FAIL 3/10; final-v1 attempt 1 BLOCKED (Gemini 429) | docs/exec/qa/tc-matrix.md, evals/reports/eval-report-v1.md | EXE30 (ask-v2). Retry 18:45 UTC. |
+| TASK-19 | TSK-15.3 (Stage 10) | todo | — | — | — | /security-review, QA-report.md (user gate) |
 | TASK-20 | TSK-16.* | todo (out of Stage 7 scope) | — | — | — | TKT-16 Stage 11 (local @claude) |
 
 ## Gates
