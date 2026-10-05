@@ -6,7 +6,7 @@
 - **B:** the phone screens, Ask and states;
 - **C:** Why Urja, OG, and the §17 Stage 8 accessibility items.
 
-Their 40 raw findings (A1–A14, B1–B13, C1–C13) merge into DES-2…DES-34 below. DES-1 was fixed in f634a0e.
+Their 40 raw findings (A1–A14, B1–B13, C1–C13) merge into DES-2…DES-38 below. DES-1 was fixed in f634a0e.
 **Freeze:** no finding needs a Design Freeze change. Every fix restores the frozen spec or is a pixel, accessibility, browser or copy fix.
 **Fix units:** S1 (global CSS, shell, Today, Trip), S2 (phone, states, scene, Why, fonts), S3 (Ask server and copy, maps). Each has one implementer with TDD, a spec review and a quality review, at most 2 fix rounds, and one commit.
 
@@ -48,6 +48,7 @@ Their 40 raw findings (A1–A14, B1–B13, C1–C13) merge into DES-2…DES-34 b
 | DES-35 | minor | A11 | Expanded table repeats 5,924 km for 8 hidden trucks | **park: user decision** (needs a generator change and a regenerated scenario.json; anchors unchanged) | — |
 | DES-36 | minor | A12 | R4 trip map doesn't show the 92.5 km deviation | **park** (R4 isn't on the demo path; Stage 9 candidate) | — |
 | DES-37 | nit | B13 | `/message` link card shows the per-deploy preview host | **park** (production shows the production host; set `NEXT_PUBLIC_SITE_URL` if the demo runs on a preview) | — |
+| DES-38 | nit | A8 (rest) | With the arrow glyph fixed (DES-14), the 1440 glass-card route line "Ramesh Kumar · Jaipur → Delhi (Okhla)" still wraps: it needs 244–267 px in a 242 px box | **park** (a wider `.floatcard` would cover the hero camera's fitted area and touch the hero composition, a freeze item; the copy stays) | — |
 
 **Still open from the Stage 7 candidates, re-confirmed and parked:**
 - balancer-trip outliers in route normals (EXE9);
