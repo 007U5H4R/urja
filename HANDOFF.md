@@ -1,12 +1,16 @@
 # HANDOFF — Urja (Bytebeam PM interview prototype)
 
-**Stage just completed:** 5 + 6 · Problem Breakdown + Technical Planning (compressed Full tier, S9).
-- Produced 2026-09-28. **Approved 2026-09-29** ("use chrome and do it").
-- Ticket **TASK-4** is Done.
+**Stage just completed:** 11 · Production (2026-10-05).
+- Stages 7–10 were merged to `main` with the user's approval (cfcd9c0, 007U5H4R/urja#1).
+- **Live at https://urja-three.vercel.app** (public; TC-020 and TC-050 pass on production).
+- Read `QA-report.md`, `docs/exec/production.md` (monitoring, rollback), `lesson-learnt.md` and `docs/exec/ledger.md`.
 
-**Next stage:** 7 · Execution.
-- Runs in a **claude.ai/code cloud session** on `007U5H4R/urja`, branch `build/stage7` (TP10).
-- Stage-table default is **Opus 5.5 / Standard**. Confirm it at the gate.
+**Still open (user):**
+- TC-051: run LinkedIn Post Inspector and opengraph.xyz on the production URL.
+- TC-030 rows on the Mac GPU, and the TC-032 manual re-run.
+- Live Ask is degraded on the Gemini free tier (EXE31, EXE32). The labelled deterministic fallback answers when Gemini is out of quota or slow.
+- The final-v1 eval retry runs 2026-10-05 18:45 UTC on the preview.
+- The native Hindi review is deferred (EXE32).
 
 **Repo:** https://github.com/007U5H4R/urja (private), branch `main`. Local path: `/Volumes/E Drive/Dev/Code/Claude/ByteBeam Dashboard`.
 
@@ -101,7 +105,7 @@ TP1–TP10 are now marked `accepted`.
 ## Open items (user)
 - Optional, recommended: a quota or budget cap on the Gemini key; rotate the key after 2026-10-07.
 - Field conversations by 2026-10-01 ("Tell me about the last trip where you lost money"). Their quotes go into `content/field-notes.ts`.
-- Confirm the byline "Tushar Pathak" on Why Urja.
+- ~~Confirm the byline~~: done (EXE19, "Tushar Pathak · Product Manager").
 - Arrange a native Hindi review; TKT-06 generates `docs/exec/hindi-review.md` for it.
 - Disk: the E Drive has 9.6 GB free and the internal disk 2.8 GB. Nothing is built locally; all builds run in the cloud, GitHub Actions or Vercel.
 

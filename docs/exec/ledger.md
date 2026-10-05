@@ -1,5 +1,15 @@
 # Stage 7 execution ledger — Urja
 
+## Stage 11: production (2026-10-05)
+- **Merged:** 007U5H4R/urja#1 (build/stage7 → `main`), merge commit cfcd9c0. Approved by the user after QA-report.md; CI green on 3363989.
+- **Production:** https://urja-three.vercel.app (Vercel production deployment of cfcd9c0). Public, confirmed by an external fetch.
+- **TC-050: PASS.** All routes return 200. og:url and og:image point at production. og.png is 1200×630 and byte-identical to the repo copy. /og-card is noindex.
+- **TC-020 on production: PASS** at 375 px. Fixed numbers are correct and there are 0 console errors. The live Ask call timed out, and the labelled fallback answered correctly.
+- **TC-051: BLOCKED (needs the user).** LinkedIn needs a login, and opengraph.xyz is egress-blocked here. Substitute evidence is in `docs/exec/production.md`.
+- **Monitoring and rollback:** `docs/exec/production.md`. **Lessons:** `lesson-learnt.md`. HANDOFF.md is updated.
+- **Campfire and Obsidian sync:** for the local session, from this ledger.
+
+
 ## Stages 8–9 (2026-10-05, cloud session 1, resumed)
 **Status:**
 - **Stage 8 (TSK-15.1): done.** The user asked to move straight on to Stage 9 without waiting for approval.
@@ -221,8 +231,8 @@ Vercel: each row records the pushed SHA. Since 2026-09-29 the VM reaches the pre
 | TASK-12 | EXE28 illustrative quotes | done | a528994 | why tests: the label renders when any quote is illustrative; e2e why.spec | pushed | The placeholder no longer shows. Open question: chapter 01 title (EXE28). |
 | TASK-19 | TSK-15.1 (Stage 8) | done | aa6a941, 1ae4f84, 5406f86, 55c8e1a | verify 1176; e2e 515 pass / 0 fail; QA on preview 30/32 → closed by unit F | docs/exec/stage8-critique.md, docs/exec/qa/stage8-qa.md | DES-2…39; EXE29. Parked DES-34…39 (34 and 35 need user decisions). |
 | TASK-19 | TSK-15.2 (Stage 9) | doing | 8bcb303, 3ab14d4, 8376c5d, f2a7753, e2db435, 7ced739, dc18e9c | CR-1 fixed; TC matrix 35/4/1; eval baseline-v1 FAIL 3/10; final-v1 attempt 1 BLOCKED (Gemini 429) | docs/exec/qa/tc-matrix.md, evals/reports/eval-report-v1.md | EXE30 (ask-v2). Retry 18:45 UTC. |
-| TASK-19 | TSK-15.3 (Stage 10) | review | (this commit) | /security-review main...build/stage7: 0 findings ≥ 8 confidence | QA-report.md | QA-report: GO for Stage 11, conditional on the 18:45 UTC final-v1 retry (or BLOCKED-upstream recorded). User gate: merge to main needs approval. |
-| TASK-20 | TSK-16.* | todo (out of Stage 7 scope) | — | — | — | TKT-16 Stage 11 (local @claude) |
+| TASK-19 | TSK-15.3 (Stage 10) | done | (this commit) | /security-review main...build/stage7: 0 findings ≥ 8 confidence | QA-report.md | QA-report: GO for Stage 11, conditional on the 18:45 UTC final-v1 retry (or BLOCKED-upstream recorded). User gate: merge to main needs approval. |
+| TASK-20 | TSK-16.1–16.2 | done (TC-051 BLOCKED for the user) | cfcd9c0 + this commit | TC-050 PASS, TC-020 PASS on production, TC-051 BLOCKED | docs/exec/production.md | Production https://urja-three.vercel.app |
 
 ## Gates
 
