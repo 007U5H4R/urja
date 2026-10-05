@@ -385,3 +385,12 @@
 - **Known limits:**
   - The cache and cooldowns are per instance, so a cold start or a second instance asks Gemini again.
   - Identical concurrent requests both call Gemini: there is no in-flight dedupe.
+
+## EXE32 · Decisions the user delegated — 2026-10-05 (user: "keep Gemini free tier … leave Hindi … rest all take decisions on my behalf")
+- **Gemini stays on the free tier.** No billing change is requested. Ask is made frugal instead (EXE31): an answer cache, cooldowns, and a budget env. Live answers can still be unavailable when the daily free quota runs out. Then the deterministic fallback answers, honestly labelled.
+- **Native Hindi review: deferred.** It is not a release blocker. The AI pre-review (EXE27) stands; `docs/exec/hindi-review.md` (311 strings) stays open for later.
+- **EXE30 B2, off-topic gate:** a deterministic refusal counts for off-topic cases. Refusing safely is the required behaviour, and evaluation-plan §4.7 doesn't look at mode. The runner keeps warning on each such pass, and reports never claim an off-topic 3/3 "by the model" unless every pass came from the model. No threshold changes.
+- **DES-34:** option a. "189.9 L" appears in both places on 0927-09 (e2db435), and the rupee figures are unchanged.
+- **DES-35:** no generator change this close to the interview. Repeated km on 8 hidden trucks is accepted. A regenerated scenario.json could disturb the anchors, and every fixed number is guarded.
+- **EXE29:** the substitute three-critic critique stands as the Stage 8 critique. Running `bw-design-critique` locally is optional, not required.
+- **TC-043 wording** (47abd6e): the daily caps count Gemini calls. Cached answers spend no daily budget but still take the per-minute token.
