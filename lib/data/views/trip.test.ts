@@ -288,6 +288,26 @@ describe("TC-005 · Trip 0926-11 (R3)", () => {
     expect(c.count).toMatch(/^CAN fuel sensor \+ GPS · every \d+ min$/);
     expect(c.desk.fuel.length).toBeLessThanOrEqual(120);
   });
+
+  it.each(["desk", "phone"] as const)("DES-11 (%s): the note sits clear above the dashed line and the bars along its whole width", (k) => {
+    const s = v.chart[k];
+    const note = s.notes.find((n) => n.text === "used 364 L · normal 325 L")!;
+    // Wave.tsx's geometry: viewBox w × h, axis at 64%, bars from x 44.
+    const W = s.w ?? 1000, gap = s.gap ?? 1.6, n = s.fuel.length;
+    const pitch = (W - 44 - gap * (n - 1)) / n + gap;
+    const axis = s.h * 0.64;
+    const yOf = (l: number) => axis - (l / s.max) * (axis - 20);
+    const right = 44 + note.i * pitch;
+    // Inter's average advance is under 0.55 em; the text's descent below the baseline is under 0.25 em.
+    const left = right - note.text.length * note.fs * 0.55;
+    const exp = new Map(s.expected);
+    for (let i = 0; i < n; i++) {
+      const x = 44 + i * pitch;
+      if (x + pitch < left || x > right) continue;
+      expect(note.y + note.fs * 0.25, `bar ${i}`).toBeLessThan(Math.min(yOf(s.fuel[i]), yOf(exp.get(i) ?? 0)));
+    }
+    expect(note.y - note.fs).toBeGreaterThan(0);
+  });
 });
 
 describe("§5.4 · R4, R5 and clean variants", () => {

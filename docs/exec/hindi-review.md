@@ -8,7 +8,7 @@ AI pre-review 2026-09-29 applied H1–H10; native review pending.
   `UPDATE_HINDI_REVIEW=1 pnpm exec vitest run lib/brief/hindi-review.test.ts`.
 - **How to review:** write OK, or a better wording, in the Reviewer column. Keep numbers, `₹`, `L` and plates as they are.
 - **Wording rules:** say हिसाब नहीं मिल रहा (doesn't add up); never an accusation. Confidence words are पक्का / शायद / जाँचें.
-- **Strings:** 277.
+- **Strings:** 309.
 
 ## 1. Morning brief (/brief), 27 Sep
 
@@ -342,10 +342,49 @@ components/ask/copy.ts `ASK_COPY`, `ASK_CHIPS`; components/ask/askScope.ts: the 
 | 11 | fallback banner | Urja का AI अभी जवाब नहीं दे पाया, इसलिए यह आँकड़ा सीधे आपके डेटा से है। | Urja’s AI couldn’t answer right now, so here is the number straight from your data. | |
 | 12 | saved banner (the fallback banner's first clause) | Urja का AI अभी जवाब नहीं दे पाया। | Urja’s AI couldn’t answer right now. | |
 | 13 | error line | Urja अपने सर्वर तक नहीं पहुँच पाया, इसलिए इस सवाल का जवाब अभी नहीं है। कुछ खोया नहीं है: आपका सवाल नीचे बॉक्स में ही है। | Urja couldn’t reach its server, so this question has no answer yet. Nothing is lost: your question is still in the box below. | |
-| 14 | 429 line (12 s) | आपने पिछले एक मिनट में बहुत सवाल पूछे हैं। 12 सेकंड बाद फिर पूछें। | You’ve asked a lot in the last minute. Ask again in 12 s. | |
-| 15 | try again button | फिर से कोशिश करें | Try again | |
-| 16 | cited trips aria-label | इस जवाब में इस्तेमाल हुई ट्रिप | Trips this answer used | |
-| 17 | cite chip (0926-04) | ट्रिप 0926-04 | Trip 0926-04 | |
-| 18 | provenance scope (from the data) | 212 ट्रिप, 24 ट्रक, 1–27 सितंबर | 212 trips across 24 trucks, 1–27 Sep | |
-| 19 | provenance line · model answer | 212 ट्रिप, 24 ट्रक, 1–27 सितंबर के डेटा से · Gemini 3.5 Flash · 1.8 सेकंड में जवाब · Urja ग़लत हो सकता है, इसलिए कार्रवाई से पहले ट्रिप खोलें। | From 212 trips across 24 trucks, 1–27 Sep · Gemini 3.5 Flash · answered in 1.8 s · Urja can be wrong, so open the trips before acting. | |
-| 20 | provenance line · fallback answer | 212 ट्रिप, 24 ट्रक, 1–27 सितंबर के डेटा से · AI के बिना, सीधा हिसाब · 0.04 सेकंड में जवाब · Urja ग़लत हो सकता है, इसलिए कार्रवाई से पहले ट्रिप खोलें। | From 212 trips across 24 trucks, 1–27 Sep · straight from your data, no AI · answered in 0.04 s · Urja can be wrong, so open the trips before acting. | |
+| 14 | saved answer (a question with no prepared answer) | आपका सवाल सहेज लिया गया है। लिखित जवाब के लिए एक मिनट बाद फिर पूछें। | Your question is saved. Try again in a minute for a written answer. | |
+| 15 | 429 heading (12 s left) | आपने पिछले एक मिनट में बहुत सवाल पूछे हैं। 12 सेकंड बाद फिर पूछें। | You’ve asked a lot in the last minute. Ask again in 12 s. | |
+| 16 | 429 heading, once the wait is over | अब आप फिर से पूछ सकते हैं। | You can ask again now. | |
+| 17 | 429 heading, a daily cap (no countdown, no try again) | आज के सवालों की सीमा पूरी हो गई है। कल फिर पूछें। | That’s today’s limit of questions. Ask again tomorrow. | |
+| 18 | 429 saved line | आपका सवाल सहेज लिया गया है। | Your question is saved. | |
+| 19 | try again button | फिर से कोशिश करें | Try again | |
+| 20 | try again button, disabled during a 429 (12 s left) | 12 सेकंड बाद फिर से कोशिश करें | Try again in 12 s | |
+| 21 | cited trips aria-label | इस जवाब में इस्तेमाल हुई ट्रिप | Trips this answer used | |
+| 22 | cite chip (0926-04) | ट्रिप 0926-04 | Trip 0926-04 | |
+| 23 | provenance scope (from the data) | 212 ट्रिप, 24 ट्रक, 1–27 सितंबर | 212 trips across 24 trucks, 1–27 Sep | |
+| 24 | provenance line · model answer | 212 ट्रिप, 24 ट्रक, 1–27 सितंबर के डेटा से · Gemini 3.5 Flash · 1.8 सेकंड में जवाब · Urja ग़लत हो सकता है, इसलिए कार्रवाई से पहले ट्रिप खोलें। | From 212 trips across 24 trucks, 1–27 Sep · Gemini 3.5 Flash · answered in 1.8 s · Urja can be wrong, so open the trips before acting. | |
+| 25 | provenance line · fallback answer | 212 ट्रिप, 24 ट्रक, 1–27 सितंबर के डेटा से · AI के बिना, सीधा हिसाब · 0.04 सेकंड में जवाब · Urja ग़लत हो सकता है, इसलिए कार्रवाई से पहले ट्रिप खोलें। | From 212 trips across 24 trucks, 1–27 Sep · straight from your data, no AI · answered in 0.04 s · Urja can be wrong, so open the trips before acting. | |
+
+## 10. Ask answers
+
+lib/ask/labels.ts `STATUS_LABEL`, `RULE_LABEL`, `tripLabel`; lib/ask/fallback.ts: the cited-trip labels, the Check caveat a model answer gets, and the answers Urja gives without the AI (one per prepared question), for a Hindi question.
+
+| # | Where | Hindi | English | Reviewer |
+|---|---|---|---|---|
+| 1 | flag status · waiting | आपके फ़ैसले का इंतज़ार | waiting for you | |
+| 2 | flag status · confirmed | आपने माना | confirmed | |
+| 3 | flag status · wrong | ग़लत निकला | marked wrong | |
+| 4 | rule · R1 | खड़े ट्रक में डीज़ल घटा | Stationary fuel drop | |
+| 5 | rule · R2 | बिल और टंकी में फ़र्क | Refuel mismatch | |
+| 6 | rule · R3 | सामान्य से ज़्यादा डीज़ल | Excess consumption | |
+| 7 | rule · R4 | तय रास्ते से हटकर | Route deviation | |
+| 8 | rule · R5 | टोल में फ़र्क | Toll mismatch | |
+| 9 | Check caveat · every cited flag is a Check | ये ‘जाँचें’ वाले फ़्लैग हैं: भारी लोड जैसी दूसरी वजहें भी हो सकती हैं। | These are Check flags: the extra use can have other causes, such as a heavier load. | |
+| 10 | Check caveat · one of the cited trips (0926-11) | ट्रिप 0926-11 ‘जाँचें’ वाला फ़्लैग है: भारी लोड जैसी दूसरी वजहें भी हो सकती हैं। | Trip 0926-11 is a Check flag: the extra use can have other causes, such as a heavier load. | |
+| 11 | Check caveat · two of the cited trips | ट्रिप 0909-03 और 0917-06 ‘जाँचें’ वाले फ़्लैग हैं: भारी लोड जैसी दूसरी वजहें भी हो सकती हैं। | Trips 0909-03 and 0917-06 are Check flags: the extra use can have other causes, such as a heavier load. | |
+| 12 | cited trip · a flag with litres (0926-11) | जयपुर → भिवंडी, 26 सितंबर: 39 लीटर · सामान्य से ज़्यादा डीज़ल | Jaipur → Bhiwandi, 26 Sep: 39 L · Excess consumption | |
+| 13 | cited trip · a flag with no litres (0909-07) | भिवंडी → जयपुर, 9 सितंबर: टोल में फ़र्क | Bhiwandi → Jaipur, 9 Sep: Toll mismatch | |
+| 14 | cited trip · no flag (0926-07) | जयपुर → अहमदाबाद, 26 सितंबर | Jaipur → Ahmedabad, 26 Sep | |
+| 15 | cited trip · cites span trucks, so the plate leads (0927-02) | RJ14 GA 1182 · अहमदाबाद → जयपुर, 27 सितंबर: 50 लीटर · बिल और टंकी में फ़र्क | RJ14 GA 1182 · Ahmedabad → Jaipur, 27 Sep: 50 L · Refuel mismatch | |
+| 16 | answer · driver with the most diesel unaccounted | इस महीने सबसे ज़्यादा डीज़ल का हिसाब अनिल बैरवा (RJ14 GC 3309) का नहीं मिल रहा: 3 ट्रिप में 125 लीटर (₹11,250) — 0926-11 (39 लीटर); 0917-06 (48 लीटर); 0909-03 (38 लीटर)। ये सब ‘जाँचें’ वाले फ़्लैग हैं: ज़्यादा खपत की दूसरी वजहें भी हो सकती हैं, जैसे भारी लोड। | Anil Bairwa (RJ14 GC 3309) had the most diesel unaccounted this month: 125 L (₹11,250) more than normal on 3 trips — 0926-11 (39 L); 0917-06 (48 L); 0909-03 (38 L). All of them are Check flags: the extra use can have other causes, such as a heavier load. | |
+| 17 | answer · last week's diesel | पिछले हफ़्ते (21–27 सितंबर) 5 ट्रिप में 217 लीटर डीज़ल (₹19,530) का हिसाब नहीं मिल रहा: 0921-09 (RJ14 GB 7716, 42 लीटर); 0923-02 (RJ14 GA 5023, 48 लीटर); 0926-04 (RJ14 GB 4521, 38 लीटर); 0927-02 (RJ14 GA 1182, 50 लीटर); 0926-11 (RJ14 GC 3309, 39 लीटर)। | Last week (21–27 Sep), 217 L of diesel (₹19,530) was unaccounted on 5 trips: 0921-09 (RJ14 GB 7716, 42 L); 0923-02 (RJ14 GA 5023, 48 L); 0926-04 (RJ14 GB 4521, 38 L); 0927-02 (RJ14 GA 1182, 50 L); 0926-11 (RJ14 GC 3309, 39 L). | |
+| 18 | answer · least per km, and why | सबसे कम कमाई प्रति किलोमीटर RJ14 GC 3309 (अनिल बैरवा) की है: सितंबर में ₹12.7 प्रति किलोमीटर, 7,410 किलोमीटर में। वजह: 3 ट्रिप (0926-11, 0917-06, 0909-03) में सामान्य से 125 लीटर डीज़ल (₹11,250) ज़्यादा लगा। ये ‘जाँचें’ वाले फ़्लैग हैं: भारी लोड जैसी दूसरी वजहें भी हो सकती हैं। | RJ14 GC 3309 (Anil Bairwa) earns the least: ₹12.7 per km in September, over 7,410 km. Why: it used 125 L of diesel (₹11,250) more than normal on 3 trips (0926-11, 0917-06, 0909-03). These are Check flags: the extra use can have other causes, such as a heavier load. | |
+| 19 | answer · best per km | सबसे ज़्यादा कमाई प्रति किलोमीटर RJ14 GC 7710 (महेश मीणा) की है: सितंबर में ₹31.8 प्रति किलोमीटर, 6,840 किलोमीटर में, कोई फ़्लैग नहीं। | RJ14 GC 7710 (Mahesh Meena) earns the most: ₹31.8 per km in September, over 6,840 km, with no flags. | |
+| 20 | answer · flags on the Behror stretch | सितंबर में बहरोड़ वाले हिस्से पर 5 फ़्लैग, कुल 237 लीटर (₹21,330): 0905-03 (RJ14 GA 1182, 5 सितंबर, 40 लीटर, आपने माना); 0912-05 (RJ14 GB 4521, 12 सितंबर, 69 लीटर, आपने माना); 0921-09 (RJ14 GB 7716, 21 सितंबर, 42 लीटर, आपने माना); 0923-02 (RJ14 GA 5023, 23 सितंबर, 48 लीटर, आपने माना); 0926-04 (RJ14 GB 4521, 27 सितंबर, 38 लीटर, आपके फ़ैसले का इंतज़ार)। | 5 flags on the Behror stretch in September, 237 L (₹21,330) in all: 0905-03 (RJ14 GA 1182, 5 Sep, 40 L, confirmed); 0912-05 (RJ14 GB 4521, 12 Sep, 69 L, confirmed); 0921-09 (RJ14 GB 7716, 21 Sep, 42 L, confirmed); 0923-02 (RJ14 GA 5023, 23 Sep, 48 L, confirmed); 0926-04 (RJ14 GB 4521, 27 Sep, 38 L, waiting for you). | |
+| 21 | answer · yesterday's summary | कल (रवि 27 सितंबर) 17 ट्रिप से ₹1,86,400 की कमाई हुई। 3 ट्रिप में ₹11,430 (127 लीटर डीज़ल) का हिसाब नहीं मिल रहा: 0926-04 (RJ14 GB 4521, ₹3,420, पक्का); 0927-02 (RJ14 GA 1182, ₹4,500, शायद); 0926-11 (RJ14 GC 3309, ₹3,510, जाँचें)। बाकी 14 ट्रिप का हिसाब मिल रहा है। | Yesterday (Sun 27 Sep) you earned ₹1,86,400 on 17 trips. ₹11,430 (127 L of diesel) doesn't add up, across 3 trips: 0926-04 (RJ14 GB 4521, ₹3,420, High); 0927-02 (RJ14 GA 1182, ₹4,500, Likely); 0926-11 (RJ14 GC 3309, ₹3,510, Check). The other 14 trips add up. | |
+| 22 | answer · recovered this month | इस महीने ₹58,240 के फ़्लैग में से ₹21,600 वापस मिले (37%)। | This month you have recovered ₹21,600 of the ₹58,240 flagged (37%). | |
+| 23 | answer · how often Urja was wrong | इस महीने 23 फ़्लैग में से 2 ग़लत निकले (9%), 10% की सीमा से कम: 0909-07 (टोल में फ़र्क: “प्लाज़ा पर FASTag नहीं पढ़ा गया; मैंने नकद दिया और रसीद दिखाई।”); 0920-06 (तय रास्ते से हटकर: “हादसे के बाद हाईवे बंद था; पुलिस ने दूसरे रास्ते भेजा।”)। | Urja was wrong 2 of 23 times this month (9%), under the 10% limit. The driver's side explained both: 0909-07 (Toll mismatch: “The FASTag didn't read at the plaza; I paid cash and have the receipt.”); 0920-06 (Route deviation: “The highway was closed after an accident; police diverted us.”). | |
+| 24 | answer · one truck's flags yesterday (RJ14 GA 1182) | ट्रिप 0927-02 (RJ14 GA 1182, विक्रम चौधरी): 27 सितंबर शाम 4:50 किशनगढ़ पंप पर बिल 250 लीटर का है, पर टंकी सिर्फ़ 200 लीटर बढ़ी; 50 लीटर (₹4,500) का हिसाब नहीं मिल रहा। भरोसा: शायद। ‘शायद’ से ऊपर नहीं: बिल में कैन या दूसरी टंकी का डीज़ल भी हो सकता है, और पंप-मीटर का रिकॉर्ड नहीं है। स्थिति: आपके फ़ैसले का इंतज़ार। विक्रम का जवाब: “नोज़ल जल्दी रुक गया था; मैंने अटेंडेंट को बताया था।” | Trip 0927-02 (RJ14 GA 1182, Vikram Choudhary): at the Kishangarh pump, 4:50 PM on 27 Sep, the bill says 250 L but the tank rose only 200 L, so 50 L (₹4,500) doesn't add up. Confidence: Likely. Capped at Likely: a bill can also cover cans or a second tank, and there is no pump-meter record to check against. Status: waiting for you. Vikram's side: “The nozzle stopped early; I told the attendant.” | |
+| 25 | answer · a truck with no September flag (RJ14 GC 7710) | सितंबर में RJ14 GC 7710 (महेश मीणा) पर कोई फ़्लैग नहीं: 11 ट्रिप, ₹31.8 प्रति किलोमीटर। | RJ14 GC 7710 (Mahesh Meena) has no flags in September: 11 trips at ₹31.8 per km. | |
+| 26 | answer · a truck whose trips yesterday add up (RJ14 GC 7710) | कल (27 सितंबर) RJ14 GC 7710 (महेश मीणा) की 1 ट्रिप पर कोई फ़्लैग नहीं: डीज़ल, टोल और किलोमीटर का हिसाब मिल रहा है। | RJ14 GC 7710 (Mahesh Meena) has no flag on yesterday's trip (27 Sep): diesel, tolls and km add up. | |
+| 27 | answer · a truck with no trip ending yesterday (RJ14 GC 0931) | RJ14 GC 0931 (बलवंत सिंह) की कोई ट्रिप कल (27 सितंबर) ख़त्म नहीं हुई, इसलिए कोई फ़्लैग नहीं है। | No trip of RJ14 GC 0931 (Balwant Singh) ended yesterday (27 Sep), so there is no flag to show. | |

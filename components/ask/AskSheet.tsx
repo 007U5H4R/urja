@@ -52,7 +52,7 @@ export function AskSheet({ open, onOpenChange, ask, scope, saved, returnFocus }:
   const lang = usePageLang();
   const copy = ASK_COPY[lang];
   const inputRef = useRef<HTMLInputElement>(null);
-  const contentRef = useRef<HTMLElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const [value, setValue] = useState("");
 
   // An answer clears the box; fallback, saved and error keep the question there for "Try again".
@@ -84,7 +84,8 @@ export function AskSheet({ open, onOpenChange, ask, scope, saved, returnFocus }:
             returnFocus()?.focus();
           }}
         >
-          <aside className="drawer" id="ask-drawer" role="dialog" aria-modal="true" lang={lang} ref={contentRef}>
+          {/* A div: role="dialog" isn't allowed on <aside> (axe `aria-allowed-role`, DES-25). */}
+          <div className="drawer" id="ask-drawer" role="dialog" aria-modal="true" lang={lang} ref={contentRef}>
             <InertOutside active={open} within={contentRef} />
             <header>
               <span className="mark">
@@ -137,7 +138,7 @@ export function AskSheet({ open, onOpenChange, ask, scope, saved, returnFocus }:
                 {copy.submit}
               </button>
             </form>
-          </aside>
+          </div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

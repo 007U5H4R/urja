@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { LOAD_TIMEOUT_MS, mountHeroMap, mountTripMap, STYLE_URL, watchLoad } from "./map-client";
+import { LOAD_TIMEOUT_MS, mountHeroMap, mountTripMap, placeAttribution, STYLE_URL, watchLoad } from "./map-client";
 import type { HeroMapData } from "./hero-map";
 
 // TSK-10.1: the map client's `ready` promise, the 8 s load timeout and every failure path call onFail once.
@@ -65,6 +65,14 @@ function fakeMapLibre(opts: { throwOnCreate?: boolean } = {}) {
       this.calls.push(`flyTo ${JSON.stringify(c)}`);
     }
     resize() {}
+    controls: [unknown, string][] = [];
+    addControl(c: unknown, pos: string) {
+      this.controls.push([c, pos]);
+      return this;
+    }
+  }
+  class FakeAttribution {
+    constructor(public options: unknown) {}
   }
   class FakeMarker {
     setLngLat() {
@@ -74,8 +82,14 @@ function fakeMapLibre(opts: { throwOnCreate?: boolean } = {}) {
       return this;
     }
     remove() {}
+    setOffset() {
+      return this;
+    }
+    getElement() {
+      return document.createElement("div");
+    }
   }
-  const ml = { Map: FakeMap, Marker: FakeMarker } as unknown;
+  const ml = { Map: FakeMap, Marker: FakeMarker, AttributionControl: FakeAttribution } as unknown;
   return { ml, maps, load: () => Promise.resolve(ml as never) };
 }
 
@@ -158,13 +172,14 @@ describe("watchLoad", () => {
 describe("mountHeroMap", () => {
   const cb = () => ({ onSelect: vi.fn(), onFail: vi.fn(), onReady: vi.fn() });
 
-  it("creates the warmed Carto map with a compact attribution and no rotation", async () => {
+  it("creates the warmed Carto map with a compact attribution (top left, DES-26) and no rotation", async () => {
     const f = fakeMapLibre();
     const c = cb();
     const h = await mountHeroMap(document.createElement("div"), DATA, c, { view: "map", selected: 0 }, { load: f.load });
     const o = f.maps[0].options;
     expect(o.style).toBe(STYLE_URL);
-    expect(o.attributionControl).toEqual({ compact: true });
+    expect(o.attributionControl).toBe(false);
+    expect(f.maps[0].controls.map(([ctl, pos]) => [(ctl as { options: unknown }).options, pos])).toEqual([[{ compact: true }, "top-left"]]);
     expect(o.dragRotate).toBe(false);
     f.maps[0].fire("load");
     await h.ready;
@@ -234,5 +249,35 @@ describe("mountTripMap", () => {
     await mountTripMap(document.createElement("div"), data, { onFail }, { load: f.load });
     f.maps[0].fire("error", { error: new Error("blocked") });
     expect(onFail).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("placeAttribution (DES-26)", () => {
+  const at = (el: Element, top: number, bottom: number) => {
+    el.getBoundingClientRect = () => ({ top, bottom, height: bottom - top, left: 0, right: 100, width: 100, x: 0, y: top, toJSON() {} }) as DOMRect;
+  };
+
+  it("drops the top-left corner below the header row and the legend, whichever is lower", () => {
+    const card = document.createElement("article");
+    card.className = "mapcard";
+    card.innerHTML = `<div class="mc-top"></div><div class="maplegend"></div><div class="map"><div class="ml"><div class="maplibregl-ctrl-top-left"></div></div></div>`;
+    const box = card.querySelector(".ml") as HTMLElement;
+    at(box, 200, 700);
+    at(card.querySelector(".mc-top")!, 214, 252);
+    at(card.querySelector(".maplegend")!, 258, 292);
+    placeAttribution({ getContainer: () => box } as never);
+    expect((card.querySelector(".maplibregl-ctrl-top-left") as HTMLElement).style.top).toBe("92px");
+  });
+
+  it("ignores a hidden legend", () => {
+    const card = document.createElement("article");
+    card.className = "mapcard";
+    card.innerHTML = `<div class="mc-top"></div><div class="maplegend"></div><div class="ml"><div class="maplibregl-ctrl-top-left"></div></div>`;
+    const box = card.querySelector(".ml") as HTMLElement;
+    at(box, 100, 600);
+    at(card.querySelector(".mc-top")!, 114, 152);
+    at(card.querySelector(".maplegend")!, 0, 0);
+    placeAttribution({ getContainer: () => box } as never);
+    expect((card.querySelector(".maplibregl-ctrl-top-left") as HTMLElement).style.top).toBe("52px");
   });
 });

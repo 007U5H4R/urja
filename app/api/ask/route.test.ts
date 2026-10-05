@@ -4,6 +4,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AskResponse } from "@/lib/ask/contract";
+import { CHECK_CAVEAT_LINE, fallbackAnswer } from "@/lib/ask/fallback";
 import { createAskHandler } from "@/lib/ask/handler";
 import { createRateLimiter } from "@/lib/ask/rate-limit";
 import { POST, dynamic, runtime } from "./route";
@@ -150,7 +151,8 @@ describe("TC-040 · happy path (mocked model)", () => {
     expect(body.lang).toBe("en");
     expect(body.cites.map((c: { tripId: string }) => c.tripId)).toEqual(["0926-04", "0927-02", "0926-11"]);
     expect(body.cites[0].label).toContain("RJ14 GB 4521");
-    expect(body.caveat).toBeUndefined();
+    // 0926-11 is a Check flag, cited beside a High (0926-04) and a Likely (0927-02): the caveat names it (DES-9).
+    expect(body.caveat).toBe("Trip 0926-11 is a Check flag: the extra use can have other causes, such as a heavier load.");
     expect(body.provenance).toMatchObject({
       scope: "212 trips across 24 trucks, 1–27 Sep",
       model: "gemini-3.5-flash",
@@ -166,8 +168,15 @@ describe("TC-040 · happy path (mocked model)", () => {
     fetchMock.mockImplementation(async () => geminiJson({ ...MODEL_OK, answer: "You earned ₹1,86,400 and lost ₹99,999." }));
     const { body } = await read(await POST(ask({ question: RECOGNISED })));
     expect(body.mode).toBe("model");
-    expect(body.caveat).toBe("Check the trips before acting");
+    // The guard's caveat first; the cited Check flag (0926-11) keeps its own after it (DES-9).
+    expect(body.caveat).toBe("Check the trips before acting. Trip 0926-11 is a Check flag: the extra use can have other causes, such as a heavier load.");
     expect(lastLog()).toMatchObject({ outcome: "ok", unsupportedNumbers: [99999] });
+  });
+
+  it("an invented figure with no Check flag cited carries the guard's caveat alone", async () => {
+    fetchMock.mockImplementation(async () => geminiJson({ ...MODEL_OK, answer: "You lost ₹99,999.", cited_trips: ["0926-04", "0927-02"] }));
+    const { body } = await read(await POST(ask({ question: RECOGNISED })));
+    expect(body.caveat).toBe("Check the trips before acting");
   });
 
   it("passes an out-of-scope refusal through with no cites", async () => {
@@ -176,6 +185,67 @@ describe("TC-040 · happy path (mocked model)", () => {
     );
     const { body } = await read(await POST(ask({ question: UNRECOGNISED })));
     expect(body).toMatchObject({ mode: "model", cites: [], answer: "I don't have weather data." });
+  });
+});
+
+describe("DES-9 · a model answer that cites a Check flag carries the fallback's caveat", () => {
+  const CHECK_TRIPS = ["0909-03", "0917-06", "0926-11"];
+  const LEAST_EN = "Which truck earns least per km, and why?";
+  const LEAST_HI = "कौन-सा ट्रक प्रति किलोमीटर सबसे कम कमाता है, और क्यों?";
+  const modelSays = (answer: string, lang: "en" | "hi", cited: string[]) =>
+    fetchMock.mockImplementation(async () => geminiJson({ answer, lang, cited_trips: cited, cited_trucks: ["RJ14 GC 3309"], out_of_scope: false }));
+
+  it("en: only Check trips cited → the fallback's own sentence", async () => {
+    modelSays("RJ14 GC 3309 earns the least per km: it used more diesel than its normal on three trips.", "en", CHECK_TRIPS);
+    const { body } = await read(await POST(ask({ question: LEAST_EN })));
+    expect(body.mode).toBe("model");
+    expect(body.caveat).toBe(CHECK_CAVEAT_LINE.en);
+    // The very sentence the no-AI path gives for the same question.
+    expect(fallbackAnswer(LEAST_EN)?.answer).toContain(body.caveat);
+  });
+
+  it("hi: only Check trips cited → the fallback's Hindi sentence", async () => {
+    modelSays("RJ14 GC 3309 प्रति किलोमीटर सबसे कम कमाता है: तीन ट्रिप में सामान्य से ज़्यादा डीज़ल लगा।", "hi", CHECK_TRIPS);
+    const { body } = await read(await POST(ask({ question: LEAST_HI })));
+    expect(body.mode).toBe("model");
+    expect(body.caveat).toBe(CHECK_CAVEAT_LINE.hi);
+    expect(fallbackAnswer(LEAST_HI)?.answer).toContain(body.caveat);
+  });
+
+  it("hi: a Check trip beside a High one → the caveat names it, in Hindi", async () => {
+    modelSays("कल दो ट्रिप में डीज़ल का हिसाब नहीं मिल रहा।", "hi", ["0926-04", "0926-11"]);
+    const { body } = await read(await POST(ask({ question: "कल का हिसाब बताइए" })));
+    expect(body.mode).toBe("model");
+    expect(body.caveat).toBe("ट्रिप 0926-11 ‘जाँचें’ वाला फ़्लैग है: भारी लोड जैसी दूसरी वजहें भी हो सकती हैं।");
+  });
+
+  it("en: an invented figure beside only Check trips → both caveats, joined", async () => {
+    modelSays("RJ14 GC 3309 lost ₹99,999 on three trips.", "en", CHECK_TRIPS);
+    const { body } = await read(await POST(ask({ question: LEAST_EN })));
+    expect(body.mode).toBe("model");
+    expect(body.caveat).toBe(`Check the trips before acting. ${CHECK_CAVEAT_LINE.en}`);
+  });
+
+  it("en: one Check trip, or a Check trip beside a clean one → the caveat names it, never the plural", async () => {
+    modelSays("RJ14 GC 3309 used more diesel than its normal.", "en", ["0926-11"]);
+    expect((await read(await POST(ask({ question: LEAST_EN })))).body.caveat).toBe(
+      "Trip 0926-11 is a Check flag: the extra use can have other causes, such as a heavier load.",
+    );
+    modelSays("Two trips to compare.", "en", ["0926-11", "0926-07"]);
+    expect((await read(await POST(ask({ question: LEAST_EN })))).body.caveat).toBe(
+      "Trip 0926-11 is a Check flag: the extra use can have other causes, such as a heavier load.",
+    );
+  });
+
+  it.each([
+    ["en", "Two trips don't add up yesterday.", ["0926-04", "0927-02"]],
+    ["hi", "कल दो ट्रिप का हिसाब नहीं मिल रहा।", ["0926-04", "0927-02"]],
+    ["en", "Trip 0926-07 adds up.", ["0926-07"]],
+  ] as const)("%s: only High or Likely flags (or none) cited → no caveat", async (lang, answer, cited) => {
+    modelSays(answer, lang, [...cited]);
+    const { body } = await read(await POST(ask({ question: RECOGNISED })));
+    expect(body.mode).toBe("model");
+    expect(body.caveat).toBeUndefined();
   });
 });
 

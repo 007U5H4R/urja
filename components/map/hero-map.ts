@@ -40,6 +40,11 @@ export interface CameraSpec {
 
 /** The phone breakpoint (lamp.css): no glass card, a flatter camera. */
 export const COMPACT_MAX_PX = 760;
+/** Bottom padding of a flag's camera: the rail box's rise plus a city label's hang, plus a gap (DES-13). */
+export const RAIL_CLEAR = { desktop: 172, compact: 184 } as const;
+/** How far a city label hangs below its point (mapLabel's 8 px offset plus its 20 px line). */
+export const CITY_LABEL_HANG = 28;
+
 /** Design.md §15: the fly-to on selection. */
 export const FLY = { duration: 1400, curve: 1.3 } as const;
 
@@ -51,8 +56,15 @@ export const FLY = { duration: 1400, curve: 1.3 } as const;
  * the glass card (right) and the rail box (bottom).
  */
 export function heroCamera(bounds: [LngLat, LngLat], kind: "flag" | "fleet", compact: boolean): CameraSpec {
-  const padding = compact ? { top: 72, right: 32, bottom: 152, left: 32 } : { top: 84, right: 312, bottom: 142, left: 48 };
-  if (kind === "fleet") return { bounds, padding, pitch: 38, bearing: 0 };
+  if (kind === "fleet") {
+    // The fleet's rail box is one line high (about 44 px), so its padding stays as it was.
+    const padding = compact ? { top: 72, right: 32, bottom: 152, left: 32 } : { top: 84, right: 312, bottom: 142, left: 48 };
+    return { bounds, padding, pitch: 38, bearing: 0 };
+  }
+  // DES-13: a flag's rail box rises 122 px (desktop) or 140 px (phone, its header wraps) above the
+  // map's bottom edge, and a city label hangs 28 px below its point (8 px offset + a 20 px line),
+  // so the route's end city keeps its label clear of the box with room to spare.
+  const padding = compact ? { top: 72, right: 32, bottom: RAIL_CLEAR.compact, left: 32 } : { top: 84, right: 312, bottom: RAIL_CLEAR.desktop, left: 48 };
   const dx = Math.max(1e-6, bounds[1][0] - bounds[0][0]);
   const dy = bounds[1][1] - bounds[0][1];
   const span = Math.max(dx, dy);
@@ -158,6 +170,107 @@ export function glowLine(map: ML.Map, id: string, data: GeoJSON.Feature | GeoJSO
   map.addLayer({ id: `${id}-core`, type: "line", source: id, layout, paint: { "line-color": color, "line-width": width } });
 }
 
+// ── Label layout (DES-12) ────────────────────────────────────────────────
+type Pt = { x: number; y: number };
+type Size = { w: number; h: number };
+type Box = [x0: number, y0: number, x1: number, y1: number];
+
+/** A flag marker's half size (lamp.css `.fmark`: 26 px) and its place label's gap from the centre (mapLabel offset). */
+const MARK_HALF = 13;
+const PLACE_GAP = 18;
+/** What covers the hero map: its header row, the glass card and the rail box. */
+const COVERS = ".mc-top, #fc, .railbox";
+/** Labels closer than this count as touching. */
+const LABEL_MARGIN = 2;
+
+const hit = (a: Box, b: Box, m = LABEL_MARGIN) => a[0] < b[2] + m && b[0] < a[2] + m && a[1] < b[3] + m && b[1] < a[3] + m;
+const markBox = (p: Pt): Box => [p.x - MARK_HALF, p.y - MARK_HALF, p.x + MARK_HALF, p.y + MARK_HALF];
+const placeBox = (p: Pt, s: Size, side: "right" | "left"): Box =>
+  side === "right" ? [p.x + PLACE_GAP, p.y - s.h / 2, p.x + PLACE_GAP + s.w, p.y + s.h / 2] : [p.x - PLACE_GAP - s.w, p.y - s.h / 2, p.x - PLACE_GAP, p.y + s.h / 2];
+/** A city label's box for a marker offset (anchor "top": the offset moves the label's top centre). */
+const cityBox = (p: Pt, s: Size, [dx, dy]: Offset): Box => [p.x + dx - s.w / 2, p.y + dy, p.x + dx + s.w / 2, p.y + dy + s.h];
+
+type Offset = [dx: number, dy: number];
+/** Where a city label may go, in order: below its point (map.js), above, right, left, then further below or above. */
+export const CITY_SPOTS = (s: Size): Offset[] => [
+  [0, 8],
+  [0, -8 - s.h],
+  [8 + s.w / 2, -s.h / 2],
+  [-8 - s.w / 2, -s.h / 2],
+  [0, 24],
+  [0, -24 - s.h],
+];
+
+export interface LabelLayout {
+  /** Which side of its marker each flag's place label goes. */
+  side: ("right" | "left")[];
+  /** Each city label's offset from its point, or null when every spot is covered (it is hidden). */
+  city: (Offset | null)[];
+}
+
+/**
+ * Where the hero's labels go, in screen pixels (map.project). A flag's place label
+ * sits right of its marker, as in map.js, unless that covers a city label, a marker or
+ * an earlier flag's label and the left side is clear. A city label then takes the first
+ * of CITY_SPOTS that no marker, flag label or earlier city label covers; if a single
+ * flag label is all that covers a spot and that label's other side is clear, the label
+ * moves over instead. A city label is hidden only when nothing works. Cities are placed
+ * in data order, so Jaipur, the home yard, goes first. Flags carry the evidence, so
+ * cities give way.
+ */
+export function layoutLabels(marks: readonly Pt[], places: readonly (Size | null)[], cities: readonly { p: Pt; size: Size }[]): LabelLayout {
+  const homeBoxes = cities.map((c) => cityBox(c.p, c.size, CITY_SPOTS(c.size)[0]));
+  const markBoxes = marks.map(markBox);
+  const labels: (Box | null)[] = [];
+  const side = marks.map((p, i): "right" | "left" => {
+    const s = places[i];
+    if (!s) {
+      labels.push(null);
+      return "right";
+    }
+    const blocked = (b: Box) => homeBoxes.some((c) => hit(b, c)) || markBoxes.some((m, k) => k !== i && hit(b, m)) || labels.some((q) => q && hit(b, q));
+    const right = placeBox(p, s, "right");
+    const left = placeBox(p, s, "left");
+    const pick = blocked(right) && !blocked(left) ? "left" : "right";
+    labels.push(pick === "left" ? left : right);
+    return pick;
+  });
+  const cityBoxes: Box[] = [];
+  const city = cities.map((c): Offset | null => {
+    const spots = CITY_SPOTS(c.size);
+    const fixed = (b: Box) => markBoxes.some((m) => hit(b, m)) || cityBoxes.some((q) => hit(b, q));
+    const take = (b: Box, off: Offset) => {
+      cityBoxes.push(b);
+      return off;
+    };
+    for (const off of spots) {
+      const b = cityBox(c.p, c.size, off);
+      if (!fixed(b) && !labels.some((q) => q && hit(b, q))) return take(b, off);
+    }
+    // Second pass: move the one flag label in the way to its other side, if that side is clear.
+    for (const off of spots) {
+      const b = cityBox(c.p, c.size, off);
+      if (fixed(b)) continue;
+      const inWay = labels.flatMap((q, j) => (q && hit(b, q) ? [j] : []));
+      if (inWay.length !== 1) continue;
+      const j = inWay[0];
+      const s = places[j]!;
+      const flipped = placeBox(marks[j], s, side[j] === "right" ? "left" : "right");
+      const clear =
+        !hit(flipped, b) &&
+        !markBoxes.some((m, k) => k !== j && hit(flipped, m)) &&
+        !labels.some((q, k) => k !== j && q && hit(flipped, q)) &&
+        !cityBoxes.some((q) => hit(flipped, q));
+      if (!clear) continue;
+      side[j] = side[j] === "right" ? "left" : "right";
+      labels[j] = flipped;
+      return take(b, off);
+    }
+    return null;
+  });
+  return { side, city };
+}
+
 export interface HeroLayers {
   show(view: HeroMapView, selected: number, animate: boolean): void;
   destroy(): void;
@@ -194,7 +307,10 @@ export function addHeroLayers(
     },
   });
 
-  const extras: ML.Marker[] = data.cities.map((c) => mapLabel(ml, map, c.lngLat, c.name, "city"));
+  const cityMarks = data.cities.map((c) => mapLabel(ml, map, c.lngLat, c.name, "city"));
+  const extras: ML.Marker[] = [...cityMarks];
+  const card = map.getContainer().closest(".mapcard") ?? map.getContainer().parentElement;
+  const placeMarks: (ML.Marker | null)[] = [];
   const marks = data.flags.map((f, i) => {
     const m = document.createElement("button");
     m.type = "button";
@@ -206,13 +322,82 @@ export function addHeroLayers(
       e.stopPropagation();
       opts.onSelect(i);
     });
+    // DES-8: a marker Tab reaches off the map, or under the glass card or rail box, would hold an
+    // invisible focus. Focusing it selects its flag, as Enter would, so the map flies (or, under
+    // reduced motion, jumps) to it; if it is already the selected flag (panned away), the map goes
+    // back to it. The scroll the browser gives the clipped map box is undone.
+    m.addEventListener("focus", () => {
+      unscroll();
+      requestAnimationFrame(unscroll);
+      if (inView(m)) return;
+      if (shown?.view === "map" && shown.selected === i) frame(f, true);
+      else opts.onSelect(i);
+    });
     extras.push(addMarker(ml, map, m, f.at, f.markerLabel));
-    if (f.place) extras.push(mapLabel(ml, map, f.at, f.place, "place", "left", [18, 0]));
+    const label = f.place ? mapLabel(ml, map, f.at, f.place, "place", "left", [PLACE_GAP, 0]) : null;
+    placeMarks.push(label);
+    if (label) extras.push(label);
     return m;
   });
 
+  /** Whole inside the map box, and under none of the card's header, glass card or rail box. */
+  const inView = (el: HTMLElement) => {
+    const r = el.getBoundingClientRect();
+    const b = map.getContainer().getBoundingClientRect();
+    if (r.left < b.left || r.right > b.right || r.top < b.top || r.bottom > b.bottom) return false;
+    const box = (q: DOMRect): Box => [q.left, q.top, q.right, q.bottom];
+    return ![...(card?.querySelectorAll(COVERS) ?? [])].some((c) => {
+      const q = c.getBoundingClientRect();
+      return q.width > 0 && q.height > 0 && hit(box(r), box(q), 0);
+    });
+  };
+  const unscroll = () => {
+    for (let el: HTMLElement | null = map.getContainer(); el; el = el === card ? null : el.parentElement) {
+      if (el.scrollTop) el.scrollTop = 0;
+      if (el.scrollLeft) el.scrollLeft = 0;
+    }
+  };
+
+  // DES-12: labels laid out against each other once a move ends (sizes are measured once per resize),
+  // at most once a frame: resolveCamera's probe jumps end moves too.
+  let gone = false;
+  let raf = 0;
+  const scheduleLayout = () => {
+    raf ||= requestAnimationFrame(() => {
+      raf = 0;
+      if (!gone) layout();
+    });
+  };
+  let sizes: { places: (Size | null)[]; cities: Size[] } | null = null;
+  const size = (mk: ML.Marker): Size => ({ w: mk.getElement().offsetWidth, h: mk.getElement().offsetHeight });
+  const layout = () => {
+    sizes ??= { places: placeMarks.map((mk) => (mk ? size(mk) : null)), cities: cityMarks.map(size) };
+    const { places, cities } = sizes;
+    const r = layoutLabels(
+      data.flags.map((f) => map.project(f.at)),
+      places,
+      data.cities.map((c, k) => ({ p: map.project(c.lngLat), size: cities[k] })),
+    );
+    placeMarks.forEach((mk, i) => {
+      const s = places[i];
+      if (mk && s) mk.setOffset(r.side[i] === "left" ? [-PLACE_GAP - s.w, 0] : [PLACE_GAP, 0]);
+    });
+    cityMarks.forEach((mk, k) => {
+      const off = r.city[k];
+      if (off) mk.setOffset(off);
+      mk.getElement().style.visibility = off ? "" : "hidden";
+    });
+  };
+  const remeasure = () => {
+    sizes = null;
+    scheduleLayout();
+  };
+  map.on("moveend", scheduleLayout);
+  map.on("resize", remeasure);
+  // The labels' first measure may use the fallback font; measure again once the fonts are in.
+  document.fonts?.ready.then(() => !gone && remeasure()).catch(() => {});
+
   // The pool lives on the card, beside the map box (map.js), over the canvas.
-  const card = map.getContainer().closest(".mapcard") ?? map.getContainer().parentElement;
   const pool = document.createElement("div");
   pool.className = "pool";
   card?.appendChild(pool);
@@ -230,9 +415,14 @@ export function addHeroLayers(
     if (animate && !opts.reducedMotion()) map.flyTo({ ...cam, duration: FLY.duration, curve: FLY.curve });
     else map.jumpTo(cam);
   };
+  const frame = (f: HeroMapFlag, animate: boolean) =>
+    go(heroCamera(f.bounds, "flag", opts.compact()), f.plan ? [...f.route, ...f.plan] : f.route, animate);
+  /** What show() last drew, so a focused marker knows whether it is the selected flag. */
+  let shown: { view: HeroMapView; selected: number } | null = null;
 
   return {
     show(view, selected, animate) {
+      shown = { view, selected };
       const fleet = view === "fleet";
       vis("trucks", fleet);
       vis("trucks-glow", fleet);
@@ -253,12 +443,17 @@ export function addHeroLayers(
         (map.getSource("plan") as ML.GeoJSONSource).setData(f.plan ? ln(f.plan) : EMPTY);
         vis("plan", !!f.plan);
         focus = f.at;
-        go(heroCamera(f.bounds, "flag", opts.compact()), f.plan ? [...f.route, ...f.plan] : f.route, animate);
+        frame(f, animate);
       }
       place();
+      scheduleLayout();
     },
     destroy() {
+      gone = true;
+      cancelAnimationFrame(raf);
       map.off("move", place);
+      map.off("moveend", scheduleLayout);
+      map.off("resize", remeasure);
       extras.forEach((m) => m.remove());
       pool.remove();
     },

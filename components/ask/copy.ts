@@ -20,8 +20,16 @@ export interface AskCopy {
   fallbackBanner: string;
   error: string;
   retry: string;
-  /** 429: `n` seconds until the next question is accepted. */
+  /** 429: `n` seconds until the next question is accepted (the heading while the wait lasts). */
   retryAfter: (n: number) => string;
+  /** 429 from a daily cap (the wait runs to midnight): no countdown, no "Try again". */
+  dailyLimit: string;
+  /** 429: the heading once the wait is over. */
+  retryReady: string;
+  /** 429: the disabled "Try again" button, counting down. */
+  retryIn: (n: number) => string;
+  /** 429: the saved line without "Try again in a minute" (the wait is given above it). */
+  savedShort: string;
   citesLabel: string;
   /** A cite chip's label: the trip id, with the word "trip" in the screen's language. */
   citeChip: (tripId: string) => string;
@@ -46,6 +54,10 @@ export const ASK_COPY: Record<Lang, AskCopy> = {
     error: "Urja couldn’t reach its server, so this question has no answer yet. Nothing is lost: your question is still in the box below.",
     retry: "Try again",
     retryAfter: (n) => `You’ve asked a lot in the last minute. Ask again in ${n} s.`,
+    retryReady: "You can ask again now.",
+    dailyLimit: "That’s today’s limit of questions. Ask again tomorrow.",
+    retryIn: (n) => `Try again in ${n} s`,
+    savedShort: "Your question is saved.",
     citesLabel: "Trips this answer used",
     citeChip: (tripId) => `Trip ${tripId}`,
     from: (scope) => `From ${scope}`,
@@ -66,6 +78,10 @@ export const ASK_COPY: Record<Lang, AskCopy> = {
     error: "Urja अपने सर्वर तक नहीं पहुँच पाया, इसलिए इस सवाल का जवाब अभी नहीं है। कुछ खोया नहीं है: आपका सवाल नीचे बॉक्स में ही है।",
     retry: "फिर से कोशिश करें",
     retryAfter: (n) => `आपने पिछले एक मिनट में बहुत सवाल पूछे हैं। ${n} सेकंड बाद फिर पूछें।`,
+    retryReady: "अब आप फिर से पूछ सकते हैं।",
+    dailyLimit: "आज के सवालों की सीमा पूरी हो गई है। कल फिर पूछें।",
+    retryIn: (n) => `${n} सेकंड बाद फिर से कोशिश करें`,
+    savedShort: "आपका सवाल सहेज लिया गया है।",
     citesLabel: "इस जवाब में इस्तेमाल हुई ट्रिप",
     citeChip: (tripId) => `ट्रिप ${tripId}`,
     from: (scope) => `${scope} के डेटा से`,

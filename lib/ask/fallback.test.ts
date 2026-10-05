@@ -6,7 +6,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { getAskContext } from "./context";
-import { SAVED_MESSAGE, fallbackAnswer } from "./fallback";
+import { CHECK_CAVEAT_LINE, SAVED_MESSAGE, checkCaveat, fallbackAnswer } from "./fallback";
 import { unsupportedNumbers } from "./guard";
 import { detectLang, matchIntent, normaliseQuestion, type IntentId } from "./intents";
 import { FORBIDDEN } from "./text";
@@ -231,5 +231,29 @@ describe("unrecognised and off-topic questions are saved, not answered", () => {
   it("has the saved message in English and Hindi", () => {
     expect(SAVED_MESSAGE.en).toBe("Your question is saved. Try again in a minute for a written answer.");
     expect(SAVED_MESSAGE.hi).toMatch(/[ऀ-ॿ]/);
+  });
+});
+
+describe("DES-9 · checkCaveat (the caveat a model answer gets for a cited Check flag)", () => {
+  it("is the fallback's own sentence when more than one trip is cited and every one is a Check flag", () => {
+    expect(checkCaveat(["0909-03", "0917-06", "0926-11"], "en")).toBe(CHECK_CAVEAT_LINE.en);
+    expect(checkCaveat(["0909-03", "0917-06", "0926-11"], "hi")).toBe(CHECK_CAVEAT_LINE.hi);
+    expect(checkCaveat(["0909-03", "0917-06"], "en")).toBe(CHECK_CAVEAT_LINE.en);
+    expect(fallbackAnswer("Which truck earns least per km, and why?")?.answer).toContain(CHECK_CAVEAT_LINE.en);
+  });
+
+  it("names the Check trips when the cites mix confidences, and is absent with none", () => {
+    expect(checkCaveat(["0926-04", "0926-11"], "en")).toBe("Trip 0926-11 is a Check flag: the extra use can have other causes, such as a heavier load.");
+    expect(checkCaveat(["0926-04", "0909-03", "0917-06"], "en")).toBe(
+      "Trips 0909-03 and 0917-06 are Check flags: the extra use can have other causes, such as a heavier load.",
+    );
+    expect(checkCaveat(["0926-04", "0927-02"], "en")).toBeUndefined();
+    // One Check trip, or Check trips beside a clean one: named, never the plural line.
+    expect(checkCaveat(["0926-11"], "en")).toBe("Trip 0926-11 is a Check flag: the extra use can have other causes, such as a heavier load.");
+    expect(checkCaveat(["0926-11"], "hi")).toBe("ट्रिप 0926-11 ‘जाँचें’ वाला फ़्लैग है: भारी लोड जैसी दूसरी वजहें भी हो सकती हैं।");
+    expect(checkCaveat(["0909-03", "0917-06", "0926-07"], "en")).toBe(
+      "Trips 0909-03 and 0917-06 are Check flags: the extra use can have other causes, such as a heavier load.",
+    );
+    expect(checkCaveat([], "hi")).toBeUndefined();
   });
 });

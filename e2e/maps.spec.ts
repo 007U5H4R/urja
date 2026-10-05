@@ -228,6 +228,159 @@ test.describe("reduced motion", () => {
   });
 });
 
+test.describe("DES-8 · keyboard focus on a flag marker is never off the map (WCAG 2.4.7)", () => {
+  /** Marker n's box against the map box and what covers it (header row, glass card, rail box). */
+  const placement = (page: Page, n: number) =>
+    page.evaluate((n) => {
+      const el = document.querySelector(`.fmark[aria-label="Show flag ${n} on the map"]`)!;
+      const card = el.closest("article.mapcard")!;
+      const r = el.getBoundingClientRect();
+      const m = card.querySelector(".maplibregl-map")!.getBoundingClientRect();
+      const inside = r.left >= m.left && r.right <= m.right && r.top >= m.top && r.bottom <= m.bottom;
+      const covered = [...card.querySelectorAll(".mc-top, #fc, .railbox")].some((c) => {
+        const q = c.getBoundingClientRect();
+        return q.width > 0 && r.left < q.right && q.left < r.right && r.top < q.bottom && q.top < r.bottom;
+      });
+      let scrolled = 0;
+      for (let e: Element | null = el.parentElement; e && e !== card.parentElement; e = e.parentElement) scrolled += e.scrollTop + e.scrollLeft;
+      return { inside, covered, scrolled, focused: document.activeElement === el };
+    }, n);
+
+  for (const reduced of [false, true]) {
+    test(`Tab onto an off-map marker selects its flag and brings it into view${reduced ? " (reduced motion: a jump)" : ""}`, async ({ page }) => {
+      const errors = collectErrors(page);
+      if (reduced) await page.emulateMedia({ reducedMotion: "reduce" });
+      await page.goto("/?view=map");
+      await expect(hero(page)).toHaveAttribute("data-map", "ready", { timeout: 20_000 });
+      await page.waitForTimeout(300);
+      // Framed on flag 1, flag 2's marker starts off the visible map.
+      expect((await placement(page, 2)).inside && !(await placement(page, 2)).covered).toBe(false);
+      await page.getByRole("button", { name: "Show flag 1 on the map" }).focus();
+      await page.keyboard.press("Tab");
+      await expect(page.getByRole("button", { name: "Show flag 2 on the map" })).toBeFocused();
+      await expect(page.getByRole("button", { name: "Show flag 2 on the map" })).toHaveAttribute("aria-pressed", "true");
+      await expect(eyeSel(page).nth(1)).toHaveAttribute("aria-pressed", "true");
+      await expect
+        .poll(() => placement(page, 2), { timeout: reduced ? 1000 : 4000 })
+        .toEqual({ inside: true, covered: false, scrolled: 0, focused: true });
+      expect(errors).toEqual([]);
+    });
+  }
+
+  test("the selected flag's marker, panned out of view, brings the map back when it takes focus", async ({ page }, info) => {
+    test.skip(info.project.name === "phone", "pans with a mouse drag");
+    await page.goto("/?view=map");
+    await expect(hero(page)).toHaveAttribute("data-map", "ready", { timeout: 20_000 });
+    await page.waitForTimeout(300);
+    await hero(page).scrollIntoViewIfNeeded();
+    const box = (await page.locator("article.mapcard .maplibregl-map").boundingBox())!;
+    // Drag from the empty top left to the bottom right, twice, so flag 1 ends far off the map.
+    for (let k = 0; k < 2; k++) {
+      await page.mouse.move(box.x + 30, box.y + box.height * 0.3);
+      await page.mouse.down();
+      await page.mouse.move(box.x + box.width - 30, box.y + box.height - 30, { steps: 12 });
+      await page.mouse.up();
+    }
+    await page.waitForTimeout(600);
+    expect(await placement(page, 1)).not.toMatchObject({ inside: true, covered: false });
+    await page.getByRole("button", { name: "Show flag 1 on the map" }).focus();
+    await expect(page.getByRole("button", { name: "Show flag 1 on the map" })).toHaveAttribute("aria-pressed", "true");
+    await expect.poll(() => placement(page, 1), { timeout: 4000 }).toEqual({ inside: true, covered: false, scrolled: 0, focused: true });
+  });
+
+  test("a marker already in view keeps the selection when it takes focus", async ({ page }) => {
+    await page.goto("/?view=fleet");
+    await expect(hero(page)).toHaveAttribute("data-map", "ready", { timeout: 20_000 });
+    await page.waitForTimeout(300);
+    await page.getByRole("button", { name: "Show flag 2 on the map" }).focus();
+    expect(await placement(page, 2)).toMatchObject({ inside: true, covered: false, focused: true });
+    await page.waitForTimeout(300);
+    await expect(seg(page, "Fleet")).toHaveAttribute("aria-pressed", "true");
+  });
+});
+
+test.describe("DES-12, DES-13 · hero map labels", () => {
+  for (const path of ["/?view=fleet", "/?view=map", "/?view=map&flag=2", "/?view=map&flag=3"]) {
+    test(`on ${path}, no label overlaps another label or a marker, and no city label sits under the rail box`, async ({ page }) => {
+      await page.goto(path);
+      await expect(hero(page)).toHaveAttribute("data-map", "ready", { timeout: 20_000 });
+      await page.waitForTimeout(500);
+      const clashes = await page.evaluate(() => {
+        const card = document.querySelector("article.mapcard")!;
+        const m = card.querySelector(".maplibregl-map")!.getBoundingClientRect();
+        type B = { name: string; kind: string; r: DOMRect };
+        const boxes: B[] = [];
+        for (const el of card.querySelectorAll<HTMLElement>(".map-label.city, .map-label.place, .fmark")) {
+          if (getComputedStyle(el).visibility === "hidden") continue;
+          const r = el.getBoundingClientRect();
+          if (r.right < m.left || r.left > m.right || r.bottom < m.top || r.top > m.bottom) continue;
+          boxes.push({ name: el.textContent ?? "", kind: el.classList.contains("city") ? "city" : el.classList.contains("place") ? "place" : "mark", r });
+        }
+        const over = (a: DOMRect, b: DOMRect) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+        const out: string[] = [];
+        // Two markers may touch when their flags lie close at a wide zoom; they sit on their data.
+        boxes.forEach((a, i) =>
+          boxes.slice(i + 1).forEach((b) => !(a.kind === "mark" && b.kind === "mark") && over(a.r, b.r) && out.push(`${a.kind} ${a.name} × ${b.kind} ${b.name}`)),
+        );
+        const rail = card.querySelector(".railbox")!.getBoundingClientRect();
+        for (const b of boxes) if (b.kind === "city" && over(b.r, rail)) out.push(`city ${b.name} × rail box`);
+        const cities = boxes.filter((b) => b.kind === "city");
+        return { out, cities: cities.length, names: cities.map((b) => b.name) };
+      });
+      expect(clashes.out).toEqual([]);
+      expect(clashes.cities).toBeGreaterThan(0);
+      // Jaipur, the home yard, keeps its label: a covered city label moves before it hides.
+      if (path === "/?view=fleet") expect(clashes.names).toContain("Jaipur");
+    });
+  }
+});
+
+test.describe("DES-26 · the map attribution can be read and clicked", () => {
+  // A style whose (empty) source carries Carto's attribution, so the control shows offline.
+  const ATTRIBUTED = JSON.stringify({
+    version: 8,
+    sources: { carto: { type: "geojson", data: { type: "FeatureCollection", features: [] }, attribution: "© CARTO, © OpenStreetMap contributors" } },
+    layers: [
+      { id: "background", type: "background", paint: { "background-color": "#111" } },
+      { id: "carto", type: "circle", source: "carto" },
+    ],
+  });
+  for (const path of ["/?view=map", "/?view=fleet", "/trips/0926-04"]) {
+    test(`on ${path}, the attribution is on top where it sits, clear of the header, legend, glass card and rail box`, async ({ page }, info) => {
+      await page.route(CARTO_STYLE, (r) => r.fulfill({ status: 200, contentType: "application/json", body: ATTRIBUTED }));
+      await page.goto(path);
+      await expect(page.locator("[data-map=ready]")).toHaveCount(1, { timeout: 20_000 });
+      const attrib = page.locator("article.mapcard .maplibregl-ctrl-attrib");
+      await expect(attrib).toContainText("OpenStreetMap");
+      await attrib.scrollIntoViewIfNeeded();
+      // Open, and so legible, when the map loads. On a phone it folds to its (i) after about 5 s
+      // (it would cover the route's far end), and the (i) opens it again.
+      await expect(attrib).toHaveClass(/maplibregl-compact-show/);
+      if (info.project.name === "phone") {
+        await expect(attrib).not.toHaveClass(/maplibregl-compact-show/, { timeout: 8000 });
+        await attrib.locator(".maplibregl-ctrl-attrib-button").click();
+        await expect(attrib).toHaveClass(/maplibregl-compact-show/);
+      }
+      await expect(attrib.locator(".maplibregl-ctrl-attrib-inner")).toBeVisible();
+      const r = await attrib.evaluate((el) => {
+        const card = el.closest("article.mapcard")!;
+        const a = el.getBoundingClientRect();
+        const probe = (x: number, y: number) => !!document.elementFromPoint(x, y)?.closest(".maplibregl-ctrl-attrib");
+        const button = el.querySelector(".maplibregl-ctrl-attrib-button")!.getBoundingClientRect();
+        const covers = [...card.querySelectorAll(".mc-top, .maplegend, #fc, .railbox")].filter((c) => {
+          const q = c.getBoundingClientRect();
+          return q.width > 0 && a.left < q.right && q.left < a.right && a.top < q.bottom && q.top < a.bottom;
+        });
+        return {
+          hits: [probe(a.left + 4, a.top + a.height / 2), probe(a.left + a.width / 2, a.top + a.height / 2), probe(a.right - 4, a.top + a.height / 2), probe(button.left + button.width / 2, button.top + button.height / 2)],
+          covers: covers.map((c) => c.className),
+        };
+      });
+      expect(r).toEqual({ hits: [true, true, true, true], covers: [] });
+    });
+  }
+});
+
 test("with motion allowed, the lit marker pings", async ({ page }) => {
   await page.goto("/?view=map");
   await expect(hero(page)).toHaveAttribute("data-map", "ready", { timeout: 20_000 });

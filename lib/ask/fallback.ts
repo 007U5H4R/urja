@@ -15,13 +15,47 @@ import type { Lang, Plate } from "@/lib/data/types";
 import { DEMO_NOW, MIN_PER_DAY, dayKey } from "@/lib/clock";
 import { formatDateIST, formatINR, minToISTParts } from "@/lib/format";
 import { WRONG_FLAG_LIMIT_PCT } from "@/lib/data/constants";
-import { detectLang, matchIntent, type IntentId } from "./intents";
+import { detectLang, matchIntent, type Intent, type IntentId } from "./intents";
 import { RULE_LABEL, STATUS_LABEL, confidenceWord, dayLabel, flagPlace } from "./labels";
 
 export const SAVED_MESSAGE: Record<Lang, string> = {
   en: "Your question is saved. Try again in a minute for a written answer.",
   hi: "आपका सवाल सहेज लिया गया है। लिखित जवाब के लिए एक मिनट बाद फिर पूछें।",
 };
+
+/** The Check caveat (Design.md §19: low confidence says "Check"), shared by the fallback and model answers. */
+export const CHECK_CAVEAT_LINE: Record<Lang, string> = {
+  en: "These are Check flags: the extra use can have other causes, such as a heavier load.",
+  hi: "ये ‘जाँचें’ वाले फ़्लैग हैं: भारी लोड जैसी दूसरी वजहें भी हो सकती हैं।",
+};
+
+/** The same caveat when only some of the cited trips are Check flags: it names them. */
+export function checkCaveatFor(ids: readonly string[], lang: Lang): string {
+  const one = ids.length === 1;
+  const and = lang === "hi" ? " और " : " and ";
+  const named = one ? ids[0] : `${ids.slice(0, -1).join(", ")}${and}${ids[ids.length - 1]}`;
+  if (lang === "hi") return `ट्रिप ${named} ‘जाँचें’ ${one ? "वाला फ़्लैग है" : "वाले फ़्लैग हैं"}: भारी लोड जैसी दूसरी वजहें भी हो सकती हैं।`;
+  return one
+    ? `Trip ${named} is a Check flag: the extra use can have other causes, such as a heavier load.`
+    : `Trips ${named} are Check flags: the extra use can have other causes, such as a heavier load.`;
+}
+
+/**
+ * The caveat a model answer carries when it cites a Check-confidence flag
+ * (DES-9): the model is told to say so (prompt rule 3) but may not, so the
+ * server adds it. The plural CHECK_CAVEAT_LINE only when more than one trip is
+ * cited and every one of them carries Check flags and no other; otherwise the
+ * form that names the Check trips (one trip, or Check trips beside High, Likely
+ * or clean ones); undefined when no cited trip has a Check flag.
+ */
+export function checkCaveat(tripIds: readonly string[], lang: Lang): string | undefined {
+  const cited = [...new Set(tripIds)];
+  const flags = getDataset().flags.filter((f) => cited.includes(f.tripId));
+  const check = cited.filter((id) => flags.some((f) => f.tripId === id && f.confidence === "check"));
+  if (check.length === 0) return undefined;
+  const allCheck = cited.length > 1 && check.length === cited.length && flags.every((f) => f.confidence === "check");
+  return allCheck ? CHECK_CAVEAT_LINE[lang] : checkCaveatFor(check, lang);
+}
 
 export interface FallbackAnswer {
   intent: IntentId;
@@ -36,19 +70,12 @@ const inr = (n: number) => formatINR(n, { sign: "never" });
 const perKm = (n: number) => `₹${n.toFixed(1)}`;
 const num = (n: number) => new Intl.NumberFormat("en-IN").format(n);
 const L = (n: number, lang: Lang) => (lang === "hi" ? `${num(n)} लीटर` : `${num(n)} L`);
-const MONTHS_HI = ["जनवरी", "फ़रवरी", "मार्च", "अप्रैल", "मई", "जून", "जुलाई", "अगस्त", "सितंबर", "अक्टूबर", "नवंबर", "दिसंबर"];
 const WEEKDAYS_HI = ["रवि", "सोम", "मंगल", "बुध", "गुरु", "शुक्र", "शनि"];
 
-/** '27 Sep' / '27 सितंबर' from a day key. */
-function day(key: string, lang: Lang): string {
-  if (lang === "en") return dayLabel(key);
-  const [, m, d] = key.split("-").map(Number);
-  return `${d} ${MONTHS_HI[m - 1]}`;
-}
 
 /** '27 Sep' / '27 सितंबर' for a minute. */
 function dateOf(t: number, lang: Lang): string {
-  return day(dayKey(t), lang);
+  return dayLabel(dayKey(t), lang);
 }
 
 const driverOf = (plate: Plate, lang: Lang) => truckByPlate(plate).driver.name[lang];
@@ -146,7 +173,7 @@ function lastWeekDiesel(lang: Lang): FallbackAnswer {
   const w = last7();
   const trips = [...new Set(w.tripIds)];
   const items = w.flags.map((f) => `${f.tripId} (${f.plate}, ${L(f.litres ?? 0, lang)})`);
-  const range = `${Number(w.fromDay.slice(8))}–${day(w.toDay, lang)}`;
+  const range = `${Number(w.fromDay.slice(8))}–${dayLabel(w.toDay, lang)}`;
   const answer =
     lang === "hi"
       ? `पिछले हफ़्ते (${range}) ${trips.length} ट्रिप में ${L(w.litres, lang)} डीज़ल (${inr(w.inr)}) का हिसाब नहीं मिल रहा: ${list(items)}।`
@@ -171,9 +198,9 @@ function perKmAnswer(which: "least" | "best", lang: Lang): FallbackAnswer {
       d.litres > 0
         ? lang === "hi"
           ? ` वजह: ${d.flags.length} ट्रिप (${d.tripIds.join(", ")}) में सामान्य से ${L(d.litres, lang)} डीज़ल (${inr(d.inr)}) ज़्यादा लगा।` +
-            (d.flags.every((f) => f.confidence === "check") ? ` ये ‘जाँचें’ वाले फ़्लैग हैं: भारी लोड जैसी दूसरी वजहें भी हो सकती हैं।` : "")
+            (d.flags.every((f) => f.confidence === "check") ? ` ${CHECK_CAVEAT_LINE.hi}` : "")
           : ` Why: it used ${L(d.litres, lang)} of diesel (${inr(d.inr)}) more than normal on ${d.flags.length} trips (${d.tripIds.join(", ")}).` +
-            (d.flags.every((f) => f.confidence === "check") ? ` These are Check flags: the extra use can have other causes, such as a heavier load.` : "")
+            (d.flags.every((f) => f.confidence === "check") ? ` ${CHECK_CAVEAT_LINE.en}` : "")
         : "";
     answer =
       lang === "hi"
@@ -185,7 +212,7 @@ function perKmAnswer(which: "least" | "best", lang: Lang): FallbackAnswer {
 
 function behrorFlags(lang: Lang): FallbackAnswer {
   const s = stretch("behror");
-  const items = s.flags.map((f) => `${f.tripId} (${f.plate}, ${day(f.dayKey, lang)}, ${L(f.litres ?? 0, lang)}, ${STATUS_LABEL[f.status][lang]})`);
+  const items = s.flags.map((f) => `${f.tripId} (${f.plate}, ${dayLabel(f.dayKey, lang)}, ${L(f.litres ?? 0, lang)}, ${STATUS_LABEL[f.status][lang]})`);
   const answer =
     lang === "hi"
       ? `सितंबर में ${placeById(STRETCHES.behror.centerPlaceId).name.hi} वाले हिस्से पर ${s.flags.length} फ़्लैग, कुल ${L(s.litres, lang)} (${inr(s.inr)}): ${list(items)}।`
@@ -199,7 +226,7 @@ function yesterdaySummary(lang: Lang): FallbackAnswer {
   const trips = [...new Set(counted.map((f) => f.tripId))];
   const items = counted.map((f) => `${f.tripId} (${f.plate}, ${inr(f.inr)}, ${confidenceWord(f.confidence, lang)})`);
   const t = DEMO_NOW - MIN_PER_DAY;
-  const date = lang === "hi" ? `${WEEKDAYS_HI[minToISTParts(t).weekday]} ${day(YESTERDAY_DAY, lang)}` : formatDateIST(t, "weekday-day-month");
+  const date = lang === "hi" ? `${WEEKDAYS_HI[minToISTParts(t).weekday]} ${dayLabel(YESTERDAY_DAY, lang)}` : formatDateIST(t, "weekday-day-month");
   const others = y.trips - trips.length;
   const answer =
     lang === "hi"
@@ -241,11 +268,11 @@ function truckFlags(plate: Plate, yesterdayOnly: boolean, lang: Lang): FallbackA
     const answer =
       trips.length === 0
         ? lang === "hi"
-          ? `${who} की कोई ट्रिप कल (${day(YESTERDAY_DAY, lang)}) ख़त्म नहीं हुई, इसलिए कोई फ़्लैग नहीं है।`
-          : `No trip of ${who} ended yesterday (${day(YESTERDAY_DAY, lang)}), so there is no flag to show.`
+          ? `${who} की कोई ट्रिप कल (${dayLabel(YESTERDAY_DAY, lang)}) ख़त्म नहीं हुई, इसलिए कोई फ़्लैग नहीं है।`
+          : `No trip of ${who} ended yesterday (${dayLabel(YESTERDAY_DAY, lang)}), so there is no flag to show.`
         : lang === "hi"
-          ? `कल (${day(YESTERDAY_DAY, lang)}) ${who} की ${trips.length} ट्रिप पर कोई फ़्लैग नहीं: डीज़ल, टोल और किलोमीटर का हिसाब मिल रहा है।`
-          : `${who} has no flag on yesterday's ${trips.length === 1 ? "trip" : `${trips.length} trips`} (${day(YESTERDAY_DAY, lang)}): diesel, tolls and km add up.`;
+          ? `कल (${dayLabel(YESTERDAY_DAY, lang)}) ${who} की ${trips.length} ट्रिप पर कोई फ़्लैग नहीं: डीज़ल, टोल और किलोमीटर का हिसाब मिल रहा है।`
+          : `${who} has no flag on yesterday's ${trips.length === 1 ? "trip" : `${trips.length} trips`} (${dayLabel(YESTERDAY_DAY, lang)}): diesel, tolls and km add up.`;
     return { intent: "truck_flags", answer, lang, cites: trips.map((t) => t.id) };
   }
   const row = trucks().find((r) => r.plate === plate);
@@ -260,7 +287,11 @@ function truckFlags(plate: Plate, yesterdayOnly: boolean, lang: Lang): FallbackA
 export function fallbackAnswer(question: string): FallbackAnswer | null {
   const intent = matchIntent(question);
   if (!intent) return null;
-  const lang: Lang = detectLang(question) === "hi" ? "hi" : "en";
+  return answerIntent(intent, detectLang(question) === "hi" ? "hi" : "en");
+}
+
+/** The template for one intent, in one language (also rendered into docs/exec/hindi-review.md). */
+export function answerIntent(intent: Intent, lang: Lang): FallbackAnswer {
   switch (intent.id) {
     case "driver_most_diesel":
       return driverMostDiesel(lang);

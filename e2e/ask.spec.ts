@@ -305,13 +305,38 @@ test.describe("Ask states (TC-024)", () => {
     await expect(input(page)).toHaveValue("Will it rain in Behror tomorrow?");
   });
 
-  test("429: when to ask again, with the fallback it carries", async ({ page }) => {
+  test("429: when to ask again is the heading, over the fallback it carries; Try again waits (DES-18)", async ({ page }) => {
     await mockAsk(page, { ...FALLBACK, retryAfterS: 12 }, 429);
     await page.goto("/");
     await openWithShortcut(page);
     await ask(page, "q");
-    await expect(drawer(page).getByText("Ask again in 12 s.")).toBeVisible();
-    await expect(drawer(page).getByRole("heading", { level: 3 })).toHaveText(BANNER);
+    await expect(drawer(page).getByRole("heading", { level: 3, name: "You’ve asked a lot in the last minute. Ask again in 12 s." })).toBeVisible();
+    await expect(drawer(page).getByText(BANNER)).toHaveCount(0);
+    await expect(drawer(page).locator(".fallback .ans")).toHaveText(FALLBACK.answer);
+    await expect(drawer(page).locator(".fallback .saved")).toHaveText("Your question is saved.");
+    await expect(drawer(page)).not.toContainText("in a minute");
+    const retry = drawer(page).getByRole("button", { name: "Try again" });
+    await expect(retry).toBeDisabled();
+    await expect(retry).toContainText(/Try again in 1[0-2] s/);
+  });
+
+  test("429 on a saved question: one wait, and Try again comes back when it has passed (DES-18)", async ({ page }) => {
+    const sent = await mockAsk(page, { ...SAVED, retryAfterS: 2 }, 429);
+    await page.goto("/");
+    await openWithShortcut(page);
+    await ask(page, "Will it rain in Behror tomorrow?");
+    const heading = drawer(page).getByRole("heading", { level: 3 });
+    await expect(heading).toHaveAccessibleName("You’ve asked a lot in the last minute. Ask again in 2 s.");
+    await expect(drawer(page).locator(".fallback .ans")).toHaveText("Your question is saved.");
+    await expect(drawer(page)).not.toContainText("Urja’s AI");
+    const retry = drawer(page).getByRole("button", { name: "Try again" });
+    await expect(retry).toBeDisabled();
+    await expect(heading).toHaveText("You can ask again now.", { timeout: 4000 });
+    await expect(retry).toBeEnabled();
+    await expect(retry).toHaveText("Try again");
+    await retry.click();
+    await expect.poll(() => sent.length).toBe(2);
+    expect(sent[1].question).toBe("Will it rain in Behror tomorrow?");
   });
 
   test("error: says what happened, keeps the question, and Try again recovers", async ({ page }) => {

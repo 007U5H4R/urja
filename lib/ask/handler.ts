@@ -12,11 +12,11 @@ import { randomUUID } from "node:crypto";
 import { askConfig, type AskConfig } from "./config";
 import { AskRequest, type AskLang, type AskResponse } from "./contract";
 import { getAskContext } from "./context";
-import { fallbackAnswer, SAVED_MESSAGE } from "./fallback";
+import { checkCaveat, fallbackAnswer, SAVED_MESSAGE } from "./fallback";
 import { callGeminiWithFallback, type GeminiAttempt } from "./gemini";
 import { guardAnswer } from "./guard";
 import { detectLang } from "./intents";
-import { tripLabel } from "./labels";
+import { citeLabels } from "./labels";
 import { consoleSink, hashQuestion, writeAskLog, type AskOutcome, type LogSink } from "./log";
 import { PROMPT_VERSION } from "./prompt";
 import { clientIp, createRateLimiter, hashIp, type RateLimiter } from "./rate-limit";
@@ -53,6 +53,13 @@ const attemptLog = (a: GeminiAttempt) => `${a.model} ${attemptCode(a)}`;
  */
 function outcomeHeader(code: string, model: string | null, first?: GeminiAttempt): string {
   return [code, model ? `model=${model}` : null, first ? `after=${attemptCode(first)} ${first.model}` : null].filter(Boolean).join("; ");
+}
+
+/** Caveats as one line of sentences: "Check the trips before acting. Trip 0926-11 is a Check flag: …". */
+function joinCaveats(...parts: (string | undefined)[]): string | undefined {
+  const kept = parts.filter((p): p is string => !!p);
+  if (kept.length < 2) return kept[0];
+  return kept.map((p) => (/[.!?।]$/.test(p) ? p : `${p}.`)).join(" ");
 }
 
 export function createAskHandler(deps: AskDeps = {}) {
@@ -144,7 +151,7 @@ export function createAskHandler(deps: AskDeps = {}) {
       const provenance = { scope, model: null, ms: elapsed(), promptVersion: PROMPT_VERSION, datasetHash };
       if (fb) {
         cites = fb.cites;
-        body = { mode: "fallback", answer: fb.answer, lang: fb.lang, cites: fb.cites.map((id) => ({ tripId: id, label: tripLabel(id, fb.lang) })), provenance };
+        body = { mode: "fallback", answer: fb.answer, lang: fb.lang, cites: citeLabels(fb.cites, fb.lang), provenance };
       } else {
         const lang = qLang === "hi" ? "hi" : "en";
         body = { mode: "saved", answer: SAVED_MESSAGE[lang], lang, cites: [], provenance };
@@ -181,12 +188,16 @@ export function createAskHandler(deps: AskDeps = {}) {
       if (!g.ok) return degrade("guard", 200, { guard: g.reason, model: result.model, first });
 
       const lang = result.answer.lang;
+      const labelLang = lang === "hi" ? "hi" : "en";
+      // DES-9: a cited Check flag always carries the fallback's caveat, whatever the model wrote,
+      // after the guard's own caveat when it added one (an unsupported figure); both are kept.
+      const caveat = joinCaveats(g.caveat, checkCaveat(g.cites, labelLang));
       const body: AskResponse = {
         mode: "model",
         answer: g.answer,
         lang,
-        cites: g.cites.map((id) => ({ tripId: id, label: tripLabel(id, lang === "hi" ? "hi" : "en") })),
-        ...(g.caveat ? { caveat: g.caveat } : {}),
+        cites: citeLabels(g.cites, labelLang),
+        ...(caveat ? { caveat } : {}),
         provenance: { scope: bundle.scope, model: result.model, ms: elapsed(), promptVersion: PROMPT_VERSION, datasetHash: bundle.hash },
       };
       log({ mode: "model", outcome: "ok", model: result.model, question, lang, cites: g.cites, unsupported: g.unsupported, firstAttempt: first && attemptLog(first) });

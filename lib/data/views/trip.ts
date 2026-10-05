@@ -689,6 +689,17 @@ function rail(ctx: Ctx): RailView {
 const DESK = { h: 300, noteLift: 35, refuelLift: 37, stopLift: 18 } as const;
 const PHONE = { w: 360, h: 250, gap: 1.2, fs: 12, noteLift: 28, refuelLift: 33 } as const;
 const MAX_BARS = 115;
+/** Wave's defaults (components/charts/Wave.tsx): viewBox width, bar gap and the left gutter. */
+const WAVE_W = 1000;
+const WAVE_GAP = 1.6;
+const WAVE_X0 = 44;
+/** SVG units between a note's baseline and the highest mark under it. */
+const NOTE_CLEAR = 10;
+
+/** A generous width for a note in Inter at `fs` (about 0.6 em a character), so it errs on the clear side. */
+function noteWidth(text: string, fs: number): number {
+  return text.length * fs * 0.6;
+}
 
 /** Where a bar of `litres` tops out, in SVG y (Wave's geometry: axis at 64% of the height). */
 function barTop(litres: number, h: number, max: number): number {
@@ -790,9 +801,18 @@ function series(ctx: Ctx, step: number, phone: boolean, kmFrac: (t: Min) => numb
       notes.push({ i, y, a: "end", text, tone: "loss", fs: 13 });
     } else if (flag?.rule === "R3") {
       const { used, normal } = r3Litres(trip, flag);
-      const endExp = expected ? expected[expected.length - 1][1] : fuel[n - 1];
-      const y = Math.max(12, Math.round(top(Math.max(endExp, fuel[n - 1])) - 20));
-      notes.push({ i: n - 1, y, a: "end", text: `used ${used} L · normal ${normal} L`, tone: "loss", fs: 13 });
+      const text = `used ${used} L · normal ${normal} L`;
+      // DES-11: clear of the dashed line and the bars under the note's whole width, not only at its
+      // end; the line climbs to the left, so measured at the end alone it struck through the text.
+      const w = phone ? PHONE.w : WAVE_W;
+      const gap = phone ? PHONE.gap : WAVE_GAP;
+      const pitch = (w - WAVE_X0 - gap * (n - 1)) / n + gap;
+      const from = Math.max(0, n - 1 - Math.ceil(noteWidth(text, 13) / pitch));
+      const exp = new Map(expected ?? []);
+      let peak = 0;
+      for (let i = from; i < n; i++) peak = Math.max(peak, fuel[i], exp.get(i) ?? 0);
+      const y = Math.max(12, Math.round(top(peak) - NOTE_CLEAR));
+      notes.push({ i: n - 1, y, a: "end", text, tone: "loss", fs: 13 });
     }
     // Refuels whose bill matches the tank rise.
     for (const r of trip.refuels) {

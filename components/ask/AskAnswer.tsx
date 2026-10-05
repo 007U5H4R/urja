@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import type { AskCite, AskResponse } from "@/lib/ask/contract";
 import type { Bilingual, Lang } from "@/lib/data/types";
 import { ASK_COPY, type AskCopy } from "./copy";
@@ -63,19 +64,60 @@ function Provenance({ r, scope, lang }: { r: AskResponse; scope: Bilingual; lang
   );
 }
 
-function RetryAfter({ s, copy, lang }: { s?: number; copy: AskCopy; lang: Lang }) {
-  return s ? (
-    <p className="saved" lang={lang}>
-      {copy.retryAfter(s)}
-    </p>
-  ) : null;
+/**
+ * The per-minute limit's wait is under a minute; a daily cap's runs to midnight (lib/ask/rate-limit.ts).
+ * Only the first is counted down; the second says to come back tomorrow, with no "Try again".
+ */
+const RETRY_COUNTDOWN_MAX_S = 60;
+
+/** Seconds left of a 429's wait, ticking down once a second; 0 when there is none. A new state restarts it. */
+function useCountdown(from: number | undefined, key: unknown): number {
+  const [left, setLeft] = useState(from ?? 0);
+  const [forKey, setForKey] = useState(key);
+  if (key !== forKey) {
+    setForKey(key);
+    setLeft(from ?? 0);
+  }
+  useEffect(() => {
+    if (left <= 0) return;
+    const t = setTimeout(() => setLeft((n) => Math.max(0, n - 1)), 1000);
+    return () => clearTimeout(t);
+  }, [left]);
+  return left;
 }
 
-function Retry({ onRetry, copy }: { onRetry: () => void; copy: AskCopy }) {
+/**
+ * A ticking number for the eye; screen readers hear the server's wait once and then that it's over
+ * (the conversation is aria-live, so a visible tick would be read out every second).
+ */
+function Ticking({ shown, spoken }: { shown: string; spoken: string }) {
+  return (
+    <>
+      <span aria-hidden="true">{shown}</span>
+      <span className="sr">{spoken}</span>
+    </>
+  );
+}
+
+/**
+ * 429 (DES-18): the wait is the heading, in place of a banner that blamed the AI, which wasn't asked.
+ * It counts down with "Try again", then says the owner can ask again.
+ */
+function WaitHeading({ s, left, copy, lang }: { s: number; left: number; copy: AskCopy; lang: Lang }) {
+  return (
+    <h3 className="ask-banner" lang={lang}>
+      {s > RETRY_COUNTDOWN_MAX_S ? copy.dailyLimit : left > 0 ? <Ticking shown={copy.retryAfter(left)} spoken={copy.retryAfter(s)} /> : copy.retryReady}
+    </h3>
+  );
+}
+
+/** "Try again", disabled with a countdown until a 429's wait has passed. */
+function Retry({ onRetry, copy, left = 0 }: { onRetry: () => void; copy: AskCopy; left?: number }) {
+  const waiting = left > 0;
   return (
     <div className="actions">
-      <button type="button" className="btn btn-line" onClick={onRetry}>
-        {copy.retry}
+      <button type="button" className="btn btn-line" onClick={onRetry} disabled={waiting}>
+        {waiting ? <Ticking shown={copy.retryIn(left)} spoken={copy.retry} /> : copy.retry}
       </button>
     </div>
   );
@@ -83,6 +125,10 @@ function Retry({ onRetry, copy }: { onRetry: () => void; copy: AskCopy }) {
 
 export function AskAnswer({ state, lang: ui = "en", scope, saved, onRetry, onCite }: AskAnswerProps) {
   const copy = ASK_COPY[ui];
+  const wait = state.status === "answering" || state.status === "answer" ? undefined : state.retryAfterS;
+  const daily = !!wait && wait > RETRY_COUNTDOWN_MAX_S;
+  const left = useCountdown(daily ? undefined : wait, state);
+  const retry = daily ? null : <Retry onRetry={onRetry} copy={copy} left={left} />;
   const question = (
     <div className={textLang(state.question) === "hi" ? "q hi" : "q"} lang={textLang(state.question)}>
       {state.question}
@@ -132,9 +178,13 @@ export function AskAnswer({ state, lang: ui = "en", scope, saved, onRetry, onCit
       return (
         <>
           {question}
-          <h3 className="ask-banner" lang={ui}>
-            {copy.fallbackBanner}
-          </h3>
+          {wait ? (
+            <WaitHeading s={wait} left={left} copy={copy} lang={ui} />
+          ) : (
+            <h3 className="ask-banner" lang={ui}>
+              {copy.fallbackBanner}
+            </h3>
+          )}
           <div className="fallback" lang={lang} data-mode="fallback">
             <Paragraphs text={r.answer} className="ans" />
             {r.cites.length > 0 && (
@@ -146,29 +196,32 @@ export function AskAnswer({ state, lang: ui = "en", scope, saved, onRetry, onCit
             )}
             {r.caveat && <p className="muted">{r.caveat}</p>}
             <p className="saved" lang={savedLang}>
-              {saved[savedLang]}
+              {wait ? ASK_COPY[savedLang].savedShort : saved[savedLang]}
             </p>
-            <RetryAfter s={state.retryAfterS} copy={copy} lang={ui} />
           </div>
           <Provenance r={r} scope={scope} lang={ui} />
-          <Retry onRetry={onRetry} copy={copy} />
+          {retry}
         </>
       );
     }
 
     case "saved": {
       const r = state.response;
+      const lang = answerLang(r);
       return (
         <>
           {question}
-          <h3 className="ask-banner" lang={ui}>
-            {copy.savedBanner}
-          </h3>
-          <div className="fallback" lang={answerLang(r)} data-mode="saved">
-            <Paragraphs text={r.answer} className="ans" />
-            <RetryAfter s={state.retryAfterS} copy={copy} lang={ui} />
+          {wait ? (
+            <WaitHeading s={wait} left={left} copy={copy} lang={ui} />
+          ) : (
+            <h3 className="ask-banner" lang={ui}>
+              {copy.savedBanner}
+            </h3>
+          )}
+          <div className="fallback" lang={lang} data-mode="saved">
+            {wait ? <p className="ans">{ASK_COPY[lang].savedShort}</p> : <Paragraphs text={r.answer} className="ans" />}
           </div>
-          <Retry onRetry={onRetry} copy={copy} />
+          {retry}
         </>
       );
     }
@@ -177,11 +230,11 @@ export function AskAnswer({ state, lang: ui = "en", scope, saved, onRetry, onCit
       return (
         <>
           {question}
+          {wait ? <WaitHeading s={wait} left={left} copy={copy} lang={ui} /> : null}
           <div className="fallback" lang={ui} data-mode="error">
             <p className="ans">{copy.error}</p>
-            <RetryAfter s={state.retryAfterS} copy={copy} lang={ui} />
           </div>
-          <Retry onRetry={onRetry} copy={copy} />
+          {retry}
         </>
       );
   }

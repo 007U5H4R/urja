@@ -10,9 +10,12 @@
 import { askShellData } from "@/components/ask/askScope";
 import { ASK_CHIPS, ASK_COPY } from "@/components/ask/copy";
 import { provenanceLine } from "@/components/ask/format";
+import { CHECK_CAVEAT_LINE, SAVED_MESSAGE, answerIntent, checkCaveatFor } from "@/lib/ask/fallback";
+import type { Intent } from "@/lib/ask/intents";
+import { RULE_LABEL, STATUS_LABEL, tripLabel } from "@/lib/ask/labels";
 import { MENU_COPY, menuLinks } from "@/components/shell/nav";
-import { istMin } from "@/lib/clock";
-import { YESTERDAY_DAY } from "@/lib/data/aggregates";
+import { dayKey, istMin } from "@/lib/clock";
+import { SEPT_FIRST_DAY, YESTERDAY_DAY } from "@/lib/data/aggregates";
 import { FLEET } from "@/lib/data/fleet";
 import { getDataset, type ReadonlyFlag } from "@/lib/data/index";
 import { PLACES } from "@/lib/data/places";
@@ -220,13 +223,64 @@ function askRows(): Row[] {
     ["fallback banner", hi.fallbackBanner, en.fallbackBanner],
     ["saved banner (the fallback banner's first clause)", hi.savedBanner, en.savedBanner],
     ["error line", hi.error, en.error],
-    ["429 line (12 s)", hi.retryAfter(12), en.retryAfter(12)],
+    ["saved answer (a question with no prepared answer)", SAVED_MESSAGE.hi, SAVED_MESSAGE.en],
+    ["429 heading (12 s left)", hi.retryAfter(12), en.retryAfter(12)],
+    ["429 heading, once the wait is over", hi.retryReady, en.retryReady],
+    ["429 heading, a daily cap (no countdown, no try again)", hi.dailyLimit, en.dailyLimit],
+    ["429 saved line", hi.savedShort, en.savedShort],
     ["try again button", hi.retry, en.retry],
+    ["try again button, disabled during a 429 (12 s left)", hi.retryIn(12), en.retryIn(12)],
     ["cited trips aria-label", hi.citesLabel, en.citesLabel],
     ["cite chip (0926-04)", hi.citeChip("0926-04"), en.citeChip("0926-04")],
     ["provenance scope (from the data)", scope.hi, scope.en],
     ["provenance line · model answer", withModel[0], withModel[1]],
     ["provenance line · fallback answer", noModel[0], noModel[1]],
+  ];
+}
+
+/** Plates for the truck-flags variants: one with no September flag, one with clean trips yesterday, one with no trip ending yesterday. */
+function truckVariants() {
+  const ds = getDataset();
+  const septFlag = (plate: string) => ds.flags.some((f) => f.plate === plate && f.dayKey >= SEPT_FIRST_DAY && f.dayKey <= YESTERDAY_DAY);
+  const endedYesterday = (plate: string) => ds.trips.some((t) => t.plate === plate && dayKey(t.end) === YESTERDAY_DAY);
+  const flaggedYesterday = (plate: string) => ds.flags.some((f) => f.plate === plate && f.dayKey === YESTERDAY_DAY);
+  const pick = (ok: (plate: string) => boolean) => FLEET.find((t) => ok(t.plate))?.plate;
+  return {
+    flagged: pick(flaggedYesterday),
+    none: pick((p) => !septFlag(p)),
+    cleanYesterday: pick((p) => endedYesterday(p) && !flaggedYesterday(p)),
+    noTripYesterday: pick((p) => !endedYesterday(p)),
+  };
+}
+
+function answerRows(): Row[] {
+  const both = (where: string, fn: (l: "hi" | "en") => string): Row => [where, fn("hi"), fn("en")];
+  const intent = (where: string, i: Intent): Row => both(`answer · ${where}`, (l) => answerIntent(i, l).answer);
+  const v = truckVariants();
+  const truck = (where: string, plate: string | undefined, yesterdayOnly: boolean): Row[] =>
+    plate ? [intent(`${where} (${plate})`, { id: "truck_flags", plate: plate as never, yesterdayOnly })] : [];
+  return [
+    ...(["waiting", "confirmed", "wrong"] as const).map((k): Row => [`flag status · ${k}`, STATUS_LABEL[k].hi, STATUS_LABEL[k].en]),
+    ...(["R1", "R2", "R3", "R4", "R5"] as const).map((r): Row => [`rule · ${r}`, RULE_LABEL[r].hi, RULE_LABEL[r].en]),
+    ["Check caveat · every cited flag is a Check", CHECK_CAVEAT_LINE.hi, CHECK_CAVEAT_LINE.en],
+    both("Check caveat · one of the cited trips (0926-11)", (l) => checkCaveatFor(["0926-11"], l)),
+    both("Check caveat · two of the cited trips", (l) => checkCaveatFor(["0909-03", "0917-06"], l)),
+    both("cited trip · a flag with litres (0926-11)", (l) => tripLabel("0926-11", l)),
+    both("cited trip · a flag with no litres (0909-07)", (l) => tripLabel("0909-07", l)),
+    both("cited trip · no flag (0926-07)", (l) => tripLabel("0926-07", l)),
+    both("cited trip · cites span trucks, so the plate leads (0927-02)", (l) => tripLabel("0927-02", l, true)),
+    intent("driver with the most diesel unaccounted", { id: "driver_most_diesel" }),
+    intent("last week's diesel", { id: "last_week_diesel" }),
+    intent("least per km, and why", { id: "least_per_km" }),
+    intent("best per km", { id: "best_per_km" }),
+    intent("flags on the Behror stretch", { id: "behror_flags" }),
+    intent("yesterday's summary", { id: "yesterday_summary" }),
+    intent("recovered this month", { id: "recovered" }),
+    intent("how often Urja was wrong", { id: "wrong_rate" }),
+    ...truck("one truck's flags yesterday", v.flagged, true),
+    ...truck("a truck with no September flag", v.none, false),
+    ...truck("a truck whose trips yesterday add up", v.cleanYesterday, true),
+    ...truck("a truck with no trip ending yesterday", v.noTripYesterday, true),
   ];
 }
 
@@ -243,6 +297,11 @@ export function hindiReviewMarkdown(): string {
     ["7. Evidence lines on the flags", "Built by lib/data/rules/* with the lib/data/rules/text.ts helpers; every distinct line in the dataset.", evidenceRows()],
     ["8. Phone menu", "components/shell/nav.ts `menuLinks`, `MENU_COPY`: the menu on the Hindi /brief and /message (EXE23).", menuRows()],
     ["9. Ask drawer", "components/ask/copy.ts `ASK_COPY`, `ASK_CHIPS`; components/ask/askScope.ts: the drawer on the Hindi /brief and /message (EXE23).", askRows()],
+    [
+      "10. Ask answers",
+      "lib/ask/labels.ts `STATUS_LABEL`, `RULE_LABEL`, `tripLabel`; lib/ask/fallback.ts: the cited-trip labels, the Check caveat a model answer gets, and the answers Urja gives without the AI (one per prepared question), for a Hindi question.",
+      answerRows(),
+    ],
   ];
   const total = sections.reduce((a, [, , r]) => a + r.length, 0);
   return [

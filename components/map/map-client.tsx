@@ -12,7 +12,9 @@
  *   a failed import or WebGL context, or no `load` within 8 s calls `onFail`
  *   once (the caller shows "Map unavailable; every event is in the timeline")
  *   and frees the map.
- * - Compact attribution: the tile source's "© CARTO, © OpenStreetMap contributors".
+ * - Compact attribution: the tile source's "© CARTO, © OpenStreetMap contributors", top left,
+ *   under the card's header row and (trip map) its legend, clear of the glass card and the rail
+ *   box that covered it bottom right (DES-26). Open on load; on phones it folds to its (i) after 5 s.
  */
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -86,6 +88,55 @@ export function watchLoad(map: LoadEmitter, opts: { timeoutMs?: number; onFail: 
   };
 }
 
+/** What sits at the top of a map card, over the map: the header row and the trip map's legend. */
+const TOP_CHROME = ".mc-top, .maplegend";
+
+/**
+ * Drops the top-left control corner (the attribution) below the card's header row and legend,
+ * whose heights change with the width and text size, so it is never under them.
+ */
+export function placeAttribution(map: Pick<ML.Map, "getContainer">) {
+  const box = map.getContainer();
+  const corner = box.querySelector<HTMLElement>(".maplibregl-ctrl-top-left");
+  const card = box.closest(".mapcard");
+  if (!corner || !card) return;
+  const top = box.getBoundingClientRect().top;
+  let below = 0;
+  for (const el of card.querySelectorAll(TOP_CHROME)) {
+    const r = el.getBoundingClientRect();
+    if (r.height > 0) below = Math.max(below, r.bottom - top);
+  }
+  corner.style.top = `${Math.round(below)}px`;
+}
+
+/** On a phone, how long the open attribution stays before it folds to its (i) on its own. */
+export const ATTRIBUTION_FOLD_MS = 5000;
+
+/**
+ * On a phone the map has no free corner, and the open attribution covers the route's far end.
+ * It opens on load as MapLibre shows it (and folds on the first drag, as MapLibre does), then
+ * folds to its (i) button after ATTRIBUTION_FOLD_MS; the (i) opens it again. MapLibre opens it
+ * when the first attribution arrives, so the timer starts then.
+ */
+function foldAttributionLater(map: ML.Map) {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const arm = () => {
+    const a = map.getContainer().querySelector(".maplibregl-ctrl-attrib.maplibregl-compact-show");
+    if (!a || timer) return;
+    map.off("styledata", arm);
+    map.off("sourcedata", arm);
+    timer = setTimeout(() => a.classList.remove("maplibregl-compact-show"), ATTRIBUTION_FOLD_MS);
+  };
+  map.on("styledata", arm);
+  map.on("sourcedata", arm);
+  map.on("remove", () => clearTimeout(timer));
+}
+
+/** Re-runs placeAttribution once the fonts are in (the header and legend may change height). */
+function placeAttributionWhenFontsLoad(map: ML.Map) {
+  document.fonts?.ready.then(() => placeAttribution(map)).catch(() => {});
+}
+
 const reducedMotion = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 const compact = () => window.innerWidth < COMPACT_MAX_PX;
 
@@ -110,10 +161,15 @@ async function createMap(
       style: STYLE_URL,
       bounds: camera.bounds,
       fitBoundsOptions: { padding: camera.padding, pitch: camera.pitch, bearing: camera.bearing },
-      attributionControl: { compact: true },
+      attributionControl: false,
       dragRotate: false,
       pitchWithRotate: false,
     });
+    map.addControl(new ml.AttributionControl({ compact: true }), "top-left");
+    placeAttribution(map);
+    map.on("resize", () => placeAttribution(map));
+    placeAttributionWhenFontsLoad(map);
+    if (compact()) foldAttributionLater(map);
   } catch {
     onFail();
     return null;

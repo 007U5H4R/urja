@@ -32,7 +32,8 @@ export function AskDock({ lang, copy }: AskDockProps) {
 
   return (
     <div className="dock" lang={lang} data-slot="ask-dock">
-      <form className="glass" onSubmit={submit}>
+      {/* A search landmark, so the dock isn't content outside every landmark (axe `region`, DES-25). */}
+      <form className="glass" role="search" aria-label={copy.label} onSubmit={submit}>
         <label htmlFor="ask-dock-q" className="sr">
           {copy.label}
         </label>

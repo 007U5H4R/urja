@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import type { AskResponse } from "@/lib/ask/contract";
 import { openAsk } from "@/lib/ask-events";
+import { AskAnswer } from "./AskAnswer";
 import { AskDock } from "./AskDock";
 import { AskProvider, type SheetComponent } from "./AskProvider";
 import { ASK_CHIPS, ASK_COPY } from "./copy";
@@ -233,7 +234,7 @@ describe("AskProvider + AskSheet: opening, focus, inert (TC-026)", () => {
     mount();
     act(() => openAsk());
     const d = await waitFor(dialog);
-    expect(d.tagName).toBe("ASIDE");
+    expect(d.tagName).toBe("DIV"); // not <aside>: role="dialog" isn't allowed on it (DES-25)
     expect(d.classList.contains("drawer")).toBe(true);
     expect(d.getAttribute("aria-modal")).toBe("true");
     expect(within(d).getByRole("heading", { level: 2, name: "Ask Urja" })).toBeTruthy();
@@ -356,13 +357,19 @@ describe("Ask states (TC-024)", () => {
     expect((input() as HTMLInputElement).value).toBe("Will it rain in Behror?");
   });
 
-  it("a 429 shows when to ask again, with the fallback it carries", async () => {
+  it("a 429 shows when to ask again as its heading, with the fallback it carries (DES-18)", async () => {
     mount(reply(resp({ mode: "fallback", retryAfterS: 12, provenance: { ...provenance, model: null } }), 429));
     act(() => openAsk());
     await waitFor(dialog);
     await askQuestion("q");
-    await waitFor(() => expect(within(dialog()).getByText(ASK_COPY.en.retryAfter(12))).toBeTruthy());
-    expect(within(dialog()).getByRole("heading", { level: 3, name: ASK_COPY.en.fallbackBanner })).toBeTruthy();
+    await waitFor(() => expect(within(dialog()).getByRole("heading", { level: 3, name: ASK_COPY.en.retryAfter(12) })).toBeTruthy());
+    // The AI wasn't asked, so nothing blames it; the one wait is the heading's.
+    expect(within(dialog()).queryByText(ASK_COPY.en.fallbackBanner)).toBeNull();
+    expect(within(dialog()).getByText(ASK_COPY.en.savedShort)).toBeTruthy();
+    expect(dialog().textContent).not.toContain("in a minute");
+    expect((within(dialog()).getByRole("button", { name: "Try again" }) as HTMLButtonElement).disabled).toBe(true);
+    // The cites and the report are still there.
+    expect(within(dialog()).getByRole("link", { name: "Trip 0926-04" })).toBeTruthy();
   });
 
   it("error: says what happened, keeps the question and offers Try again", async () => {
@@ -396,6 +403,88 @@ describe("Ask states (TC-024)", () => {
   });
 });
 
+describe("Ask rate-limited (429) state (DES-18)", () => {
+  afterEach(() => vi.useRealTimers());
+
+  const savedState = (lang: "en" | "hi", retryAfterS = 3) =>
+    ({
+      status: "saved",
+      question: "q",
+      retryAfterS,
+      response: resp({ mode: "saved", lang, answer: SAVED[lang], cites: [], provenance: { ...provenance, model: null } }),
+    }) as const;
+  const shown = (el: HTMLElement) => el.querySelector("[aria-hidden]")?.textContent ?? el.textContent;
+
+  it.each(["en", "hi"] as const)("%s: the wait is the heading; 'Try again' stays disabled and counts down until it has passed", (lang) => {
+    vi.useFakeTimers();
+    const c = ASK_COPY[lang];
+    const onRetry = vi.fn();
+    const { container } = render(<AskAnswer state={savedState(lang)} lang={lang} scope={SHELL_SCOPE} saved={SAVED} onRetry={onRetry} />);
+    const heading = () => screen.getByRole("heading", { level: 3 });
+    const button = () => screen.getByRole("button") as HTMLButtonElement;
+
+    // One wait on screen, stated once to assistive tech; no banner about the AI; no "in a minute".
+    expect(shown(heading())).toBe(c.retryAfter(3));
+    expect(heading().querySelector(".sr")!.textContent).toBe(c.retryAfter(3));
+    expect(container.textContent).not.toContain(c.savedBanner);
+    expect(container.textContent).not.toContain(SAVED[lang]);
+    expect(screen.getByText(c.savedShort)).toBeTruthy();
+    expect(SAVED[lang].startsWith(c.savedShort)).toBe(true);
+    expect(button().disabled).toBe(true);
+    expect(shown(button())).toBe(c.retryIn(3));
+    expect(button().querySelector(".sr")!.textContent).toBe(c.retry);
+    fireEvent.click(button());
+    expect(onRetry).not.toHaveBeenCalled();
+
+    act(() => void vi.advanceTimersByTime(1000));
+    expect(shown(heading())).toBe(c.retryAfter(2));
+    expect(shown(button())).toBe(c.retryIn(2));
+    expect(button().disabled).toBe(true);
+
+    act(() => void vi.advanceTimersByTime(1000));
+    act(() => void vi.advanceTimersByTime(1000));
+    expect(heading().textContent).toBe(c.retryReady);
+    expect(button().disabled).toBe(false);
+    expect(button().textContent).toBe(c.retry);
+    fireEvent.click(button());
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(["en", "hi"] as const)("%s: a daily cap (wait to midnight) says to come back tomorrow, with no countdown and no 'Try again'", (lang) => {
+    vi.useFakeTimers();
+    const c = ASK_COPY[lang];
+    const { container } = render(<AskAnswer state={savedState(lang, 61234)} lang={lang} scope={SHELL_SCOPE} saved={SAVED} onRetry={() => {}} />);
+    expect(screen.getByRole("heading", { level: 3 }).textContent).toBe(c.dailyLimit);
+    expect(container.textContent).not.toContain("61234");
+    expect(container.textContent).not.toContain(c.retryAfter(61234));
+    expect(screen.queryByRole("button")).toBeNull();
+    expect(screen.getByText(c.savedShort)).toBeTruthy();
+    act(() => void vi.advanceTimersByTime(5000));
+    expect(screen.getByRole("heading", { level: 3 }).textContent).toBe(c.dailyLimit);
+  });
+
+  it("a wait of exactly 60 s still counts down", () => {
+    render(<AskAnswer state={savedState("en", 60)} lang="en" scope={SHELL_SCOPE} saved={SAVED} onRetry={() => {}} />);
+    expect((screen.getByRole("button") as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByRole("heading", { level: 3, name: ASK_COPY.en.retryAfter(60) })).toBeTruthy();
+  });
+
+  it("without a wait, saved keeps its banner, its full line and an enabled 'Try again'", () => {
+    const state = { ...savedState("en"), retryAfterS: undefined };
+    render(<AskAnswer state={state} lang="en" scope={SHELL_SCOPE} saved={SAVED} onRetry={() => {}} />);
+    expect(screen.getByRole("heading", { level: 3 }).textContent).toBe(ASK_COPY.en.savedBanner);
+    expect(screen.getByText(SAVED.en)).toBeTruthy();
+    expect((screen.getByRole("button", { name: "Try again" }) as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it("no rate-limit line blames the AI", () => {
+    for (const l of ["en", "hi"] as const) {
+      const c = ASK_COPY[l];
+      for (const s of [c.retryAfter(9), c.retryReady, c.retryIn(9), c.savedShort, c.dailyLimit]) expect(s).not.toMatch(/\bAI\b/);
+    }
+  });
+});
+
 describe("AskDock (TSK-12.3)", () => {
   const copy = { label: "Urja से पूछें", placeholder: "कुछ भी पूछें…", button: "पूछें" };
 
@@ -408,6 +497,16 @@ describe("AskDock (TSK-12.3)", () => {
     expect(sent(fetchImpl)).toEqual({ question: "सबसे कम कौन कमाता है?", lang: "hi" });
     await waitFor(() => expect(within(dialog()).getByText("RJ14 GB 4521 had 38 L unaccounted.")).toBeTruthy());
     expect((dockInput as HTMLInputElement).value).toBe("");
+  });
+
+  it("sits in a labelled search landmark, and the drawer is a div with role dialog (axe region, aria-allowed-role; DES-25)", async () => {
+    mount(reply(resp()), <AskDock lang="hi" copy={copy} />);
+    const form = screen.getByRole("search", { name: copy.label });
+    expect(within(form).getByRole("textbox", { name: copy.label })).toBeTruthy();
+    fireEvent.click(within(form).getByRole("button", { name: copy.button }));
+    await waitFor(() => expect(dialog()).toBeTruthy());
+    expect(dialog().tagName).toBe("DIV");
+    expect(dialog().id).toBe("ask-drawer");
   });
 
   it("an empty dock just opens the chat view", async () => {
@@ -489,8 +588,9 @@ describe("the drawer on a Hindi screen (EXE23): its labels follow <html lang>", 
     await openHi(reply({ ...resp({ mode: "saved", lang: "hi", answer: SAVED.hi, cites: [] }), retryAfterS: 9 }, 429));
     fireEvent.change(hiInput(), { target: { value: "कल बारिश होगी?" } });
     fireEvent.submit(hiInput().closest("form")!);
-    await waitFor(() => expect(within(hiDialog()).getByRole("heading", { level: 3 }).textContent).toBe(hi.savedBanner));
-    expect(within(hiDialog()).getByText(hi.retryAfter(9))).toBeTruthy();
+    await waitFor(() => expect(within(hiDialog()).getByRole("heading", { level: 3, name: hi.retryAfter(9) })).toBeTruthy());
+    expect(within(hiDialog()).getByText(hi.savedShort).closest("[lang]")!.getAttribute("lang")).toBe("hi");
+    expect(within(hiDialog()).getByRole("button", { name: hi.retry }).querySelector("[aria-hidden]")!.textContent).toBe(hi.retryIn(9));
     cleanup();
     await openHi(() => Promise.reject(new TypeError("offline")));
     fireEvent.change(hiInput(), { target: { value: "कल?" } });
