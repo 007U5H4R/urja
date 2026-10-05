@@ -1,4 +1,4 @@
-import { Rail } from "@/components/charts/Rail";
+import { Rail, knobEdge } from "@/components/charts/Rail";
 import type { HeroFlag, HeroFleet } from "@/lib/data/views/today";
 
 export type RailContent = { kind: "flag"; flag: HeroFlag } | { kind: "fleet"; fleet: HeroFleet };
@@ -20,8 +20,11 @@ export function RailBox({ content }: { content: RailContent }) {
     );
   }
   const r = content.flag.rail;
+  // DES-10: near an end the knob's caption is anchored on its inner side, clear of the head's short
+  // note. It stays above the rail: under it, the box would grow into the glass card above.
+  const edge = knobEdge(r.total, r.knob);
   return (
-    <div className="glass railbox" id="rb">
+    <div className={edge ? `glass railbox knob-${edge}` : "glass railbox"} id="rb">
       <div className="rb-head">
         <b>{r.head}</b>
         <span>{r.sub}</span>

@@ -1,4 +1,4 @@
-import AxeBuilder from "@axe-core/playwright";
+import { axeBuilder } from "./axe";
 import { expect, test, type Page } from "./fixtures";
 
 // TSK-06.4 · TKT-06 (TC-027, TC-022, TC-010 UI, TC-031): the Morning brief and the
@@ -39,7 +39,7 @@ for (const path of SCROLL_PAGES) {
   test(`TC-031: axe finds no serious or critical violations on ${path}`, async ({ page }) => {
     await page.goto(path);
     await page.waitForLoadState("networkidle");
-    const { violations } = await new AxeBuilder({ page }).analyze();
+    const { violations } = await axeBuilder(page).analyze();
     const bad = violations.filter((v) => v.impact === "serious" || v.impact === "critical");
     expect(bad.map((v) => `${v.id} (${v.impact}): ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`)).toEqual([]);
   });
@@ -298,7 +298,7 @@ test.describe("EXE12 · the phone screens keep their own top bar (its menu in th
         innerWidth: window.innerWidth,
       }));
       expect(scrollWidth).toBeLessThanOrEqual(innerWidth);
-      const axe = await new AxeBuilder({ page }).include(`${bar} details.m-menu`).analyze();
+      const axe = await axeBuilder(page).include(`${bar} details.m-menu`).analyze();
       expect(axe.violations.filter((v) => v.impact === "serious" || v.impact === "critical").map((v) => v.id)).toEqual([]);
       await menu.getByRole("link", { name: m.today, exact: true }).click();
       await expect(page).toHaveURL(/\/$/);

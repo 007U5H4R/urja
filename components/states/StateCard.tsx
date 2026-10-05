@@ -44,7 +44,7 @@ export function StateCard({ id, chip, tone, tag, tagIsHeading, className, role, 
 /** A state view's frame: the greeting line, then the card (final/states.html `.st-head` + `.states`). */
 export function StateView({ greet, children }: { greet: string; children: ReactNode }) {
   return (
-    <main className="wrap st-view">
+    <main className="wrap st-view" id="main">
       <section className="st-head">
         <p className="greet">{greet}</p>
       </section>

@@ -138,3 +138,100 @@ test("an unknown address shows the 404 page with the top bar and a way back", as
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("There’s no page at this address.");
   await expect(page.getByRole("link", { name: "Back to Today" })).toHaveAttribute("href", "/");
 });
+
+/* ---------- Stage 8 fixes (S1: DES-5, 6, 28, 29, 32) ---------- */
+
+for (const path of ["/", "/trips/0926-04", "/why"]) {
+  test(`DES-32: "Skip to content" is the first Tab stop on ${path}, shows when focused, and moves focus into main`, async ({ page }) => {
+    await page.goto(path);
+    await page.waitForLoadState("networkidle");
+    const skip = page.getByRole("link", { name: "Skip to content" });
+    await expect(skip).not.toBeInViewport();
+    await page.keyboard.press("Tab");
+    await expect(skip).toBeFocused();
+    await expect(skip).toBeInViewport();
+    await expect(async () => {
+      await skip.focus();
+      await page.keyboard.press("Enter");
+      expect(await page.evaluate(() => document.activeElement?.tagName)).toBe("MAIN");
+    }).toPass();
+  });
+}
+
+test("DES-6: at 320 px the Ask drawer's submit button stays on screen", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 640 });
+  await page.goto("/");
+  const drawer = page.getByRole("dialog", { name: "Ask Urja" });
+  await expect(async () => {
+    await page.keyboard.press("ControlOrMeta+k");
+    await expect(drawer).toBeVisible({ timeout: 500 });
+  }).toPass();
+  await expect.poll(() => page.locator("#ask-drawer").evaluate((el) => getComputedStyle(el).transform)).toBe("none");
+  const submit = await page.locator("#ask-drawer form.composer button[type=submit]").evaluate((b) => b.getBoundingClientRect().right);
+  expect(submit).toBeLessThanOrEqual(320);
+  expect(await page.locator("#ask-drawer").evaluate((d) => d.scrollWidth <= d.clientWidth)).toBe(true);
+});
+
+test("DES-29: the brief's Ask dock shows the standard 2 px focus ring when its field has keyboard focus", async ({ page }) => {
+  await page.goto("/brief?lang=en");
+  const form = page.locator(".dock form");
+  const input = page.locator("#ask-dock-q");
+  await input.focus();
+  await page.keyboard.press("Shift+Tab");
+  await page.keyboard.press("Tab");
+  await expect(input).toBeFocused();
+  const ring = await form.evaluate((f) => {
+    const s = getComputedStyle(f);
+    return { style: s.outlineStyle, width: s.outlineWidth };
+  });
+  expect(ring).toEqual({ style: "solid", width: "2px" });
+});
+
+test("DES-5: on the brief, focus moved into view never lands under the Ask dock", async ({ page }) => {
+  await page.goto("/brief?lang=en");
+  await page.evaluate(() => window.scrollTo(0, 0));
+  const items = page.locator("main a[href^='/trips/']");
+  const last = (await items.count()) - 1;
+  await items.nth(last).evaluate((a: HTMLElement) => a.focus());
+  const dock = await page.locator(".dock form").evaluate((f) => f.getBoundingClientRect().top);
+  const link = await items.nth(last).evaluate((a) => a.getBoundingClientRect().bottom);
+  expect(link).toBeLessThanOrEqual(dock);
+});
+
+test("DES-28: with the text alone at 200%, the top bar grows instead of overflowing, and nothing in it clips", async ({ page }, info) => {
+  if (info.project.name === "desktop") await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("/");
+  await page.evaluate(() => (document.documentElement.style.fontSize = "200%"));
+  // clientWidth, not innerWidth: on a mobile viewport innerWidth widens to whatever overflows.
+  const { sw, cw } = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
+  expect(sw).toBeLessThanOrEqual(cw);
+  const clipped = await page.evaluate(() => [
+    ...[...document.querySelectorAll<HTMLElement>("header.topbar *, .btn, .askbar")]
+      .filter((e) => e.offsetParent != null && !e.matches(".sr, .sr *, .plate") && e.scrollHeight > e.clientHeight + 1)
+      .map((e) => `${e.className}: ${e.textContent}`),
+    // a plate's box is at least its 1em line (line-height: 1), so its glyphs sit on the yellow
+    ...[...document.querySelectorAll<HTMLElement>(".plate")]
+      .filter((e) => e.offsetParent !== null && e.getBoundingClientRect().height + 0.5 < parseFloat(getComputedStyle(e).fontSize))
+      .map((e) => `${e.className}: ${e.textContent}`),
+  ]);
+  expect(clipped).toEqual([]);
+  const bar = await page.locator("header.topbar").evaluate((h) => ({ sw: h.scrollWidth, cw: h.clientWidth }));
+  expect(bar.sw).toBeLessThanOrEqual(bar.cw);
+});
+
+test("DES-28: at 100% text the boxes keep their fixed sizes; flex and grid parents don't stretch them", async ({ page }, info) => {
+  test.skip(info.project.name === "phone", "fine pointer: the coarse-pointer rules size these to 44 px");
+  for (const path of ["/brief", "/brief?lang=en"]) {
+    await page.goto(path);
+    const plates = await page.locator("main .item .plate").evaluateAll((ps) => ps.map((p) => p.getBoundingClientRect().height));
+    expect(plates.length, path).toBeGreaterThan(0);
+    for (const h of plates) expect(h, `${path} plate`).toBe(24);
+    expect(await page.locator(".dock form .btn").evaluate((b) => b.getBoundingClientRect().height), `${path} dock Ask`).toBe(40);
+  }
+  await page.goto("/");
+  await expect(async () => {
+    await page.keyboard.press("ControlOrMeta+k");
+    await expect(page.getByRole("dialog", { name: "Ask Urja" })).toBeVisible({ timeout: 500 });
+  }).toPass();
+  expect(await page.locator("#ask-drawer form.composer button[type=submit]").evaluate((b) => b.getBoundingClientRect().height)).toBe(40);
+});

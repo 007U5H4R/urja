@@ -36,6 +36,15 @@ const SUBSTITUTIONS: [string, string][] = [
   ["font-family: 'Anek Devanagari', var(--font);", "font-family: var(--font-plate), var(--font-hi), var(--font);"],
   // the poster lives in public/ (technical-plan §3.3).
   ["url(assets/truck-scene.png)", "url(/truck-scene.png)"],
+  // DES-7 (WCAG 2.4.3): the eyes list comes first in the DOM, so the stacked hero row needs no
+  // visual reorder; the desktop columns come from grid placement in the second components block.
+  [".hero-row .eyes { order: -1; }", ""],
+  // DES-2: the prefixed declaration first. In lamp.css's order the minifier treats the later
+  // -webkit- line as overriding the standard one and drops the standard one (no blur in Chromium).
+  [
+    "backdrop-filter: blur(14px) saturate(1.15); -webkit-backdrop-filter: blur(14px) saturate(1.15);",
+    "-webkit-backdrop-filter: blur(14px) saturate(1.15); backdrop-filter: blur(14px) saturate(1.15);",
+  ],
 ];
 
 describe("lamp.css port (TSK-03.2)", () => {

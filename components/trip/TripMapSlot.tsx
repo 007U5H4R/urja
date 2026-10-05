@@ -1,4 +1,4 @@
-import { Rail } from "@/components/charts/Rail";
+import { Rail, knobEdge } from "@/components/charts/Rail";
 import type { RailView, TripMapSlotView } from "@/lib/data/views/trip";
 import type { TripMapView } from "@/lib/data/views/trip-map";
 import { FullscreenButton, TripMap } from "./TripMap";
@@ -34,7 +34,8 @@ export function TripMapSlot({ map, rail, route }: { map: TripMapSlotView; rail: 
           </span>
         ))}
       </div>
-      <div className="glass railbox">
+      {/* DES-10: the head's tick legend spans a third of the box, so near an end the knob's caption goes under the rail. */}
+      <div className={knobEdge(rail.total, rail.knob) ? "glass railbox knob-under" : "glass railbox"}>
         <div className="rb-head">
           <b>{rail.head}</b>
           <span>{rail.key}</span>

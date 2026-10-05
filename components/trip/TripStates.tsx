@@ -12,7 +12,7 @@ function Sk({ w, h, style }: { w: string; h: number; style?: CSSProperties }) {
  */
 export function TripSkeleton() {
   return (
-    <main className="wrap">
+    <main className="wrap" id="main">
       <p role="status" className="sr-only">
         Loading this trip
       </p>
@@ -52,7 +52,7 @@ export function TripSkeleton() {
  */
 export function TripError({ onRetry }: { onRetry: () => void }) {
   return (
-    <main className="wrap">
+    <main className="wrap" id="main">
       <section className="pagehead" aria-labelledby="h1">
         <div>
           <p className="greet">Trip evidence</p>

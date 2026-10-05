@@ -208,6 +208,20 @@ describe("FuelSpeedChart", () => {
       `Doesn’t add up${R}1,220`,
     ]);
   });
+
+  it("R5 (0831-02): the toll table is its own panel with its own head, not under the fuel heading (DES-16)", () => {
+    const { container } = render(<FuelSpeedChart chart={view("0831-02").chart} />);
+    const fuel = container.querySelector('section[aria-labelledby="fuel-h"]')!;
+    expect(fuel.querySelector("table")).toBeNull();
+    const panel = container.querySelector('section.panel.tollpanel[aria-labelledby="tolls-h"]')!;
+    expect(panel.querySelector("h2#tolls-h")!.textContent).toBe("Toll claim against FASTag deductions, plaza by plaza");
+    expect(panel.querySelector("table.tbl")!.getAttribute("aria-labelledby")).toBe("tolls-h");
+  });
+
+  it("a trip without an R5 flag has no toll panel", () => {
+    const { container } = render(<FuelSpeedChart chart={view("0926-04").chart} />);
+    expect(container.querySelector(".tollpanel")).toBeNull();
+  });
 });
 
 describe("Timeline and TripLedger (0926-04)", () => {

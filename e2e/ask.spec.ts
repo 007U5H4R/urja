@@ -1,4 +1,4 @@
-import AxeBuilder from "@axe-core/playwright";
+import { axeBuilder } from "./axe";
 import { expect, test, type Page, type Route } from "./fixtures";
 
 // TSK-12.4 · TKT-12 (TC-026, TC-024 Ask, TC-031): the ⌘K drawer at 1440/768 and the
@@ -250,7 +250,7 @@ test.describe("Ask states (TC-024)", () => {
     );
     await expect(input(page)).toHaveValue("");
 
-    const axe = await new AxeBuilder({ page }).include("#ask-drawer").analyze();
+    const axe = await axeBuilder(page).include("#ask-drawer").analyze();
     const bad = axe.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
     expect(bad.map((v) => `${v.id} (${v.impact}): ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`)).toEqual([]);
 
@@ -285,7 +285,7 @@ test.describe("Ask states (TC-024)", () => {
     await expect(drawer(page).locator(".prov")).toContainText("straight from your data, no AI · answered in 0.04 s");
     await expect(input(page)).toHaveValue("How much diesel went missing last week?");
 
-    const axe = await new AxeBuilder({ page }).include("#ask-drawer").analyze();
+    const axe = await axeBuilder(page).include("#ask-drawer").analyze();
     expect(axe.violations.filter((v) => v.impact === "serious" || v.impact === "critical").map((v) => v.id)).toEqual([]);
 
     await drawer(page).getByRole("button", { name: "Try again" }).click();
@@ -389,7 +389,7 @@ test.describe("phone at 375: the dock and the chat view", () => {
     const { scrollWidth, innerWidth } = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, innerWidth: window.innerWidth }));
     expect(scrollWidth).toBeLessThanOrEqual(innerWidth);
 
-    const axe = await new AxeBuilder({ page }).include("#ask-drawer").analyze();
+    const axe = await axeBuilder(page).include("#ask-drawer").analyze();
     expect(axe.violations.filter((v) => v.impact === "serious" || v.impact === "critical").map((v) => v.id)).toEqual([]);
 
     await drawer(page, "hi").getByRole("button", { name: L.hi.close }).click();
@@ -416,7 +416,7 @@ test.describe("phone at 375: the dock and the chat view", () => {
       await settled(page);
       expect((await drawer(page, lang).boundingBox())!.width).toBe(375);
       await expectDrawerIn(page, lang);
-      expectNoSeriousAxe((await new AxeBuilder({ page }).include("#ask-drawer").analyze()).violations);
+      expectNoSeriousAxe((await axeBuilder(page).include("#ask-drawer").analyze()).violations);
       await ask(page, "Which truck?", lang);
       await expect(drawer(page, lang).locator(".a .prov")).toContainText(L[lang].canBeWrong);
       await page.keyboard.press("Escape");
@@ -478,7 +478,7 @@ test.describe("EXE23: the drawer on the Hindi brief, by keyboard (TC-026)", () =
     await expect(drawer(page, "hi").getByRole("heading", { level: 3 })).toHaveText(L.hi.banner);
     await expect(drawer(page, "hi").getByRole("button", { name: L.hi.retry })).toBeVisible();
     await expect(drawer(page, "hi").locator(".prov")).toContainText("AI के बिना, सीधा हिसाब");
-    expectNoSeriousAxe((await new AxeBuilder({ page }).include("#ask-drawer").analyze()).violations);
+    expectNoSeriousAxe((await axeBuilder(page).include("#ask-drawer").analyze()).violations);
     await page.keyboard.press("Escape");
     await expect(drawer(page, "hi")).toBeHidden();
     expect(errors).toEqual([]);

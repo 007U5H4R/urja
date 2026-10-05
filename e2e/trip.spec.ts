@@ -1,4 +1,4 @@
-import AxeBuilder from "@axe-core/playwright";
+import { axeBuilder } from "./axe";
 import { expect, test, type Page } from "./fixtures";
 
 // TKT-05 (TASK-9): the Trip evidence page. TC-003 (UI), TC-004/005 render, the
@@ -224,9 +224,110 @@ test("TC-022 · phone order: flag card, map, fuel chart, timeline, ledger", asyn
 test("TC-031 · axe finds no serious or critical violations on /trips/0926-04", async ({ page }) => {
   await page.goto("/trips/0926-04");
   await page.waitForLoadState("networkidle");
-  const results = await new AxeBuilder({ page }).analyze();
+  const results = await axeBuilder(page).analyze();
   const bad = results.violations
     .filter((v) => v.impact === "serious" || v.impact === "critical")
     .map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`);
   expect(bad).toEqual([]);
+});
+
+/* ---------- Stage 8 fixes (S1: DES-4, 5, 10, 16, 28, 33) ---------- */
+
+type Box = { left: number; right: number; top: number; bottom: number; width: number; height: number };
+const boxOf = (page: Page, sel: string) =>
+  page.locator(sel).first().evaluate((e): Box => {
+    const r = e.getBoundingClientRect();
+    return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, width: r.width, height: r.height };
+  });
+const overlaps = (a: Box, b: Box) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+
+test("DES-4 · the trip's phone actions are 44 px on a coarse pointer; the breadcrumb links are at least 24 px", async ({ page }, info) => {
+  await page.goto("/trips/0926-04");
+  for (const name of ["Ask Ramesh on WhatsApp", "Mark as explained", "Call Ramesh", "Message Ramesh"]) {
+    const b = await page.getByRole("button", { name }).evaluate((e) => e.getBoundingClientRect());
+    if (info.project.name === "phone") {
+      expect(b.height, name).toBeGreaterThanOrEqual(44);
+      if (name.startsWith("Call") || name.startsWith("Message")) expect(b.width, name).toBeGreaterThanOrEqual(44);
+    } else {
+      expect(b.height, name).toBeGreaterThanOrEqual(24);
+    }
+  }
+  const crumbs = await page.locator("nav.crumbs a").evaluateAll((as) => as.map((a) => a.getBoundingClientRect().height));
+  expect(crumbs).toHaveLength(2);
+  for (const h of crumbs) expect(h).toBeGreaterThanOrEqual(24);
+});
+
+test("DES-5 · Call Ramesh, focused from below, comes into view under the sticky top bar, not behind it", async ({ page }) => {
+  await page.goto("/trips/0926-04");
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await page.getByRole("button", { name: "Call Ramesh" }).evaluate((b: HTMLElement) => b.focus());
+  const bar = await boxOf(page, "header.topbar");
+  const btn = await boxOf(page, '#driver button[aria-label="Call Ramesh"]');
+  expect(btn.top).toBeGreaterThanOrEqual(bar.bottom);
+});
+
+for (const [id, caption] of [
+  ["0927-02", "4:50 PM · bill ≠ tank"],
+  ["0901-04", "12:59 AM · +59 km"],
+  ["0926-04", "2:14 AM · −38 L"],
+] as const) {
+  test(`DES-10 · /trips/${id}: the rail knob's caption sits clear of the rail box's head`, async ({ page }) => {
+    await page.goto(`/trips/${id}`);
+    const rb = ".trip-grid .railbox";
+    await expect(page.locator(`${rb} .rail .knob b`)).toHaveText(caption);
+    const cap = await boxOf(page, `${rb} .rail .knob b`);
+    for (const sel of [`${rb} .rb-head b`, `${rb} .rb-head span`, `${rb} .rail-ends span:first-child`, `${rb} .rail-ends span:last-child`]) {
+      const visible = await page.locator(sel).evaluate((e) => getComputedStyle(e).display !== "none");
+      if (visible) expect(overlaps(cap, await boxOf(page, sel)), sel).toBe(false);
+    }
+  });
+}
+
+test("DES-16 · /trips/0831-02: the R5 toll table has its own panel and head, at a readable width", async ({ page }, info) => {
+  await page.goto("/trips/0831-02");
+  const panel = page.locator("section.tollpanel");
+  await expect(panel.getByRole("heading", { level: 2 })).toHaveText("Toll claim against FASTag deductions, plaza by plaza");
+  await expect(page.locator('section[aria-labelledby="fuel-h"] table')).toHaveCount(0);
+  const table = panel.getByRole("table", { name: "Toll claim against FASTag deductions, plaza by plaza" });
+  await expect(table.locator("tfoot tr")).toHaveCount(3);
+  const w = await table.evaluate((t) => t.getBoundingClientRect().width);
+  expect(w).toBeLessThanOrEqual(560);
+  if (info.project.name === "desktop") expect(w).toBeGreaterThan(400);
+});
+
+test("DES-28 · with the text alone at 200%, the trip page doesn't scroll sideways and the shell's boxes grow instead of clipping", async ({ page }, info) => {
+  if (info.project.name === "desktop") await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("/trips/0926-04");
+  await page.evaluate(() => (document.documentElement.style.fontSize = "200%"));
+  // clientWidth, not innerWidth: on a mobile viewport innerWidth widens to whatever overflows.
+  const { sw, cw } = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
+  expect(sw).toBeLessThanOrEqual(cw);
+  const clipped = await page.evaluate(() => [
+    ...[...document.querySelectorAll<HTMLElement>(".btn, .askbar")]
+      .filter((e) => e.offsetParent !== null && e.scrollHeight > e.clientHeight + 1)
+      .map((e) => `${e.className}: ${e.textContent}`),
+    // a plate's box is at least its 1em line (line-height: 1), so its glyphs sit on the yellow
+    ...[...document.querySelectorAll<HTMLElement>(".plate")]
+      .filter((e) => e.offsetParent !== null && e.getBoundingClientRect().height + 0.5 < parseFloat(getComputedStyle(e).fontSize))
+      .map((e) => `${e.className}: ${e.textContent}`),
+  ]);
+  expect(clipped).toEqual([]);
+});
+
+test("DES-33 · at 320 a negative amount never breaks between − and ₹", async ({ page }, info) => {
+  test.skip(info.project.name !== "phone", "phone width");
+  await page.setViewportSize({ width: 320, height: 640 });
+  await page.goto("/trips/0926-04");
+  // The text's own line boxes (a Range), not the flex item's, which stretches to its label's height.
+  const lines = await page.locator(".ledgerp .row > span:last-child").evaluateAll((ss) =>
+    ss
+      .filter((s) => (s.textContent ?? "").startsWith("−"))
+      .map((s) => {
+        const r = document.createRange();
+        r.selectNodeContents(s);
+        return { text: s.textContent, tops: new Set([...r.getClientRects()].map((q) => Math.round(q.top))).size };
+      }),
+  );
+  expect(lines.length).toBeGreaterThan(0);
+  for (const l of lines) expect(l.tops, l.text ?? "").toBe(1);
 });

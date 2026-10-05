@@ -163,6 +163,11 @@ export function HeroCard({ hero, fleet, scene, cities, eyes, eyesHead, cleanLine
 
   return (
     <section className="hero-row">
+      {/* DES-7 (WCAG 2.4.3): "Needs your eyes" comes first in the DOM, so the tab order follows the
+          stacked phone order (eyes above the hero, Design.md §16). Desktop places it in the right
+          column with grid placement (globals.css), so the 7fr | 5fr layout is unchanged. */}
+      <EyesList eyes={eyes} head={eyesHead} cleanLine={cleanLine} selected={eyes[selected]?.n} onSelect={(n) => select(eyes.findIndex((e) => e.n === n))} />
+
       {/* where it happened: the flagged trips on a real, tilted night map */}
       <article ref={cardRef} className={view === "scene" ? "panel mapcard is-scene" : "panel mapcard"} id="mapcard" aria-labelledby="map-h" data-map={status}>
         {/* Scene: the poster (loading and fallback); the three.js canvas is prepended over it once its first frame is drawn. */}
@@ -209,8 +214,6 @@ export function HeroCard({ hero, fleet, scene, cities, eyes, eyesHead, cleanLine
         <GlassCard content={content} />
         <RailBox content={content} />
       </article>
-
-      <EyesList eyes={eyes} head={eyesHead} cleanLine={cleanLine} selected={eyes[selected]?.n} onSelect={(n) => select(eyes.findIndex((e) => e.n === n))} />
     </section>
   );
 }

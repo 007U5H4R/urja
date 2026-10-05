@@ -19,7 +19,7 @@ export interface WhyEssayProps {
  */
 export function WhyEssay({ view, quotes }: WhyEssayProps) {
   return (
-    <main className="essay">
+    <main className="essay" id="main">
       <WhyHero byline={view.byline} />
 
       <Chapter n="01" label="What I heard" title="I’m new to trucking, so I went and asked.">

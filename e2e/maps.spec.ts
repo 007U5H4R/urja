@@ -1,4 +1,4 @@
-import AxeBuilder from "@axe-core/playwright";
+import { axeBuilder } from "./axe";
 import { expect, test, type Page, type Route } from "./fixtures";
 
 // TSK-10.4 · TKT-10 (TASK-14): the hero map and the trip route map.
@@ -448,7 +448,7 @@ for (const path of ["/?view=map", "/trips/0926-04"]) {
   test(`TC-031 · axe finds no serious or critical violations on ${path} with the map loaded`, async ({ page }) => {
     await page.goto(path);
     await expect(page.locator("[data-map=ready]")).toHaveCount(1, { timeout: 20_000 });
-    const results = await new AxeBuilder({ page }).analyze();
+    const results = await axeBuilder(page).analyze();
     const bad = results.violations
       .filter((v) => v.impact === "serious" || v.impact === "critical")
       .map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`);

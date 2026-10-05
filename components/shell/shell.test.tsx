@@ -316,7 +316,52 @@ describe("TopBar on the phone screens (EXE12)", () => {
       pathname = p;
       const { container, unmount } = renderBar();
       expect(container.querySelector("header.topbar")).toBeNull();
+      expect(container.querySelector("a.skip")).toBeNull();
       unmount();
     }
+  });
+});
+
+describe("Skip to content (DES-32)", () => {
+  it("is the first focusable element, first in the top bar's banner landmark, and points at #main", () => {
+    const { container } = renderBar();
+    const first = container.querySelector("a[href], button, input, summary")!;
+    expect(first.className).toBe("skip");
+    expect(first.textContent).toBe("Skip to content");
+    expect(first.getAttribute("href")).toBe("#main");
+    expect(first.parentElement!.matches("header.topbar")).toBe(true);
+    expect(first.nextElementSibling!.matches(".wrap")).toBe(true);
+  });
+
+  it("moves focus into #main", () => {
+    const { container } = render(
+      <>
+        <TopBar fleetName="Verma Carriers" truckCount={7} />
+        <main id="main">
+          <h1>Today</h1>
+        </main>
+      </>,
+    );
+    fireEvent.click(container.querySelector("a.skip")!);
+    const main = container.querySelector("main")!;
+    expect(document.activeElement).toBe(main);
+    expect(main.getAttribute("tabindex")).toBe("-1");
+    // Focusable only for the skip: the tabindex goes on blur.
+    main.blur();
+    expect(main.hasAttribute("tabindex")).toBe(false);
+  });
+
+  it("falls back to the first <main> on a page that gives it no id", () => {
+    const { container } = render(
+      <>
+        <TopBar fleetName="Verma Carriers" truckCount={7} />
+        <main className="essay">
+          <h1>Why Urja</h1>
+        </main>
+      </>,
+    );
+    const main = container.querySelector("main.essay")!;
+    fireEvent.click(container.querySelector("a.skip")!);
+    expect(document.activeElement).toBe(main);
   });
 });

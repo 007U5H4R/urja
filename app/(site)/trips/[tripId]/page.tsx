@@ -42,7 +42,7 @@ export default async function TripPage({ params }: Params) {
   if (!v) notFound();
   return (
     <StateSwitch specimens={{ loading: <TripSkeleton />, error: <TripErrorSpecimen /> }}>
-      <main className="wrap">
+      <main className="wrap" id="main">
         <nav className="crumbs" aria-label="Breadcrumb">
           <Link href="/">Today</Link>
           <Icon name="right" />

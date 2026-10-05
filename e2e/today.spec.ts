@@ -1,4 +1,4 @@
-import AxeBuilder from "@axe-core/playwright";
+import { axeBuilder } from "./axe";
 import { expect, test, type Page } from "./fixtures";
 
 // TSK-04.5 · TKT-04 (TC-006..TC-008 UI, TC-021, TC-022, TC-031): Needs your eyes,
@@ -161,9 +161,145 @@ test("TC-031: axe finds no serious or critical violations on Today, and there is
   await page.goto("/");
   await page.waitForLoadState("networkidle");
   await expect(page.locator("h1")).toHaveCount(1);
-  const results = await new AxeBuilder({ page }).analyze();
+  const results = await axeBuilder(page).analyze();
   const bad = results.violations
     .filter((v) => v.impact === "serious" || v.impact === "critical")
     .map((v) => `${v.id} (${v.impact}): ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`);
   expect(bad).toEqual([]);
+});
+
+/* ---------- Stage 8 fixes (S1: DES-2, 3, 4, 5, 7, 10, 15, 33) ---------- */
+
+type Box = { left: number; right: number; top: number; bottom: number; width: number; height: number };
+const box = (page: Page, sel: string) =>
+  page.locator(sel).first().evaluate((e): Box => {
+    const r = e.getBoundingClientRect();
+    return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, width: r.width, height: r.height };
+  });
+const overlaps = (a: Box, b: Box) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+
+test("DES-2: the glass card and rail box keep their backdrop blur in the production CSS", async ({ page }) => {
+  await page.goto("/");
+  for (const sel of ["#rb", "#mapcard .glass.scene-tag", "#fc"]) {
+    expect(await page.locator(sel).evaluate((e) => getComputedStyle(e).backdropFilter), sel).toBe("blur(14px) saturate(1.15)");
+  }
+});
+
+test("DES-3: the trucks table fits at 320, 761–900 and desktop widths, and scrolls in a labelled region when it can't", async ({ page }, info) => {
+  test.skip(info.project.name !== "desktop", "sets its own viewports");
+  await page.goto("/");
+  const region = page.getByRole("region", { name: "Trucks by profit per km" }).and(page.locator(".tbl-scroll"));
+  await expect(region).toHaveAttribute("tabindex", "0");
+  await expect(region).toHaveAttribute("aria-labelledby", "trucks-h");
+  await expect(region.locator("table.tbl")).toHaveCount(1);
+  expect(await region.evaluate((e) => getComputedStyle(e).overflowX)).toBe("auto");
+  for (const width of [320, 340, 761, 800, 860, 900, 1024, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    const fit = await region.evaluate((e) => ({ sw: e.scrollWidth, cw: e.clientWidth }));
+    expect(fit.sw, `table fits its card at ${width}`).toBeLessThanOrEqual(fit.cw);
+    // The loss figures, the column that matters most, are whole and on screen.
+    const unaccounted = await region.locator("tbody tr:not(.gap) td:nth-child(7)").evaluateAll((tds) => tds.map((td) => td.getBoundingClientRect().right));
+    const right = (await box(page, ".tbl-scroll")).right;
+    for (const r of unaccounted) expect(r, `Unaccounted inside the card at ${width}`).toBeLessThanOrEqual(right + 0.5);
+  }
+  // Text-only resizing to 200% (WCAG 1.4.4) at 375: too wide to fit, so the region scrolls instead of clipping.
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.evaluate(() => (document.documentElement.style.fontSize = "200%"));
+  const scroll = await region.evaluate((e) => {
+    e.scrollLeft = 10_000;
+    return { sw: e.scrollWidth, cw: e.clientWidth, left: e.scrollLeft };
+  });
+  expect(scroll.sw).toBeGreaterThan(scroll.cw);
+  expect(scroll.left).toBeGreaterThan(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
+});
+
+test("DES-4: the Evidence links are at least 24 px tall (44 px on a coarse pointer) without moving the row", async ({ page }, info) => {
+  await page.goto("/");
+  const min = info.project.name === "phone" ? 44 : 24;
+  const heights = await page.locator(".eye a.open").evaluateAll((as) => as.map((a) => a.getBoundingClientRect().height));
+  expect(heights).toHaveLength(3);
+  for (const h of heights) expect(h).toBeGreaterThanOrEqual(min);
+  // The rows look as before: the same boxes as with the links at their old 19.5 px line.
+  const layout = () => page.locator(".eye").evaluateAll((es) => es.map((e) => [e.getBoundingClientRect().height, e.querySelector(".open")!.getBoundingClientRect().top + e.querySelector(".open")!.getBoundingClientRect().height / 2]));
+  const now = await layout();
+  await page.addStyleTag({ content: ".eye .open { min-height: 0 !important; margin-block: 0 !important; }" });
+  expect(now).toEqual(await layout());
+});
+
+test("DES-4: on a coarse pointer the hero switch, full screen and 'All 24 trucks' are 44 px targets; the switch looks the same", async ({ page }, info) => {
+  test.skip(info.project.name !== "phone", "coarse pointer (phone project)");
+  await page.goto("/");
+  for (const name of ["Scene", "Map", "Fleet", "Full screen map", "All 24 trucks"]) {
+    const b = await page.getByRole("button", { name, exact: true }).evaluate((e) => e.getBoundingClientRect().height);
+    expect(b, name).toBeGreaterThanOrEqual(44);
+  }
+  // The segmented control keeps its 38 px frame and the pressed fill its 30 px.
+  expect((await box(page, ".seg")).height).toBe(38);
+  const fill = await page.locator('.seg button[aria-pressed="true"]').evaluate((b) => {
+    const s = getComputedStyle(b, "::before");
+    return { h: b.getBoundingClientRect().height - parseFloat(s.top) - parseFloat(s.bottom), bg: s.backgroundColor };
+  });
+  expect(fill.h).toBe(30);
+  expect(fill.bg).not.toBe("rgba(0, 0, 0, 0)");
+});
+
+test("DES-5: focus moved into view never lands under the sticky top bar", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  // What Shift+Tab does: move focus to a control above the viewport.
+  await page.locator(".eye a.open").first().evaluate((a: HTMLElement) => a.focus());
+  const bar = await box(page, "header.topbar");
+  const link = await box(page, ".eye a.open");
+  expect(link.top).toBeGreaterThanOrEqual(bar.bottom);
+});
+
+test("DES-7: the eyes list comes first in the tab order; desktop keeps the hero left of it, stacked widths put it above", async ({ page }, info) => {
+  await page.goto("/");
+  const map = await box(page, "#mapcard");
+  const eyes = await box(page, "article.eyes");
+  if (info.project.name === "desktop") {
+    expect(map.right).toBeLessThanOrEqual(eyes.left);
+    expect(map.top).toBe(eyes.top);
+  } else {
+    expect(eyes.bottom).toBeLessThanOrEqual(map.top);
+  }
+  const order = await page.locator("section.hero-row").evaluate((row) =>
+    [...row.querySelectorAll<HTMLElement>("button, a[href]")].slice(0, 2).map((el) => el.getAttribute("aria-label") ?? el.textContent),
+  );
+  expect(order).toEqual([expect.stringMatching(/^Show on map: RJ14 GB 4521, /), "Evidence for RJ14 GB 4521, trip 0926-04"]);
+});
+
+test("DES-10: with flag 2 selected the rail knob's caption sits clear of the rail box's head", async ({ page }) => {
+  await page.goto("/");
+  await expect(async () => {
+    await page.locator("button.eye-sel").nth(1).click();
+    await expect(page.locator("#rb .rail .knob b")).toHaveText("4:50 PM · bill ≠ tank", { timeout: 500 });
+  }).toPass();
+  const cap = await box(page, "#rb .rail .knob b");
+  for (const sel of ["#rb .rb-head b", "#rb .rb-head span", "#rb .rail-ends span:last-child"]) {
+    const visible = await page.locator(sel).evaluate((e) => getComputedStyle(e).display !== "none");
+    if (visible) expect(overlaps(cap, await box(page, sel)), sel).toBe(false);
+  }
+  // The rail box doesn't grow into the glass card above it.
+  if (await page.locator("#fc").isVisible()) expect(overlaps(await box(page, "#fc"), await box(page, "#rb"))).toBe(false);
+});
+
+test("DES-15: the four KPI footers stay on one line, rules aligned, at 1440", async ({ page }, info) => {
+  test.skip(info.project.name !== "desktop", "four across at 1440 only");
+  await page.goto("/");
+  const footers = await page.locator(".kpi footer").evaluateAll((fs) =>
+    fs.map((f) => ({ top: Math.round(f.getBoundingClientRect().top), spans: [...f.children].map((s) => Math.round(s.getBoundingClientRect().top)) })),
+  );
+  expect(new Set(footers.map((f) => f.top)).size).toBe(1);
+  for (const f of footers) expect(new Set(f.spans).size).toBe(1);
+});
+
+test("DES-33: at 320 the eyes rows show the driver and route instead of an ellipsis", async ({ page }, info) => {
+  test.skip(info.project.name !== "phone", "phone width");
+  await page.setViewportSize({ width: 320, height: 640 });
+  await page.goto("/");
+  const who = await page.locator(".eye .who").evaluateAll((ws) => ws.map((w) => ({ sw: w.scrollWidth, cw: w.clientWidth, text: w.textContent })));
+  for (const w of who) expect(w.sw, w.text ?? "").toBeLessThanOrEqual(w.cw);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
 });

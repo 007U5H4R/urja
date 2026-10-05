@@ -21,7 +21,7 @@ const HERO_POSTER_STYLE = { objectFit: "cover", objectPosition: "30% center" } a
  * Today (final/index.html). A static server component: the view model is
  * built from the memoised dataset at build time. Phone order (Design.md §16):
  * verdict → ledger bar → needs your eyes → hero → September cards → trucks
- * (lamp.css puts the eyes list first in the stacked hero row).
+ * (the eyes list comes first in the hero row's DOM, so the tab order matches; DES-7).
  * `?state=loading|empty|clean|error` (TKT-11) swaps in a specimen on the client,
  * so the default render stays statically prerendered. The specimens riding in the payload
  * and the working-view flash on ?state= links are the intended price of a static /.
@@ -30,7 +30,7 @@ export default function Today() {
   const today = getToday();
   return (
     <StateSwitch specimens={todaySpecimens(today.greeting.en, stateSpecimens())}>
-      <main className="wrap">
+      <main className="wrap" id="main">
         <PageHead greeting={today.greeting} verdict={today.verdict} tags={today.tags} />
         <LedgerBar ledger={today.ledger} />
         {/* The hero card (scene · map · fleet) and "Needs your eyes" share one selection. */}

@@ -1,5 +1,7 @@
 import { formatINR } from "@/lib/format";
 
+const NOWRAP = { whiteSpace: "nowrap" } as const;
+
 export type MoneyTone = "loss" | "gain";
 
 export interface MoneyProps {
@@ -24,5 +26,12 @@ export function Money({ inr, tone, lit, sign: signProp = "auto", className, as: 
   const cls = [className, tone, litClass].filter(Boolean).join(" ") || undefined;
   let text = formatINR(inr, { sign: sign === "never" ? "never" : "auto" });
   if (sign === "always" && Math.round(inr) > 0) text = `+${text}`;
-  return <Tag className={cls}>{text}</Tag>;
+  // DES-33: Unicode allows a line break between a sign and "₹" ("−", "+" and "₹" are all prefix
+  // class PR), so a signed amount never wraps; unsigned ones can't break ("₹" before digits).
+  const style = /^[−+]/.test(text) ? NOWRAP : undefined;
+  return (
+    <Tag className={cls} style={style}>
+      {text}
+    </Tag>
+  );
 }

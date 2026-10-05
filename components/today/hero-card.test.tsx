@@ -103,6 +103,12 @@ describe("HeroCard · Scene (default)", () => {
     expect(h.row(0).getAttribute("aria-pressed")).toBe("true");
   });
 
+  it("puts Needs your eyes before the hero card in the DOM, so the tab order matches the stacked phone order (DES-7, WCAG 2.4.3)", () => {
+    const h = renderHero();
+    const row = h.container.querySelector("section.hero-row")!;
+    expect([...row.children].map((c) => c.className)).toEqual(["panel eyes", "panel mapcard is-scene"]);
+  });
+
   it("does not load the map module while the Scene shows", () => {
     renderHero();
     expect(mount.calls).toHaveLength(0);

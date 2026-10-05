@@ -13,7 +13,11 @@
      alone (app/fonts.ts, M-004 perf), --font-hi the whole family.
    - The scene poster is served from /truck-scene.png (technical-plan §3.3, public/).
    - The mockup banner (.proto-banner, "DESIGN PROTOTYPE — NOT PRODUCTION") is
-     not ported (technical-plan §5.2). */
+     not ported (technical-plan §5.2).
+   - .glass declares -webkit-backdrop-filter before backdrop-filter (DES-2): in lamp.css's order
+     the minifier read the prefixed line as overriding the standard one and dropped the standard
+     one, so Chromium and Firefox drew no blur.
+   - The stacked hero row has no .eyes { order: -1 } (DES-7): the eyes list is first in the DOM. */
 
 @layer theme, base, components, utilities;
 @import "tailwindcss/theme.css" layer(theme);
@@ -198,7 +202,7 @@
   .panel::before { content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; pointer-events: none;
     background: linear-gradient(155deg, oklch(1 0 0 / .26), oklch(1 0 0 / .05) 26%, transparent 48%);
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
-  .glass { background: oklch(0.150 0.004 60 / .74); backdrop-filter: blur(14px) saturate(1.15); -webkit-backdrop-filter: blur(14px) saturate(1.15); border: 1px solid oklch(1 0 0 / .09); border-radius: var(--r-lg); }
+  .glass { background: oklch(0.150 0.004 60 / .74); -webkit-backdrop-filter: blur(14px) saturate(1.15); backdrop-filter: blur(14px) saturate(1.15); border: 1px solid oklch(1 0 0 / .09); border-radius: var(--r-lg); }
 
   /* ---------- identifiers & meaning ---------- */
   .plate { display: inline-flex; align-items: center; height: 24px; padding: 0 7px; border-radius: 5px; background: var(--plate); color: var(--plate-ink);
@@ -384,7 +388,6 @@
   }
   @media (max-width: 1020px) {
     .hero-row { grid-template-columns: minmax(0, 1fr); }
-    .hero-row .eyes { order: -1; }
     .mapcard { min-height: 440px; }
   }
   @media (max-width: 760px) {
@@ -623,4 +626,95 @@
   /* 761–1020 px (one-column hero, desktop glass card): at lamp.css's 440 px the rail box covers
      "Open the evidence". 520 px clears the card (top 64 px + its height) above the rail box. */
   @media (min-width: 761px) and (max-width: 1020px) { .mapcard { min-height: 520px; } }
+  /* DES-7 (WCAG 2.4.3): "Needs your eyes" comes first in the hero row's DOM (HeroCard), so the
+     stacked layout (≤ 1020 px) needs no `order: -1`; on desktop grid placement keeps the hero card
+     in the 7fr column and the list in the 5fr column, as lamp.css lays them out. */
+  @media (min-width: 1021px) {
+    .hero-row > .mapcard { grid-column: 1; grid-row: 1; }
+    .hero-row > .eyes { grid-column: 2; grid-row: 1; }
+  }
+
+  /* DES-5 (WCAG 2.4.11): focus moved by the keyboard never lands under the sticky top bar
+     (65 px with its border) or the phone screens' Ask dock (78 px). */
+  html:has(.topbar) { scroll-padding-top: calc(65px + 12px); }
+  html:has(.dock) { scroll-padding-bottom: calc(78px + 12px); }
+
+  /* DES-32: "Skip to content", the first stop on every page with the top bar; hidden until focused. */
+  .skip { position: fixed; left: 12px; top: 12px; z-index: 50; padding: 10px 14px; border-radius: var(--r-md);
+    background: var(--surface-2); border: 1px solid var(--lamp-line); color: var(--fg); font-size: var(--t-sm); font-weight: 560;
+    transform: translateY(calc(-100% - 24px)); }
+  .skip:focus { transform: none; }
+  main[tabindex="-1"]:focus { outline: none; }
+
+  /* DES-28: text-only resizing (200%) grows or wraps these instead of clipping them or widening
+     the page. Their fixed heights stay, so at 100% they measure exactly as before and a flex or
+     grid parent still can't stretch them; `min-height: fit-content` lets a box grow only when its
+     content is taller than that height. The wrapping ones are narrower than their room at 100%. */
+  .topbar .wrap, .askbar, .pill, .btn, .plate, .flagcard .chip, .eye .chip { min-height: fit-content; }
+  .fleet { min-width: 0; }
+  .fleet .name { min-width: 0; white-space: normal; text-align: right; }
+  .evidence .src { white-space: normal; }
+  .flagcard .chip, .eye .chip { white-space: normal; }
+  .flagcard .actions .btn { white-space: normal; }
+  .kpi .vrow { flex-wrap: wrap; }
+
+  /* DES-4: the "Evidence" links and the breadcrumb links meet the 24 px floor (WCAG 2.5.8) without
+     moving: negative margins keep the 19.5 px line they took before, so nothing around them shifts
+     (on the phone the link wraps to a line of its own in the eyes row). */
+  .eye .open { min-height: 24px; margin-block: -2.25px; }
+  .crumbs a { display: inline-flex; align-items: center; min-height: 24px; margin-block: -2.25px; }
+
+  /* DES-4 (Design.md §14 Fitts, §17): 44 px touch targets on coarse pointers. Negative margins keep
+     the layout and the look where the control has no box of its own. */
+  @media (pointer: coarse) {
+    .iconbtn { width: 44px; height: 44px; }
+    .flagcard .actions .btn { height: 44px; }
+    .tablecard .sec-head .btn { height: 44px; margin-block: -2px; }
+    .eye .open { min-height: 44px; margin-block: -12.25px; }
+    /* the switch keeps its 38 px frame and 30 px fill: the buttons' boxes are 44 px, and the
+       44 px full-screen button beside it no longer stretches the frame */
+    .mapcard .mc-top .right { align-items: center; }
+    .seg button { position: relative; z-index: 0; height: 44px; margin-block: -7px; }
+    .seg button[aria-pressed="true"] { background: none; }
+    .seg button[aria-pressed="true"]::before { content: ""; position: absolute; inset: 7px 0; z-index: -1; border-radius: 6px; background: var(--surface-3); }
+  }
+
+  /* DES-3 (WCAG 1.4.10): the trucks table fits where it can and scrolls where it can't. */
+  .tbl-scroll { overflow-x: auto; }
+  .tbl-scroll:focus-visible { outline-offset: -2px; border-radius: 0 0 var(--r-xl) var(--r-xl); }
+  .tbl .gap td { white-space: normal; }
+  @media (min-width: 761px) and (max-width: 900px) { .tbl .hide-md { display: none; } }
+  @media (max-width: 360px) {
+    .tbl td, .tbl th { padding-left: 6px; padding-right: 6px; }
+    .tbl .rank { width: 34px; }
+  }
+
+  /* DES-6 (WCAG 1.4.10): the Ask composer's input shrinks, so "Ask" stays on screen at 320 px. */
+  .composer input { min-width: 0; }
+  .composer .btn { flex: none; }
+
+  /* DES-29 (WCAG 2.4.7): the brief's Ask dock shows the standard focus ring around its field. */
+  .dock form:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  /* DES-10: a knob in the rail's outer 30% (Rail.tsx knobEdge) keeps its caption clear of the rail
+     box's head. Today's box anchors it on the knob's inner side; the trip's box, whose head carries
+     the tick legend, puts it under the rail (the phone placement). */
+  .railbox.knob-start .rail .knob b { left: 0; transform: none; }
+  .railbox.knob-end .rail .knob b { left: auto; right: 0; transform: none; }
+  .railbox.knob-under .rail .knob b { bottom: auto; top: 20px; }
+  .railbox.knob-under .rail-ends { margin-top: 22px; }
+
+  /* DES-15: the four KPI footers stay on one line at 1440, as in the mockup (the copy is unchanged).
+     The self-hosted Inter sets this 12 px copy about 5% wider than the mockup's Google-served face,
+     which pushed "When Urja was wrong" 2 px past its card; a hair of tracking brings it back. */
+  .kpi footer { letter-spacing: -0.01em; }
+
+  /* DES-16: R5's toll table, under its own head, at a readable width. */
+  .tollpanel .tbl { max-width: 560px; }
+
+  /* DES-33: below 360 px the eyes row's "driver · route" wraps under the plate instead of vanishing. */
+  @media (max-width: 359px) {
+    .eye .l1 { flex-wrap: wrap; row-gap: 4px; }
+    .eye .l1 .who { white-space: normal; overflow: visible; }
+  }
 }

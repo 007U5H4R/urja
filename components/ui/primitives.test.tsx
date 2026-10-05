@@ -47,6 +47,13 @@ describe("Money", () => {
     expect(text).toBe(`−${R}10,620`);
     expect(text).not.toContain("-");
   });
+  it("never breaks a negative between − and ₹ (DES-33): the amount doesn't wrap; positives are left alone", () => {
+    const neg = render(<Money inr={-3420} />).container.firstElementChild as HTMLElement;
+    expect(neg.style.whiteSpace).toBe("nowrap");
+    expect((render(<Money inr={800} sign="always" />).container.lastElementChild as HTMLElement).style.whiteSpace).toBe("nowrap");
+    expect(html(<Money inr={3420} />)).toBe(`<span>${R}3,420</span>`);
+    expect((render(<Money inr={-3420} sign="never" />).container.lastElementChild as HTMLElement).getAttribute("style")).toBeNull();
+  });
   it("tone and className compose in mockup order (`amt loss`)", () => {
     expect(html(<Money inr={3420} tone="loss" className="amt" />)).toBe(
       `<span class="amt loss">${R}3,420</span>`,

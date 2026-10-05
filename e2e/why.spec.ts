@@ -1,4 +1,4 @@
-import AxeBuilder from "@axe-core/playwright";
+import { axeBuilder } from "./axe";
 import { expect, test, type Page } from "./fixtures";
 
 // TKT-08 AC1–AC3 (TC-022, TC-023 touch target): the Why Urja page at 375 / 768 / 1440.
@@ -52,7 +52,7 @@ test("the buttons keep their 40 px height on fine pointers", async ({ page }, in
 test("axe finds no violations", async ({ page }) => {
   await page.goto("/why");
   await page.waitForLoadState("networkidle");
-  const { violations } = await new AxeBuilder({ page }).analyze();
+  const { violations } = await axeBuilder(page).analyze();
   expect(violations.map((v) => `${v.id} (${v.impact}): ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`)).toEqual([]);
 });
 

@@ -3,7 +3,7 @@ import Link from "next/link";
 // The 404 page (technical-plan §3.3, TKT-03), in the ported page-head style.
 export default function NotFound() {
   return (
-    <main className="wrap">
+    <main className="wrap" id="main">
       <section className="pagehead" aria-labelledby="h1">
         <div>
           <p className="greet">Page not found</p>

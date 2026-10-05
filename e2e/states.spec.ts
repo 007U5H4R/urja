@@ -1,4 +1,4 @@
-import AxeBuilder from "@axe-core/playwright";
+import { axeBuilder } from "./axe";
 import { expect, test, type Page } from "./fixtures";
 
 // TKT-11 (TASK-15): every data view's states. TC-024 (copy and computed numbers on
@@ -40,7 +40,7 @@ async function expectNoSmallText(page: Page) {
 }
 
 async function expectAxeClean(page: Page) {
-  const results = await new AxeBuilder({ page }).analyze();
+  const results = await axeBuilder(page).analyze();
   const bad = results.violations
     .filter((v) => v.impact === "serious" || v.impact === "critical")
     .map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`);

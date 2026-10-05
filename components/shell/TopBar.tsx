@@ -3,6 +3,7 @@ import { AskTrigger } from "./AskTrigger";
 import { MobileMenu } from "./MobileMenu";
 import { NavPills } from "./NavPills";
 import { HideOnBarlessRoutes, RouteVariant } from "./RouteVariant";
+import { SkipLink } from "./SkipLink";
 
 type TopBarProps = { fleetName: string; truckCount: number };
 
@@ -22,11 +23,13 @@ function initials(name: string): string {
  * chip, and a "Start the demo" button before the menu. On the phone screens
  * (/brief, /message) it renders nothing: they carry their own bar and menu (EXE12).
  * Nor on /og-card, the link-preview card scripts/render-og.ts screenshots (§9).
+ * A "Skip to content" link comes first in it (DES-32).
  */
 export function TopBar({ fleetName, truckCount }: TopBarProps) {
   return (
     <HideOnBarlessRoutes>
       <header className="topbar">
+        <SkipLink />
         <div className="wrap">
           <Link className="wordmark" href="/" aria-label="Urja, Today">
             <span className="mark">

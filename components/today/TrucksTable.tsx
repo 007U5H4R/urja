@@ -27,7 +27,7 @@ function Row({ r }: { r: TrucksTableRow }) {
       <td className="hide-sm">{r.driver}</td>
       <td className="r hide-sm">{KM.format(r.km)}</td>
       <td className={r.tone === "top" ? "r lit" : "r"}>{r.perKmText}</td>
-      <td className="hide-sm">
+      <td className="hide-sm hide-md">
         <span className={`minibar${tone}`}>
           <b style={{ width: `${r.barPct}%` }}></b>
         </span>
@@ -44,6 +44,8 @@ function Row({ r }: { r: TrucksTableRow }) {
  * "Trucks by profit per km" (final/index.html lines 137–155): ranks 1–5, a gap
  * row summing up the middle, and the bottom 3. "All N trucks" expands the table
  * in place (a real button with aria-expanded, not <details>) and collapses it back.
+ * Narrow screens drop the low-value columns: Driver, Km, the bar and Now at ≤ 760 px (hide-sm),
+ * the bar at 761–900 px (hide-md), as Design.md §16's "reduced truck table".
  */
 export function TrucksTable({ trucks }: { trucks: TrucksTableView }) {
   const [expanded, setExpanded] = useState(false);
@@ -70,37 +72,41 @@ export function TrucksTable({ trucks }: { trucks: TrucksTableView }) {
             </button>
           }
         />
-        <table className="tbl" aria-labelledby="trucks-h">
-          <thead>
-            <tr>
-              <th className="rank">
-                <span aria-hidden="true">#</span>
-                <span className="sr">Rank</span>
-              </th>
-              <th>Truck</th>
-              <th className="hide-sm">Driver</th>
-              <th className="r hide-sm">Km</th>
-              <th className="r">₹ / km</th>
-              <th className="hide-sm">
-                <span className="sr">Compared with the best</span>
-              </th>
-              <th className="r">Unaccounted</th>
-              <th className="hide-sm">Now</th>
-            </tr>
-          </thead>
-          <tbody id="trucks-rows">
-            {rows.map((r) => (
-              <Fragment key={r.plate}>
-                <Row r={r} />
-                {showGap && r.rank === trucks.gapAfterRank && (
-                  <tr className="gap">
-                    <td colSpan={8}>{trucks.gapText}</td>
-                  </tr>
-                )}
-              </Fragment>
-            ))}
-          </tbody>
-        </table>
+        {/* DES-3 (WCAG 1.4.10): the table fits at every width it can (hide-sm, hide-md), and this
+            focusable region scrolls it where it can't (320 px, 200% text), so no column is cut off. */}
+        <div className="tbl-scroll" role="region" tabIndex={0} aria-labelledby="trucks-h">
+          <table className="tbl" aria-labelledby="trucks-h">
+            <thead>
+              <tr>
+                <th className="rank">
+                  <span aria-hidden="true">#</span>
+                  <span className="sr">Rank</span>
+                </th>
+                <th>Truck</th>
+                <th className="hide-sm">Driver</th>
+                <th className="r hide-sm">Km</th>
+                <th className="r">₹ / km</th>
+                <th className="hide-sm hide-md">
+                  <span className="sr">Compared with the best</span>
+                </th>
+                <th className="r">Unaccounted</th>
+                <th className="hide-sm">Now</th>
+              </tr>
+            </thead>
+            <tbody id="trucks-rows">
+              {rows.map((r) => (
+                <Fragment key={r.plate}>
+                  <Row r={r} />
+                  {showGap && r.rank === trucks.gapAfterRank && (
+                    <tr className="gap">
+                      <td colSpan={8}>{trucks.gapText}</td>
+                    </tr>
+                  )}
+                </Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </article>
     </section>
   );
