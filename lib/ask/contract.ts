@@ -41,5 +41,11 @@ export const AskResponse = z.object({
   caveat: z.string().optional(),
   provenance: AskProvenance,
   retryAfterS: z.number().int().positive().optional(),
+  /**
+   * Stage 9 (additive): set on a deterministic refusal of an off-topic question
+   * (mode 'saved'): why it was refused. Trying again won't help, so the UI shows
+   * the refusal without the saved banner or "Try again".
+   */
+  refusal: z.enum(["out_of_scope", "injection"]).optional(),
 });
 export type AskResponse = z.infer<typeof AskResponse>;

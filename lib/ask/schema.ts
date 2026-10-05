@@ -15,7 +15,8 @@ export const RESPONSE_SCHEMA = {
     out_of_scope: { type: "BOOLEAN" },
   },
   required: ["answer", "lang", "cited_trips", "cited_trucks", "out_of_scope"],
-  propertyOrdering: ["answer", "lang", "cited_trips", "cited_trucks", "out_of_scope"],
+  // Stage 9 (ask-v2): decide scope, language and the records first, then write the answer from them.
+  propertyOrdering: ["out_of_scope", "lang", "cited_trips", "cited_trucks", "answer"],
 } as const;
 
 export const ModelAnswer = z.object({

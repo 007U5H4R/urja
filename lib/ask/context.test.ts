@@ -64,3 +64,29 @@ describe("TSK-07.2 · Ask context", () => {
     expect(a.scope).toBe("212 trips across 24 trucks, 1–27 Sep");
   });
 });
+
+describe("Stage 9 · counts and trip lists the answers need, stated in the data", () => {
+  const ctx = buildContext();
+  it("states yesterday's flagged-trip count and last week's trip count, matching their lists", () => {
+    expect(ctx.yesterday.flaggedTripCount).toBe(3);
+    expect(ctx.yesterday.flaggedTripCount).toBe(ctx.yesterday.flaggedTrips.length);
+    expect(ctx.september.lastWeek.tripCount).toBe(5);
+    expect(ctx.september.lastWeek.tripCount).toBe(ctx.september.lastWeek.trips.length);
+  });
+
+  it("lists the trips behind the recovered money and behind the flags marked wrong", () => {
+    const byTrip = (id: string) => ctx.flags.filter((f) => f.trip === id);
+    const recovered = ctx.september.recoveredTrips.flatMap(byTrip).reduce((n, f) => n + f.recoveredInr, 0);
+    expect(recovered).toBe(ctx.september.recoveredInr);
+    expect(recovered).toBe(21600);
+    expect(ctx.september.wrongTrips.sort()).toEqual(["0909-07", "0920-06"]);
+    expect(ctx.september.wrongTrips).toHaveLength(ctx.september.wrong);
+  });
+
+  it("the bundle carries the fleet's 24 plates, normalised", () => {
+    const { plates } = getAskContext();
+    expect(plates.size).toBe(24);
+    expect(plates.has("RJ14GC7710")).toBe(true);
+  });
+});
+

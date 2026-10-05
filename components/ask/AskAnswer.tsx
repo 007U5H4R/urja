@@ -208,6 +208,17 @@ export function AskAnswer({ state, lang: ui = "en", scope, saved, onRetry, onCit
     case "saved": {
       const r = state.response;
       const lang = answerLang(r);
+      // Stage 9: a refusal (weather, a price forecast, the prompt) is the answer itself. Trying again
+      // won't change it, so there is no saved banner, no wait heading, no "saved" line and no "Try again".
+      if (r.refusal)
+        return (
+          <>
+            {question}
+            <div className="fallback" lang={lang} data-mode="refusal">
+              <Paragraphs text={r.answer} className="ans" />
+            </div>
+          </>
+        );
       return (
         <>
           {question}

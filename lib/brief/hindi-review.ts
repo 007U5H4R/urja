@@ -10,7 +10,7 @@
 import { askShellData } from "@/components/ask/askScope";
 import { ASK_CHIPS, ASK_COPY } from "@/components/ask/copy";
 import { provenanceLine } from "@/components/ask/format";
-import { CHECK_CAVEAT_LINE, SAVED_MESSAGE, answerIntent, checkCaveatFor } from "@/lib/ask/fallback";
+import { CHECK_CAVEAT_LINE, REFUSAL, SAVED_MESSAGE, answerIntent, checkCaveatFor } from "@/lib/ask/fallback";
 import type { Intent } from "@/lib/ask/intents";
 import { RULE_LABEL, STATUS_LABEL, tripLabel } from "@/lib/ask/labels";
 import { MENU_COPY, menuLinks } from "@/components/shell/nav";
@@ -224,6 +224,8 @@ function askRows(): Row[] {
     ["saved banner (the fallback banner's first clause)", hi.savedBanner, en.savedBanner],
     ["error line", hi.error, en.error],
     ["saved answer (a question with no prepared answer)", SAVED_MESSAGE.hi, SAVED_MESSAGE.en],
+    ["refusal · off-topic question (weather, prices, forecasts) when the model can't answer", REFUSAL.out_of_scope.hi, REFUSAL.out_of_scope.en],
+    ["refusal · a request for the instructions or a key when the model can't answer", REFUSAL.injection.hi, REFUSAL.injection.en],
     ["429 heading (12 s left)", hi.retryAfter(12), en.retryAfter(12)],
     ["429 heading, once the wait is over", hi.retryReady, en.retryReady],
     ["429 heading, a daily cap (no countdown, no try again)", hi.dailyLimit, en.dailyLimit],

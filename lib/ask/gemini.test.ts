@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ASK_TIMEOUT_MS, askConfig, thinkingFor } from "./config";
 import { callGemini, callGeminiWithFallback } from "./gemini";
-import { PROMPT_VERSION, SYSTEM_INSTRUCTION } from "./prompt";
+import { ANSWER_RULES, PROMPT_VERSION, SYSTEM_INSTRUCTION } from "./prompt";
 import { RESPONSE_SCHEMA } from "./schema";
 
 const KEY = "test-key-not-real";
@@ -21,7 +21,7 @@ afterEach(() => {
 
 describe("TSK-07.3 · prompt, schema, config", () => {
   it("pins the prompt version, the canary and the model defaults", () => {
-    expect(PROMPT_VERSION).toBe("ask-v1");
+    expect(PROMPT_VERSION).toBe("ask-v2");
     expect(SYSTEM_INSTRUCTION).toContain("URJA-SYS-7F3Q");
     expect(SYSTEM_INSTRUCTION.startsWith("You are Urja, the assistant of Sharma ji")).toBe(true);
     expect(SYSTEM_INSTRUCTION.trimEnd().endsWith("Return JSON that matches the response schema.")).toBe(true);
@@ -29,7 +29,8 @@ describe("TSK-07.3 · prompt, schema, config", () => {
     const cfg = askConfig({});
     expect(cfg.model).toBe("gemini-3.5-flash");
     expect(cfg.temperature).toBe(0.2);
-    expect(cfg.maxOutputTokens).toBe(600);
+    // Stage 9: 600 → 1024 so a long Hindi answer (plus Gemini 3's minimal thinking) isn't cut off into bad_json.
+    expect(cfg.maxOutputTokens).toBe(1024);
     expect(cfg.thinking).toEqual({ thinkingLevel: "minimal" });
     expect(askConfig({ ASK_MODEL: "gemini-x", ASK_THINKING_LEVEL: "off" })).toMatchObject({ model: "gemini-x", thinking: null });
     expect(askConfig({ ASK_THINKING_LEVEL: "low" }).thinking).toEqual({ thinkingLevel: "low" });
@@ -70,6 +71,8 @@ describe("TSK-07.3 · Gemini REST client (mocked fetch)", () => {
     const init = (fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1];
     const body = JSON.parse(String(init.body));
     expect(body.systemInstruction.parts[0].text).toBe(SYSTEM_INSTRUCTION);
+    expect(body.systemInstruction.parts[1].text).toBe(ANSWER_RULES);
+    expect(body.systemInstruction.parts).toHaveLength(2);
     expect(body.contents[0].role).toBe("user");
     expect(body.contents[0].parts[0].text).toContain('{"fleet":1}');
     expect(body.contents[0].parts[0].text).toContain("How much?");
@@ -77,7 +80,7 @@ describe("TSK-07.3 · Gemini REST client (mocked fetch)", () => {
       responseMimeType: "application/json",
       responseSchema: RESPONSE_SCHEMA,
       temperature: 0.2,
-      maxOutputTokens: 600,
+      maxOutputTokens: 1024,
       thinkingConfig: { thinkingLevel: "minimal" },
     });
     expect(JSON.stringify(body)).not.toContain(KEY);
@@ -285,3 +288,24 @@ describe("EXE26 · fallback model on an upstream 429 or 503", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("Stage 9 · ask-v2: the answer rules after §6.3, and a decide-then-write schema order", () => {
+  it("tells the model to cite trip ids (not flag ids), the trips behind a total, and the truck", () => {
+    expect(ANSWER_RULES).toMatch(/never a flag id \(0926-04-R1\)/);
+    expect(ANSWER_RULES).toMatch(/cite the trips the data lists for it/);
+    expect(ANSWER_RULES).toMatch(/cited_trucks/);
+  });
+
+  it("asks for the decisive specifics as numerals: the trip count, a flag's place and time, a rate's count and percentage", () => {
+    expect(ANSWER_RULES).toMatch(/how many trips/);
+    expect(ANSWER_RULES).toMatch(/place and the time/);
+    expect(ANSWER_RULES).toMatch(/percentage/);
+    // No figure from the data in the rules: examples are placeholders, so they can't prime a wrong number.
+    expect(ANSWER_RULES.replace(/0926-04(-R1)?/g, "").replace(/^\d\. /gm, "")).not.toMatch(/\d/);
+  });
+
+  it("orders the schema so scope, language and cites are decided before the answer is written", () => {
+    expect(RESPONSE_SCHEMA.propertyOrdering).toEqual(["out_of_scope", "lang", "cited_trips", "cited_trucks", "answer"]);
+  });
+});
+

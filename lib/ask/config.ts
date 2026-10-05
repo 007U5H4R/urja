@@ -10,10 +10,14 @@
  * ASK_THINKING_LEVEL=minimal|low|medium|high, or `off` to send no
  * thinkingConfig at all.
  *
- * Prompt version: 'ask-v1' covers the §6.3 system instruction plus the user
- * turn in prompt.ts (the question JSON-encoded and marked as data, added in
- * review before any eval baseline existed). Any change after the first
- * baseline run bumps PROMPT_VERSION (evaluation-plan §6).
+ * Prompt version: 'ask-v2' covers the §6.3 system instruction, the ask-v2
+ * answer rules and the user turn in prompt.ts. Any change bumps
+ * PROMPT_VERSION (evaluation-plan §6).
+ *
+ * maxOutputTokens: 1024 (Stage 9; §6.4 said 600). Answers run 60–250 tokens, so
+ * the cap costs no latency; it only stops a long Hindi answer (Devanagari takes
+ * more tokens) plus Gemini 3's minimal thinking from being cut off into bad_json
+ * ('bad_json:MAX_TOKENS' in x-ask-outcome).
  */
 import "server-only";
 
@@ -55,7 +59,7 @@ export function askConfig(env: Env = process.env): AskConfig {
     model: env.ASK_MODEL?.trim() || DEFAULT_ASK_MODEL,
     fallbackModel: fallbackModel(env.ASK_FALLBACK_MODEL),
     temperature: 0.2,
-    maxOutputTokens: 600,
+    maxOutputTokens: 1024,
     thinking,
     timeoutMs: ASK_TIMEOUT_MS,
   };

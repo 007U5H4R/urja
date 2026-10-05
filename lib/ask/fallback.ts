@@ -15,13 +15,38 @@ import type { Lang, Plate } from "@/lib/data/types";
 import { DEMO_NOW, MIN_PER_DAY, dayKey } from "@/lib/clock";
 import { formatDateIST, formatINR, minToISTParts } from "@/lib/format";
 import { WRONG_FLAG_LIMIT_PCT } from "@/lib/data/constants";
-import { detectLang, matchIntent, type Intent, type IntentId } from "./intents";
+import { copyLang, matchIntent, offTopicKind, type Intent, type IntentId } from "./intents";
 import { RULE_LABEL, STATUS_LABEL, confidenceWord, dayLabel, flagPlace } from "./labels";
 
 export const SAVED_MESSAGE: Record<Lang, string> = {
   en: "Your question is saved. Try again in a minute for a written answer.",
   hi: "आपका सवाल सहेज लिया गया है। लिखित जवाब के लिए एक मिनट बाद फिर पूछें।",
 };
+
+/**
+ * The deterministic refusal for an off-topic question when the model can't
+ * answer (Stage 9): retrying won't bring weather, a price forecast or the
+ * prompt into the data, so "saved, try again" would be untrue. Plain wording,
+ * no figure, no cite (evaluation-plan §4.7). Hindi pending the native review.
+ */
+export const REFUSAL: Record<"out_of_scope" | "injection", Record<Lang, string>> = {
+  out_of_scope: {
+    en: "I don't have that data. I only know Sharma Roadlines' own trips, trucks, diesel and money, so ask me about those.",
+    hi: "मेरे पास इसका डेटा नहीं है। मैं सिर्फ़ शर्मा रोडलाइंस के अपने ट्रिप, ट्रक, डीज़ल और पैसों का हिसाब जानता हूँ, उनके बारे में पूछें।",
+  },
+  injection: {
+    en: "I can't answer that: I don't share my instructions or any key. Ask me about your trips, trucks, diesel or money.",
+    hi: "मैं यह नहीं बता सकता: अपने निर्देश या कोई key मैं किसी से साझा नहीं करता। अपने ट्रिप, ट्रक, डीज़ल या पैसों के बारे में पूछें।",
+  },
+};
+
+/** The refusal for an off-topic question, in its copy language (CR-1); null when the question isn't off-topic. */
+export function refusalAnswer(question: string, hint?: "hi" | "en"): { answer: string; lang: Lang; kind: "out_of_scope" | "injection" } | null {
+  const kind = offTopicKind(question);
+  if (!kind) return null;
+  const lang = copyLang(question, hint);
+  return { answer: REFUSAL[kind][lang], lang, kind };
+}
 
 /** The Check caveat (Design.md §19: low confidence says "Check"), shared by the fallback and model answers. */
 export const CHECK_CAVEAT_LINE: Record<Lang, string> = {
@@ -284,10 +309,11 @@ function truckFlags(plate: Plate, yesterdayOnly: boolean, lang: Lang): FallbackA
 }
 
 /** The deterministic answer for a recognised question, or null (the route then says it is saved). */
-export function fallbackAnswer(question: string): FallbackAnswer | null {
+/** `hint`: the screen's language (the request's `lang`), used when the question's script is ambiguous (CR-1). */
+export function fallbackAnswer(question: string, hint?: "hi" | "en"): FallbackAnswer | null {
   const intent = matchIntent(question);
   if (!intent) return null;
-  return answerIntent(intent, detectLang(question) === "hi" ? "hi" : "en");
+  return answerIntent(intent, copyLang(question, hint));
 }
 
 /** The template for one intent, in one language (also rendered into docs/exec/hindi-review.md). */

@@ -147,6 +147,13 @@ export interface CaseResult {
   /** EXE26: the model that wrote the answer (provenance.model); null for fallback, saved or error. */
   model: string | null;
   httpStatus: number | null;
+  /**
+   * The response's x-ask-outcome header (EXE24/EXE26), verbatim: why the server
+   * answered as it did ('ok; model=…', 'guard:no_cites; model=…', 'timeout; …').
+   * null when the header is absent or there was no response. Diagnostic only:
+   * it never affects scoring or the gate.
+   */
+  outcome: string | null;
   /** Client-side, end to end. */
   ms: number;
   serverMs: number | null;
@@ -199,8 +206,10 @@ export interface Summary {
   /** The §7 gate metric: unsupported figures on passing cases. */
   unsupportedOnPassing: number;
   modes: Record<string, number>;
+  /** Cases per outcome code (the x-ask-outcome part before the first ';'); 'none' when absent. Diagnostic only. */
+  outcomes: Record<string, number>;
   failedCases: string[];
-  /** One per prepared pass that isn't a model answer. */
+  /** One per prepared pass that isn't a model answer, and one per off-topic pass that isn't (a deterministic refusal). */
   warnings: string[];
   gate: "PASS" | "FAIL";
   gateFailures: string[];
@@ -331,7 +340,7 @@ export async function runEval(opts: RunOptions, deps: RunDeps = realDeps): Promi
 
   for (const c of dataset.cases) {
     let retried = false;
-    let outcome: { status: number | null; body: unknown; ms: number; error?: string };
+    let outcome: { status: number | null; body: unknown; ms: number; error?: string; outcome?: string | null };
     for (;;) {
       if (lastStart !== null && opts.paceMs > 0) {
         const wait = opts.paceMs - (deps.now() - lastStart);
@@ -367,6 +376,7 @@ export async function runEval(opts: RunOptions, deps: RunDeps = realDeps): Promi
       mode: usable?.mode ?? "error",
       model: usable?.provenance?.model ?? null,
       httpStatus: outcome.status,
+      outcome: outcome.outcome ?? null,
       ms: outcome.ms,
       serverMs: typeof usable?.provenance?.ms === "number" ? usable.provenance.ms : null,
       checks: score.checks,
@@ -383,7 +393,7 @@ export async function runEval(opts: RunOptions, deps: RunDeps = realDeps): Promi
       ...(retried ? { retried } : {}),
     });
     const last = cases[cases.length - 1];
-    deps.log(`  ${last.id}  ${last.pass ? "pass" : "FAIL"}  ${last.mode}  ${last.ms} ms`);
+    deps.log(`  ${last.id}  ${last.pass ? "pass" : "FAIL"}  ${last.mode}  ${last.ms} ms  ${last.outcome ?? "no outcome header"}`);
   }
 
   const provenance = buildProvenance(opts, deps, dataset, bundle.hash, seen, cases);
@@ -418,7 +428,7 @@ async function post(
   headers: Record<string, string>,
   body: { question: string; lang?: string },
   timeoutMs: number,
-): Promise<{ status: number | null; body: unknown; ms: number; error?: string }> {
+): Promise<{ status: number | null; body: unknown; ms: number; error?: string; outcome?: string | null }> {
   const t0 = deps.now();
   const abort = new AbortController();
   const timer = setTimeout(() => abort.abort(), timeoutMs);
@@ -431,7 +441,7 @@ async function post(
     } catch {
       parsed = null;
     }
-    return { status: res.status, body: parsed, ms: Math.round(deps.now() - t0) };
+    return { status: res.status, body: parsed, ms: Math.round(deps.now() - t0), outcome: res.headers.get("x-ask-outcome") };
   } catch (e) {
     const code = e instanceof Error ? (e.cause as { code?: unknown } | undefined)?.code : undefined;
     const reason = abort.signal.aborted
@@ -509,6 +519,11 @@ export function summarise(dataset: EvalDataset, cases: CaseResult[]): Summary {
   const unsupportedOnPassing = cases.filter((c) => c.pass).reduce((n, c) => n + c.unsupported.length, 0);
   const modes: Record<string, number> = {};
   for (const c of cases) modes[c.mode] = (modes[c.mode] ?? 0) + 1;
+  const outcomes: Record<string, number> = {};
+  for (const c of cases) {
+    const code = outcomeCode(c.outcome);
+    outcomes[code] = (outcomes[code] ?? 0) + 1;
+  }
 
   const gateFailures = [
     prepared.length !== g.prepared_total ? `ran ${prepared.length} prepared cases, the gate expects ${g.prepared_total}` : "",
@@ -539,8 +554,14 @@ export function summarise(dataset: EvalDataset, cases: CaseResult[]): Summary {
     unsupportedNumbers,
     unsupportedOnPassing,
     modes,
+    // Most frequent first; ties keep the order the cases ran in.
+    outcomes: Object.fromEntries(Object.entries(outcomes).sort((x, y) => y[1] - x[1])),
     failedCases: cases.filter((c) => !c.pass).map((c) => c.id),
-    warnings: prepared.filter((c) => c.pass && c.mode !== "model").map((c) => `${c.id} passed on a ${c.mode} answer, not the model`),
+    warnings: [
+      ...prepared.filter((c) => c.pass && c.mode !== "model").map((c) => `${c.id} passed on a ${c.mode} answer, not the model`),
+      // Informational: off-topic counting is unchanged (a deterministic refusal still counts).
+      ...offtopic.filter((c) => c.pass && c.mode !== "model").map((c) => `${c.id} passed on a deterministic refusal, not the model`),
+    ],
     gate: gateFailures.length ? "FAIL" : "PASS",
     gateFailures,
   };
@@ -568,11 +589,12 @@ export function report(r: EvalResult): string[] {
     c.kind,
     c.mode,
     c.httpStatus === null ? "—" : String(c.httpStatus),
+    outcomeCode(c.outcome),
     String(c.ms),
     c.pass ? "pass" : "FAIL",
     CHECK_ORDER.filter((k) => c.checks[k] === false).join(",") || "",
   ]);
-  const head = ["case", "kind", "mode", "http", "ms", "result", "failed checks"];
+  const head = ["case", "kind", "mode", "http", "outcome", "ms", "result", "failed checks"];
   const widths = head.map((h, i) => Math.max(h.length, ...rows.map((row) => row[i].length)));
   const line = (cells: string[]) => cells.map((cell, i) => cell.padEnd(widths[i])).join("  ").trimEnd();
   const out = ["", line(head), line(widths.map((w) => "-".repeat(w))), ...rows.map(line), ""];
@@ -581,7 +603,7 @@ export function report(r: EvalResult): string[] {
   if (failed.length) {
     out.push(`Failed cases (${failed.length}):`);
     for (const c of failed) {
-      out.push(`  ${c.id}: ${c.notes.join(" · ")}`);
+      out.push(`  ${c.id}: ${c.notes.join(" · ")}${c.outcome ? ` · x-ask-outcome: ${c.outcome}` : ""}`);
       if (c.answer) out.push(`    answer: ${c.answer.length > 200 ? `${c.answer.slice(0, 200)}…` : c.answer}`);
     }
     out.push("");
@@ -591,6 +613,7 @@ export function report(r: EvalResult): string[] {
   out.push(
     `Prepared ${s.prepared} (by the model ${s.preparedByModel}) · off-topic ${s.offtopic} · p50 ${s.p50Ms} ms · p90 ${s.p90Ms} ms · forbidden ${s.forbiddenHits} · unsupported ${s.unsupportedNumbers} (on passing ${s.unsupportedOnPassing})`,
     `Modes: ${Object.entries(s.modes).map(([k, v]) => `${k} ${v}`).join(", ")}`,
+    `Outcomes: ${Object.entries(s.outcomes ?? {}).map(([k, v]) => `${k} ${v}`).join(", ")}`,
     `Provenance: ${p.commit.slice(0, 7)}${p.dirty ? " (dirty)" : ""} on ${p.branch} · ${p.baseUrlHost} · ${modelText(p)} · ${p.promptVersion} · dataset ${p.datasetVersion} · hash ${p.datasetHash ?? "none"}`,
   );
   for (const w of [...s.warnings, ...p.warnings]) out.push(`Warning: ${w}`);
@@ -629,6 +652,11 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
       process.exitCode = 2;
     },
   );
+}
+
+/** 'guard:no_cites' from 'guard:no_cites; model=gemini-3.5-flash'; 'none' when there was no header. */
+export function outcomeCode(outcome: string | null | undefined): string {
+  return outcome?.split(";")[0].trim() || "none";
 }
 
 function countModels(models: (string | null)[]): Record<string, number> {

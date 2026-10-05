@@ -79,3 +79,12 @@ describe("docs/exec/hindi-review.md (TKT-06 DoD)", () => {
     expect(md).toContain("| आपका सवाल सहेज लिया गया है। | Your question is saved. |");
   });
 });
+
+describe("Stage 9 · the Ask refusals are in the review", () => {
+  it("lists both refusals beside their English", () => {
+    const md = hindiReviewMarkdown();
+    expect(md).toContain("| मेरे पास इसका डेटा नहीं है। मैं सिर्फ़ शर्मा रोडलाइंस के अपने ट्रिप, ट्रक, डीज़ल और पैसों का हिसाब जानता हूँ, उनके बारे में पूछें। | I don't have that data.");
+    expect(md).toContain("| मैं यह नहीं बता सकता: अपने निर्देश या कोई key मैं किसी से साझा नहीं करता। अपने ट्रिप, ट्रक, डीज़ल या पैसों के बारे में पूछें। | I can't answer that:");
+  });
+});
+

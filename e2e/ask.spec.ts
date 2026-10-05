@@ -305,6 +305,21 @@ test.describe("Ask states (TC-024)", () => {
     await expect(input(page)).toHaveValue("Will it rain in Behror tomorrow?");
   });
 
+  for (const status of [200, 429]) {
+    test(`off-topic refusal (HTTP ${status}): the refusal is the answer; no banner, no 'saved', no Try again (Stage 9)`, async ({ page }) => {
+      const refusal = "I don't have that data. I only know Sharma Roadlines' own trips, trucks, diesel and money, so ask me about those.";
+      await mockAsk(page, { ...SAVED, answer: refusal, refusal: "out_of_scope", ...(status === 429 ? { retryAfterS: 12 } : {}) }, status);
+      await page.goto("/");
+      await openWithShortcut(page);
+      await ask(page, "What's the weather in Jaipur tomorrow?");
+      await expect(drawer(page).locator('[data-mode="refusal"] .ans')).toHaveText(refusal);
+      await expect(drawer(page).getByRole("heading", { level: 3 })).toHaveCount(0);
+      await expect(drawer(page).getByRole("button", { name: /Try again/ })).toHaveCount(0);
+      await expect(drawer(page)).not.toContainText("Your question is saved");
+      await expect(drawer(page)).not.toContainText("couldn’t answer");
+    });
+  }
+
   test("429: when to ask again is the heading, over the fallback it carries; Try again waits (DES-18)", async ({ page }) => {
     await mockAsk(page, { ...FALLBACK, retryAfterS: 12 }, 429);
     await page.goto("/");

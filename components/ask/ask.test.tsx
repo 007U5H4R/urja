@@ -477,6 +477,23 @@ describe("Ask rate-limited (429) state (DES-18)", () => {
     expect((screen.getByRole("button", { name: "Try again" }) as HTMLButtonElement).disabled).toBe(false);
   });
 
+  it.each([undefined, 9, 61234])("Stage 9: a refusal (retryAfterS %s) shows the refusal itself: no banner, no wait, no 'saved', no 'Try again'", (retryAfterS) => {
+    const refusal = "I don't have that data. I only know Sharma Roadlines' own trips, trucks, diesel and money, so ask me about those.";
+    const state = {
+      status: "saved",
+      question: "What's the weather in Jaipur tomorrow?",
+      ...(retryAfterS ? { retryAfterS } : {}),
+      response: resp({ mode: "saved", lang: "en", answer: refusal, cites: [], refusal: "out_of_scope", provenance: { ...provenance, model: null } }),
+    } as const;
+    const { container } = render(<AskAnswer state={state} lang="en" scope={SHELL_SCOPE} saved={SAVED} onRetry={() => {}} />);
+    const c = ASK_COPY.en;
+    expect(screen.getByText(refusal)).toBeTruthy();
+    expect(container.querySelector('[data-mode="refusal"]')).not.toBeNull();
+    expect(screen.queryByRole("heading", { level: 3 })).toBeNull();
+    expect(screen.queryByRole("button")).toBeNull();
+    for (const s of [c.savedBanner, c.savedShort, c.dailyLimit, SAVED.en]) expect(container.textContent).not.toContain(s);
+  });
+
   it("no rate-limit line blames the AI", () => {
     for (const l of ["en", "hi"] as const) {
       const c = ASK_COPY[l];

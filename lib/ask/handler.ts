@@ -10,12 +10,12 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import { askConfig, type AskConfig } from "./config";
-import { AskRequest, type AskLang, type AskResponse } from "./contract";
+import { AskRequest, type AskResponse } from "./contract";
 import { getAskContext } from "./context";
-import { checkCaveat, fallbackAnswer, SAVED_MESSAGE } from "./fallback";
+import { checkCaveat, fallbackAnswer, refusalAnswer, SAVED_MESSAGE } from "./fallback";
 import { callGeminiWithFallback, type GeminiAttempt } from "./gemini";
-import { guardAnswer } from "./guard";
-import { detectLang } from "./intents";
+import { guardAnswer, missingSpecifics, type Specific } from "./guard";
+import { copyLang } from "./intents";
 import { citeLabels } from "./labels";
 import { consoleSink, hashQuestion, writeAskLog, type AskOutcome, type LogSink } from "./log";
 import { PROMPT_VERSION } from "./prompt";
@@ -48,11 +48,14 @@ const attemptCode = (a: GeminiAttempt) => (a.status ? `${a.outcome}:${a.status}`
 const attemptLog = (a: GeminiAttempt) => `${a.model} ${attemptCode(a)}`;
 
 /**
- * EXE24/EXE26 · "<outcome>[:<detail>][; model=<model>][; after=<first outcome> <first model>]".
- * Outcome codes and model ids only: never the key or the question.
+ * EXE24/EXE26 · "<outcome>[:<detail>][; model=<model>][; after=<first outcome> <first model>][; missing=<facts>]".
+ * Outcome codes, model ids and fact names only: never the key or the question.
+ * `missing` (Stage 9) names decisive facts a model answer left out (guard.ts missingSpecifics).
  */
-function outcomeHeader(code: string, model: string | null, first?: GeminiAttempt): string {
-  return [code, model ? `model=${model}` : null, first ? `after=${attemptCode(first)} ${first.model}` : null].filter(Boolean).join("; ");
+function outcomeHeader(code: string, model: string | null, first?: GeminiAttempt, missing: readonly Specific[] = []): string {
+  return [code, model ? `model=${model}` : null, first ? `after=${attemptCode(first)} ${first.model}` : null, missing.length ? `missing=${missing.join(",")}` : null]
+    .filter(Boolean)
+    .join("; ");
 }
 
 /** Caveats as one line of sentences: "Check the trips before acting. Trip 0926-11 is a Check flag: …". */
@@ -85,6 +88,7 @@ export function createAskHandler(deps: AskDeps = {}) {
       unsupported?: number[];
       guard?: string;
       firstAttempt?: string;
+      missing?: Specific[];
     }) =>
       writeAskLog(
         {
@@ -103,6 +107,7 @@ export function createAskHandler(deps: AskDeps = {}) {
           ipHash,
           ...(e.guard ? { guard: e.guard } : {}),
           ...(e.firstAttempt ? { firstAttempt: e.firstAttempt } : {}),
+          ...(e.missing?.length ? { missing: e.missing } : {}),
         },
         sink,
       );
@@ -126,11 +131,16 @@ export function createAskHandler(deps: AskDeps = {}) {
       log({ mode: null, outcome: "invalid" });
       return json(400, { error: "invalid_request", message: "Send JSON {question} with 1 to 500 characters." });
     }
-    const { question } = parsed.data;
-    const qLang: AskLang = detectLang(question);
+    const { question, lang: uiLang } = parsed.data;
+    // CR-1: deterministic copy (saved, fallback, refusal) follows the screen's language when the script is ambiguous.
+    const qLang = copyLang(question, uiLang);
 
     // ── Answers that don't come from the model ───────────────────────────
-    const degrade = (outcome: AskOutcome, status = 200, extra: { retryAfterS?: number; guard?: string; model?: string | null; upstream?: number; first?: GeminiAttempt } = {}) => {
+    const degrade = (
+      outcome: AskOutcome,
+      status = 200,
+      extra: { retryAfterS?: number; guard?: string; model?: string | null; upstream?: number; reason?: string; first?: GeminiAttempt } = {},
+    ) => {
       let body: AskResponse;
       let cites: string[] = [];
       let scope = "";
@@ -144,23 +154,27 @@ export function createAskHandler(deps: AskDeps = {}) {
       }
       let fb: ReturnType<typeof fallbackAnswer> = null;
       try {
-        fb = fallbackAnswer(question);
+        fb = fallbackAnswer(question, uiLang);
       } catch {
         fb = null;
       }
       const provenance = { scope, model: null, ms: elapsed(), promptVersion: PROMPT_VERSION, datasetHash };
+      // Stage 9: an off-topic question (weather, prices, the prompt) is refused, not "saved": trying
+      // again won't bring that into the data. Same mode as saved, so the drawer shows it unchanged.
+      const refusal = fb ? null : refusalAnswer(question, uiLang);
       if (fb) {
         cites = fb.cites;
         body = { mode: "fallback", answer: fb.answer, lang: fb.lang, cites: citeLabels(fb.cites, fb.lang), provenance };
+      } else if (refusal) {
+        body = { mode: "saved", answer: refusal.answer, lang: refusal.lang, cites: [], refusal: refusal.kind, provenance };
       } else {
-        const lang = qLang === "hi" ? "hi" : "en";
-        body = { mode: "saved", answer: SAVED_MESSAGE[lang], lang, cites: [], provenance };
+        body = { mode: "saved", answer: SAVED_MESSAGE[qLang], lang: qLang, cites: [], provenance };
       }
       if (extra.retryAfterS) body.retryAfterS = extra.retryAfterS;
       log({ mode: body.mode, outcome, model: extra.model ?? null, question, lang: body.lang, cites, guard: extra.guard, firstAttempt: extra.first && attemptLog(extra.first) });
       // EXE24: the outcome code (never the key or the question) in a header, so a
       // preview's fallbacks can be diagnosed without its runtime logs.
-      const detail = extra.guard ?? (extra.upstream ? String(extra.upstream) : null);
+      const detail = extra.guard ?? (extra.upstream ? String(extra.upstream) : (extra.reason ?? null));
       const diag = { "x-ask-outcome": outcomeHeader(detail ? `${outcome}:${detail}` : outcome, extra.model ?? null, extra.first) };
       return json(status, body, extra.retryAfterS ? { ...diag, "retry-after": String(extra.retryAfterS) } : diag);
     };
@@ -182,9 +196,9 @@ export function createAskHandler(deps: AskDeps = {}) {
       // EXE26: the model that answered (or failed last), and the busy first attempt if the fallback model was asked.
       const answeredBy = result.attempts[result.attempts.length - 1].model;
       const first = result.attempts.length > 1 ? result.attempts[0] : undefined;
-      if (!result.ok) return degrade(result.outcome, 200, { model: answeredBy, upstream: result.status, first });
+      if (!result.ok) return degrade(result.outcome, 200, { model: answeredBy, upstream: result.status, reason: result.detail, first });
 
-      const g = guardAnswer(result.answer, { question, allowed: bundle.allowed, tripIds: bundle.tripIds });
+      const g = guardAnswer(result.answer, { question, allowed: bundle.allowed, tripIds: bundle.tripIds, plates: bundle.plates });
       if (!g.ok) return degrade("guard", 200, { guard: g.reason, model: result.model, first });
 
       const lang = result.answer.lang;
@@ -200,16 +214,17 @@ export function createAskHandler(deps: AskDeps = {}) {
         ...(caveat ? { caveat } : {}),
         provenance: { scope: bundle.scope, model: result.model, ms: elapsed(), promptVersion: PROMPT_VERSION, datasetHash: bundle.hash },
       };
-      log({ mode: "model", outcome: "ok", model: result.model, question, lang, cites: g.cites, unsupported: g.unsupported, firstAttempt: first && attemptLog(first) });
-      return json(200, body, { "x-ask-outcome": outcomeHeader("ok", result.model, first) });
+      // Stage 9: decisive facts the cited records carry but the answer omits, named for the eval (never rewritten).
+      const missing = result.answer.out_of_scope ? [] : missingSpecifics(g.answer, g.cites, bundle.context.flags);
+      log({ mode: "model", outcome: "ok", model: result.model, question, lang, cites: g.cites, unsupported: g.unsupported, firstAttempt: first && attemptLog(first), missing });
+      return json(200, body, { "x-ask-outcome": outcomeHeader("ok", result.model, first, missing) });
     } catch {
       try {
         return degrade("error");
       } catch {
         // Last resort, still not a 500: the saved answer with empty provenance.
-        const lang = qLang === "hi" ? "hi" : "en";
         const provenance = { scope: "", model: null, ms: elapsed(), promptVersion: PROMPT_VERSION, datasetHash: "" };
-        return json(200, { mode: "saved", answer: SAVED_MESSAGE[lang], lang, cites: [], provenance } satisfies AskResponse);
+        return json(200, { mode: "saved", answer: SAVED_MESSAGE[qLang], lang: qLang, cites: [], provenance } satisfies AskResponse);
       }
     }
   };

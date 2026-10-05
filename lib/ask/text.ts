@@ -33,3 +33,6 @@ export const FORBIDDEN = new RegExp(`\\b(${EN.join("|")})\\b|${HI.join("|")}`, "
 
 /** A Google API key's shape, assembled so this file never matches the secret scan. */
 export const KEY_SHAPE = new RegExp(["AI", "za", "[0-9A-Za-z_\\-]{35}"].join(""));
+
+/** 'RJ14 GC 7710', 'rj-14-gc-7710' → 'RJ14GC7710'. */
+export const normalisePlate = (p: string) => p.replace(/[\s-]/g, "").toUpperCase();

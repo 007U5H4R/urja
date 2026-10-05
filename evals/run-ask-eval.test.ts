@@ -30,7 +30,7 @@ const provenance = (model: string | null = "gemini-3.5-flash") => ({
   datasetHash: bundle.hash,
 });
 
-type Answerer = (id: string, attempt: number) => { status: number; body?: unknown; raw?: string } | Error | "hang";
+type Answerer = (id: string, attempt: number) => { status: number; body?: unknown; raw?: string; headers?: Record<string, string> } | Error | "hang";
 
 function harness(answer: Answerer = (id) => ({ status: 200, body: { ...good.get(id), provenance: provenance() } }), stepMs = 1000) {
   const calls: { url: string; body: { question: string; lang?: string }; headers: Record<string, string> }[] = [];
@@ -51,7 +51,7 @@ function harness(answer: Answerer = (id) => ({ status: 200, body: { ...good.get(
     if (r === "hang")
       return new Promise<Response>((_, reject) => init?.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError"))));
     if (r instanceof Error) throw r;
-    return new Response(r.raw ?? JSON.stringify(r.body), { status: r.status, headers: { "content-type": r.raw ? "text/html" : "application/json" } });
+    return new Response(r.raw ?? JSON.stringify(r.body), { status: r.status, headers: { "content-type": r.raw ? "text/html" : "application/json", ...r.headers } });
   });
   const deps: RunDeps = {
     fetch: fetchMock as unknown as typeof fetch,
@@ -508,5 +508,68 @@ describe("runEval", () => {
     expect(h.calls).toHaveLength(13);
     expect(result.cases.find((c) => c.id === "EVAL-004")).toMatchObject({ httpStatus: 429, pass: false });
     expect(result.cases.find((c) => c.id === "EVAL-004")).not.toHaveProperty("retried");
+  });
+});
+
+describe("x-ask-outcome diagnostics (Stage 9)", () => {
+  const outcomeFor: Record<string, string> = {
+    "EVAL-001": "guard:no_cites; model=gemini-3.5-flash",
+    "EVAL-007": "http_5xx:503; model=gemini-2.5-flash; after=http_429:429 gemini-3.5-flash",
+    "EVAL-011": "timeout; model=gemini-3.5-flash",
+  };
+  const withOutcomes = () =>
+    harness((id) => ({ status: 200, body: { ...good.get(id), provenance: provenance() }, headers: { "x-ask-outcome": outcomeFor[id] ?? "ok; model=gemini-3.5-flash" } }));
+
+  it("records each case's x-ask-outcome header in the results JSON", async () => {
+    const h = withOutcomes();
+    const { result } = await runEval(opts(), h.deps);
+    const byId = new Map(result.cases.map((c) => [c.id, c]));
+    expect(byId.get("EVAL-001")?.outcome).toBe("guard:no_cites; model=gemini-3.5-flash");
+    expect(byId.get("EVAL-007")?.outcome).toBe("http_5xx:503; model=gemini-2.5-flash; after=http_429:429 gemini-3.5-flash");
+    expect(byId.get("EVAL-002")?.outcome).toBe("ok; model=gemini-3.5-flash");
+    expect(JSON.parse(h.writes[0].text).cases[0].outcome).toBe("guard:no_cites; model=gemini-3.5-flash");
+  });
+
+  it("summarises outcome codes (the part before the first ';') and prints them", async () => {
+    const h = withOutcomes();
+    const { result } = await runEval(opts(), h.deps);
+    expect(result.summary.outcomes).toEqual({ ok: 10, "guard:no_cites": 1, "http_5xx:503": 1, timeout: 1 });
+    const out = h.lines.join("\n");
+    expect(out).toMatch(/Outcomes: ok 10, guard:no_cites 1, http_5xx:503 1, timeout 1/);
+    // The table carries the outcome code on each row.
+    expect(out.split("\n").find((l) => l.startsWith("EVAL-001"))).toMatch(/guard:no_cites/);
+    expect(out.split("\n").find((l) => l.startsWith("case "))).toMatch(/\bhttp\s+outcome\s+ms\b/);
+  });
+
+  it("records null (and counts 'none') when the server sends no header or there is no response", async () => {
+    const h = harness((id) => (id === "EVAL-003" ? new Error("ECONNRESET") : { status: 200, body: { ...good.get(id), provenance: provenance() } }));
+    const { result } = await runEval(opts(), h.deps);
+    expect(result.cases.every((c) => c.outcome === null)).toBe(true);
+    expect(result.summary.outcomes).toEqual({ none: 13 });
+  });
+
+  it("warns on every off-topic pass that isn't a model answer, without changing the count or the gate", async () => {
+    const h = harness((id) =>
+      id === "EVAL-011" || id === "EVAL-013"
+        ? { status: 200, body: { ...good.get(id), mode: "saved", refusal: "out_of_scope", provenance: provenance(null) } }
+        : { status: 200, body: { ...good.get(id), provenance: provenance() } },
+    );
+    const { result } = await runEval(opts(), h.deps);
+    expect(result.summary.offtopic).toBe("3/3");
+    expect(result.summary.gate).toBe("PASS");
+    expect(result.summary.warnings).toEqual([
+      "EVAL-007 passed on a fallback answer, not the model",
+      "EVAL-011 passed on a deterministic refusal, not the model",
+      "EVAL-013 passed on a deterministic refusal, not the model",
+    ]);
+    expect(h.lines.join("\n")).toMatch(/Warning: EVAL-011 passed on a deterministic refusal, not the model/);
+  });
+
+  it("never changes scoring or the gate", async () => {
+    const plain = await runEval(opts(), harness().deps);
+    const diag = await runEval(opts(), withOutcomes().deps);
+    expect(diag.result.cases.map((c) => [c.id, c.pass, c.checks])).toEqual(plain.result.cases.map((c) => [c.id, c.pass, c.checks]));
+    expect(diag.result.summary.gate).toBe(plain.result.summary.gate);
+    expect(diag.result.summary.gateFailures).toEqual(plain.result.summary.gateFailures);
   });
 });

@@ -30,6 +30,7 @@ import { truckByPlate } from "@/lib/data/fleet";
 import { INTERCITY_ROUTE_IDS, routeName } from "@/lib/data/routes";
 import { DIESEL_INR_PER_L, WRONG_FLAG_LIMIT_PCT } from "@/lib/data/constants";
 import { formatDateIST, formatTimeIST, minToISTParts } from "@/lib/format";
+import { normalisePlate } from "./text";
 import { RULE_LABEL, confidenceWord, dayLabel, flagPlace, flagWhen } from "./labels";
 
 export const FLEET_NAME = "Sharma Roadlines";
@@ -60,6 +61,8 @@ export interface AskContext {
     unaccountedInr: number;
     unaccountedL: number;
     flaggedTrips: string[];
+    /** flaggedTrips.length, stated so the model needn't count (Stage 9: EVAL-005 left it out). */
+    flaggedTripCount: number;
     tripsThatAddUp: number;
   };
   september: {
@@ -75,7 +78,11 @@ export interface AskContext {
     recoveredInr: number;
     recoveredSharePct: number;
     dieselUnaccounted: { litres: number; inr: number; incidents: number; trips: string[] };
-    lastWeek: { from: string; to: string; litres: number; inr: number; trips: string[] };
+    lastWeek: { from: string; to: string; litres: number; inr: number; tripCount: number; trips: string[] };
+    /** Trips whose flags brought money back (recoveredInr sums to `recoveredInr`): what a "recovered" answer cites. */
+    recoveredTrips: string[];
+    /** Trips whose flags were marked wrong: what a "how often was Urja wrong" answer cites. */
+    wrongTrips: string[];
     behrorStretch: { flags: number; dieselLitres: number; dieselInr: number; trips: string[] };
     weeks: { days: string; flaggedInr: number; recoveredInr: number }[];
     dailyProfitInr: Record<string, number>;
@@ -135,6 +142,8 @@ export function buildContext(): AskContext {
   const ranked = trucks();
   const nowCounts: Record<string, number> = { moving: 0, yard: 0, workshop: 0 };
   for (const t of ranked) nowCounts[t.now.state]++;
+  // The flags september() sums (lib/data/aggregates.ts septemberFlags: flag day 1–27 Sep).
+  const septFlags = ds.flags.filter((f) => f.dayKey >= SEPT_FIRST_DAY && f.dayKey <= SEPT_LAST_DAY);
   const flaggedYesterday = [...new Set(y.flags.filter((f) => f.status !== "wrong").map((f) => f.tripId))];
   const daily: Record<string, number> = {};
   for (const d of days(dayKey(DEMO_NOW - 14 * MIN_PER_DAY), YESTERDAY_DAY)) daily[dayLabel(d.dayKey)] = d.profitInr;
@@ -166,6 +175,7 @@ export function buildContext(): AskContext {
       unaccountedInr: y.unaccountedInr,
       unaccountedL: y.unaccountedL,
       flaggedTrips: flaggedYesterday,
+      flaggedTripCount: flaggedYesterday.length,
       tripsThatAddUp: y.trips - flaggedYesterday.length,
     },
     september: {
@@ -181,7 +191,9 @@ export function buildContext(): AskContext {
       recoveredInr: s.recoveredInr,
       recoveredSharePct: s.sharePct,
       dieselUnaccounted: { litres: s.dieselL, inr: s.dieselInr, incidents: s.incidents.length, trips: s.incidents.map((f) => f.tripId) },
-      lastWeek: { from: dayLabel(w.fromDay), to: dayLabel(w.toDay), litres: w.litres, inr: w.inr, trips: [...w.tripIds] },
+      lastWeek: { from: dayLabel(w.fromDay), to: dayLabel(w.toDay), litres: w.litres, inr: w.inr, tripCount: w.tripIds.length, trips: [...w.tripIds] },
+      recoveredTrips: [...new Set(septFlags.filter((f) => f.recoveredInr > 0).map((f) => f.tripId))],
+      wrongTrips: [...new Set(septFlags.filter((f) => f.status === "wrong").map((f) => f.tripId))],
       behrorStretch: { flags: behror.flags.length, dieselLitres: behror.litres, dieselInr: behror.inr, trips: behror.flags.map((f) => f.tripId) },
       weeks: weeks().map((k) => ({ days: `${k.label} Sep`, flaggedInr: k.flaggedInr, recoveredInr: k.recoveredInr })),
       dailyProfitInr: daily,
@@ -302,6 +314,8 @@ export interface AskContextBundle {
   /** How long the first build took (dataset + context), in ms. */
   buildMs: number;
   tripIds: Set<string>;
+  /** The fleet's plates, normalised ('RJ14GC7710'): a truck the guard accepts as a citation. */
+  plates: Set<string>;
 }
 
 let memo: AskContextBundle | undefined;
@@ -320,6 +334,7 @@ export function getAskContext(): AskContextBundle {
     scope: `${context.september.trips} trips across ${context.fleet.trucks} trucks, ${context.september.period}`,
     buildMs: Math.round(performance.now() - t0),
     tripIds: new Set(getDataset().trips.map((t) => t.id)),
+    plates: new Set(context.trucks.map((t) => normalisePlate(t.plate))),
   };
   return memo;
 }

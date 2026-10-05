@@ -4,14 +4,19 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AskResponse } from "@/lib/ask/contract";
-import { CHECK_CAVEAT_LINE, fallbackAnswer } from "@/lib/ask/fallback";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { getAskContext } from "@/lib/ask/context";
+import { CHECK_CAVEAT_LINE, REFUSAL, SAVED_MESSAGE, fallbackAnswer } from "@/lib/ask/fallback";
+import { scoreCase, scoringContext, type EvalDataset } from "@/evals/scorers/ask-scorer";
 import { createAskHandler } from "@/lib/ask/handler";
 import { createRateLimiter } from "@/lib/ask/rate-limit";
 import { POST, dynamic, runtime } from "./route";
 
 const KEY = "test-key-not-real";
 const RECOGNISED = "How much did we earn yesterday, and how much doesn't add up?";
-const UNRECOGNISED = "What's the weather in Jaipur tomorrow?";
+/** In scope, but no fallback template answers it: the saved path. (The weather is off-topic: it gets a refusal.) */
+const UNRECOGNISED = "Which driver drove the most kilometres in August?";
 
 let ipSeq = 0;
 function ask(body: unknown, ip = `198.51.100.${++ipSeq}`): Request {
@@ -156,7 +161,7 @@ describe("TC-040 · happy path (mocked model)", () => {
     expect(body.provenance).toMatchObject({
       scope: "212 trips across 24 trucks, 1–27 Sep",
       model: "gemini-3.5-flash",
-      promptVersion: "ask-v1",
+      promptVersion: "ask-v2",
     });
     expect(body.provenance.datasetHash).toMatch(/^[0-9a-f]{12}$/);
     expect(body.provenance.ms).toBeGreaterThanOrEqual(0);
@@ -531,3 +536,205 @@ describe("EXE26 · the fallback model answers when the primary is busy", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
+
+// ── Stage 9 · the baseline's failure classes, reproduced with mocked Gemini answers ──
+const dataset = JSON.parse(readFileSync(join(__dirname, "..", "..", "..", "evals", "eval-dataset.json"), "utf8")) as EvalDataset;
+const evalCase = (id: string) => dataset.cases.find((c) => c.id === id)!;
+const scoreCtx = scoringContext(dataset, getAskContext());
+const askCase = (id: string, ip?: string) => ask({ question: evalCase(id).input.question, ...(evalCase(id).input.lang ? { lang: evalCase(id).input.lang } : {}) }, ip);
+
+describe("Stage 9 · correct model answers the guard used to reject (baseline EVAL-001/008/009 fell back)", () => {
+  it.each([
+    [
+      "EVAL-001: the flag ids of the three Check trips",
+      "EVAL-001",
+      {
+        answer:
+          "Anil Bairwa (RJ14 GC 3309) cost you the most diesel this month: 125 L (₹11,250) more than normal on 3 trips. All 3 are Check flags, so the extra use can have other causes, such as a heavier load.",
+        lang: "en",
+        cited_trips: ["0926-11-R3", "0917-06-R3", "0909-03-R3"],
+        cited_trucks: ["RJ14 GC 3309"],
+        out_of_scope: false,
+      },
+    ],
+    [
+      "EVAL-008: the two flags marked wrong, by flag id",
+      "EVAL-008",
+      {
+        answer: "Urja was wrong 2 of 23 times this month (9%), under the 10% limit: 0909-07 and 0920-06, both explained by the driver.",
+        lang: "en",
+        cited_trips: ["0909-07-R5", "0920-06-R4"],
+        cited_trucks: [],
+        out_of_scope: false,
+      },
+    ],
+    [
+      "EVAL-009: the best truck, which has no flagged trip, cited by plate",
+      "EVAL-009",
+      {
+        answer: "सबसे ज़्यादा कमाई प्रति किलोमीटर RJ14 GC 7710 (महेश मीणा) की है: सितंबर में ₹31.8 प्रति किलोमीटर।",
+        lang: "hi",
+        cited_trips: [],
+        cited_trucks: ["RJ14 GC 7710"],
+        out_of_scope: false,
+      },
+    ],
+  ])("%s → mode model, and the scorer passes it", async (_label, id, payload) => {
+    fetchMock.mockImplementation(async () => geminiJson(payload));
+    const res = await POST(askCase(id));
+    const { body } = await read(res);
+    expect(res.headers.get("x-ask-outcome")).toMatch(/^ok; model=gemini-3\.5-flash/);
+    expect(AskResponse.parse(body).mode).toBe("model");
+    const score = scoreCase(evalCase(id), body, scoreCtx);
+    expect(score.notes).toEqual([]);
+    expect(score.pass).toBe(true);
+  });
+
+  it("B1: a fleet plate the answer doesn't name grounds nothing: no_cites → fallback", async () => {
+    // MODEL_OK's answer names no plate; its cited_trucks is ["RJ14 GB 4521"].
+    fetchMock.mockImplementation(async () => geminiJson({ ...MODEL_OK, cited_trips: [], cited_trucks: ["RJ14 GB 4521"] }));
+    const res = await POST(ask({ question: RECOGNISED }));
+    expect((await read(res)).body.mode).toBe("fallback");
+    expect(res.headers.get("x-ask-outcome")).toBe("guard:no_cites; model=gemini-3.5-flash");
+  });
+
+  it("a made-up truck still grounds nothing: no_cites → fallback", async () => {
+    fetchMock.mockImplementation(async () => geminiJson({ ...MODEL_OK, cited_trips: [], cited_trucks: ["RJ14 ZZ 9999"] }));
+    const res = await POST(ask({ question: RECOGNISED }));
+    expect((await read(res)).body.mode).toBe("fallback");
+    expect(res.headers.get("x-ask-outcome")).toBe("guard:no_cites; model=gemini-3.5-flash");
+  });
+});
+
+describe("Stage 9 · off-topic questions are refused, never 'saved' (baseline EVAL-011/013)", () => {
+  const hang = (_url: string, init: RequestInit) =>
+    new Promise<Response>((_resolve, reject) => init.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError"))));
+
+  it.each([
+    ["a refusal the model didn't mark out_of_scope (no_cites)", () => geminiJson({ answer: "Sorry, I can only help with your fleet.", lang: "en", cited_trips: [], cited_trucks: [], out_of_scope: false }), "guard:no_cites; model=gemini-3.5-flash"],
+    ["an upstream 503 on both models", () => new Response("{}", { status: 503 }), "http_5xx:503; model=gemini-2.5-flash; after=http_5xx:503 gemini-3.5-flash"],
+    ["a blocked prompt (no candidates)", () => new Response(JSON.stringify({ promptFeedback: { blockReason: "SAFETY" } }), { status: 200 }), "bad_json:SAFETY; model=gemini-3.5-flash"],
+  ])("EVAL-011, %s → the out-of-scope refusal, which the scorer passes", async (_label, reply, outcome) => {
+    fetchMock.mockImplementation(async () => reply());
+    const res = await POST(askCase("EVAL-011"));
+    const { status, body } = await read(res);
+    expect(status).toBe(200);
+    expect(res.headers.get("x-ask-outcome")).toBe(outcome);
+    expect(AskResponse.parse(body)).toMatchObject({ mode: "saved", answer: REFUSAL.out_of_scope.en, lang: "en", cites: [], refusal: "out_of_scope" });
+    expect(scoreCase(evalCase("EVAL-011"), body, scoreCtx).pass).toBe(true);
+  });
+
+  it("EVAL-013 after a timeout → the injection refusal: no canary, no prompt, no key; the scorer passes it", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    fetchMock.mockImplementation(hang);
+    const pending = POST(askCase("EVAL-013"));
+    await vi.advanceTimersByTimeAsync(8000);
+    const { body } = await read(await pending);
+    expect(body).toMatchObject({ mode: "saved", answer: REFUSAL.injection.en, cites: [], refusal: "injection" });
+    expect(scoreCase(evalCase("EVAL-013"), body, scoreCtx).pass).toBe(true);
+  });
+
+  it("EVAL-012 with no key → the Hindi refusal; the scorer passes it", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "");
+    const { body } = await read(await POST(askCase("EVAL-012")));
+    expect(body).toMatchObject({ mode: "saved", answer: REFUSAL.out_of_scope.hi, lang: "hi" });
+    expect(scoreCase(evalCase("EVAL-012"), body, scoreCtx).pass).toBe(true);
+  });
+
+  it("a rate-limited off-topic question is refused too, still 429 with retryAfterS", async () => {
+    const ip = "203.0.113.150";
+    for (let i = 0; i < 5; i++) await POST(ask({ question: UNRECOGNISED }, ip));
+    const res = await POST(askCase("EVAL-011", ip));
+    const { status, body } = await read(res);
+    expect(status).toBe(429);
+    expect(body).toMatchObject({ mode: "saved", answer: REFUSAL.out_of_scope.en, refusal: "out_of_scope" });
+    expect(body.retryAfterS).toBeGreaterThan(0);
+  });
+
+  it("an in-scope question the templates can't answer is saved, with no refusal flag", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "");
+    for (const question of [UNRECOGNISED, "Did drivers follow instructions on the Behror trip?", "What diesel price do you use?"]) {
+      const { body } = await read(await POST(ask({ question })));
+      expect(body, question).toMatchObject({ mode: "saved", answer: SAVED_MESSAGE.en });
+      expect(body.refusal, question).toBeUndefined();
+    }
+  });
+
+  it("the model's own refusal still wins when it answers (mode model)", async () => {
+    fetchMock.mockImplementation(async () => geminiJson({ answer: "I don't have weather data.", lang: "en", cited_trips: [], cited_trucks: [], out_of_scope: true }));
+    const { body } = await read(await POST(askCase("EVAL-011")));
+    expect(body).toMatchObject({ mode: "model", answer: "I don't have weather data." });
+  });
+});
+
+describe("Stage 9 · missing decisive facts are named in x-ask-outcome (baseline EVAL-002/005/006)", () => {
+  it.each([
+    ["EVAL-002 without the trip count", "EVAL-002", { answer: "पिछले हफ़्ते 217 L डीज़ल हिसाब नहीं मिल रहा है, जिसकी कीमत ₹19,530 है।", lang: "hi", cited_trips: ["0921-09", "0923-02", "0926-04", "0927-02", "0926-11"], cited_trucks: [], out_of_scope: false }, "missing=count"],
+    ["EVAL-005 without the trip count", "EVAL-005", { answer: "Yesterday we earned a profit of ₹1,86,400, and ₹11,430 (127 L of diesel) is unaccounted.", lang: "en", cited_trips: ["0926-04", "0927-02", "0926-11"], cited_trucks: [], out_of_scope: false }, "missing=count"],
+    ["EVAL-006 without the place and time", "EVAL-006", { answer: "Ramesh Kumar's truck RJ14 GB 4521 had 38 L of unaccounted diesel worth ₹3,420 during a stationary fuel drop on trip 0926-04.", lang: "en", cited_trips: ["0926-04"], cited_trucks: [], out_of_scope: false }, "missing=place,time"],
+  ])("%s → still the model's answer, flagged %s", async (_label, id, payload, missing) => {
+    fetchMock.mockImplementation(async () => geminiJson(payload));
+    const res = await POST(askCase(id));
+    const { body } = await read(res);
+    expect(body.mode).toBe("model");
+    expect(body.answer).toBe(payload.answer);
+    expect(res.headers.get("x-ask-outcome")).toBe(`ok; model=gemini-3.5-flash; ${missing}`);
+    expect(lastLog()).toMatchObject({ outcome: "ok", missing: missing.slice("missing=".length).split(",") });
+  });
+
+  it("a complete answer carries no missing= part", async () => {
+    fetchMock.mockImplementation(async () =>
+      geminiJson({ answer: "RJ14 GB 4521 lost 38 L (₹3,420) while parked near Behror at 2:14 AM on trip 0926-04.", lang: "en", cited_trips: ["0926-04"], cited_trucks: [], out_of_scope: false }),
+    );
+    const res = await POST(askCase("EVAL-006"));
+    expect(res.headers.get("x-ask-outcome")).toBe("ok; model=gemini-3.5-flash");
+  });
+});
+
+describe("Stage 9 · Gemini's finish or block reason names a bad_json outcome", () => {
+  it("a MAX_TOKENS cut-off → bad_json:MAX_TOKENS", async () => {
+    const body = { candidates: [{ content: { parts: [{ text: '{"answer":"Yesterday you ear' }] }, finishReason: "MAX_TOKENS" }] };
+    fetchMock.mockImplementation(async () => new Response(JSON.stringify(body), { status: 200 }));
+    const res = await POST(ask({ question: RECOGNISED }));
+    expect(res.headers.get("x-ask-outcome")).toBe("bad_json:MAX_TOKENS; model=gemini-3.5-flash");
+  });
+
+  it("an odd reason is reduced to safe characters", async () => {
+    const body = { candidates: [{ content: { parts: [] }, finishReason: "weird reason <script>" }] };
+    fetchMock.mockImplementation(async () => new Response(JSON.stringify(body), { status: 200 }));
+    const res = await POST(ask({ question: RECOGNISED }));
+    expect(res.headers.get("x-ask-outcome")).toBe("bad_json:WEIRDREASONSCRIPT; model=gemini-3.5-flash");
+  });
+});
+
+describe("CR-1 · the request's lang picks the language of deterministic copy for a Latin-script question", () => {
+  const HINGLISH_UNRECOGNISED = "mere trucks ka haal batao";
+
+  it("lang 'hi' + an unrecognised Hinglish question → the Hindi saved message", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "");
+    const { body } = await read(await POST(ask({ question: HINGLISH_UNRECOGNISED, lang: "hi" })));
+    expect(body).toMatchObject({ mode: "saved", answer: SAVED_MESSAGE.hi, lang: "hi" });
+  });
+
+  it("lang 'en' (or none) + the same question → the English saved message", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "");
+    for (const req of [{ question: HINGLISH_UNRECOGNISED, lang: "en" }, { question: HINGLISH_UNRECOGNISED }]) {
+      const { body } = await read(await POST(ask(req)));
+      expect(body).toMatchObject({ mode: "saved", answer: SAVED_MESSAGE.en, lang: "en" });
+    }
+  });
+
+  it("lang 'hi' + a recognised Hinglish question → the Hindi fallback answer", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "");
+    const { body } = await read(await POST(ask({ question: "Vikram ki kal wali trip mein kya gadbad hai?", lang: "hi" })));
+    expect(body).toMatchObject({ mode: "fallback", lang: "hi" });
+    expect(body.answer).toContain("किशनगढ़");
+  });
+
+  it("a clearly English question stays English on the Hindi screen, and Devanagari stays Hindi on the English one", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "");
+    expect((await read(await POST(ask({ question: UNRECOGNISED, lang: "hi" })))).body).toMatchObject({ answer: SAVED_MESSAGE.en, lang: "en" });
+    expect((await read(await POST(ask({ question: "मेरे ट्रकों का हाल बताओ", lang: "en" })))).body).toMatchObject({ answer: SAVED_MESSAGE.hi, lang: "hi" });
+  });
+});
+

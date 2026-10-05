@@ -10,13 +10,16 @@
  */
 import "server-only";
 import { askConfig, GEMINI_BASE_URL, thinkingFor, type AskConfig } from "./config";
-import { SYSTEM_INSTRUCTION, userTurn } from "./prompt";
+import { ANSWER_RULES, SYSTEM_INSTRUCTION, userTurn } from "./prompt";
 import { ModelAnswer, RESPONSE_SCHEMA } from "./schema";
 
 /** `network`: the request never got an HTTP response (DNS, TLS, connection reset). */
 export type GeminiFailure = "timeout" | "network" | "http_429" | "http_4xx" | "http_5xx" | "bad_json" | "schema";
 
-export type GeminiResult = { ok: true; answer: ModelAnswer; model: string } | { ok: false; outcome: GeminiFailure; status?: number };
+export type GeminiResult =
+  | { ok: true; answer: ModelAnswer; model: string }
+  /** `detail`: for bad_json and schema, Gemini's block or finish reason ('SAFETY', 'MAX_TOKENS'), A–Z, 0–9 and _ only. */
+  | { ok: false; outcome: GeminiFailure; status?: number; detail?: string };
 
 export interface GeminiCall {
   apiKey: string;
@@ -30,7 +33,7 @@ export interface GeminiCall {
 /** The request body; exported for the probe script. */
 export function requestBody(context: string, question: string, config: AskConfig) {
   return {
-    systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
+    systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }, { text: ANSWER_RULES }] },
     contents: [{ role: "user", parts: [{ text: userTurn(context, question) }] }],
     generationConfig: {
       responseMimeType: "application/json",
@@ -43,8 +46,23 @@ export function requestBody(context: string, question: string, config: AskConfig
 }
 
 interface GenerateContentResponse {
-  candidates?: { content?: { parts?: { text?: string; thought?: boolean }[] } }[];
+  candidates?: { content?: { parts?: { text?: string; thought?: boolean }[] }; finishReason?: string }[];
+  promptFeedback?: { blockReason?: string };
 }
+
+/**
+ * Why Gemini's answer is unusable, as it says: the prompt's block reason, else
+ * the first candidate's finish reason when it isn't a normal STOP. Uppercased
+ * and reduced to A–Z, 0–9 and _ (max 40), so it is safe in a header.
+ */
+function reasonOf(body: GenerateContentResponse | undefined): string | undefined {
+  const raw = body?.promptFeedback?.blockReason ?? body?.candidates?.[0]?.finishReason;
+  if (typeof raw !== "string" || raw === "STOP") return undefined;
+  const clean = raw.toUpperCase().replace(/[^A-Z0-9_]/g, "").slice(0, 40);
+  return clean || undefined;
+}
+
+const failure = (outcome: GeminiFailure, detail?: string): GeminiResult => ({ ok: false, outcome, ...(detail ? { detail } : {}) });
 
 /** The answer text: the first candidate's non-thought parts, joined. */
 function answerText(body: GenerateContentResponse): string | null {
@@ -89,16 +107,16 @@ export async function callGemini({ apiKey, context, question, config = askConfig
     } catch (e) {
       return { ok: false, outcome: isAbort(e) || controller.signal.aborted ? "timeout" : "bad_json" };
     }
-    const text = answerText(body);
-    if (text === null) return { ok: false, outcome: "bad_json" };
+    const text = body && typeof body === "object" ? answerText(body) : null;
+    if (text === null) return failure("bad_json", reasonOf(body));
     let raw: unknown;
     try {
       raw = JSON.parse(text);
     } catch {
-      return { ok: false, outcome: "bad_json" };
+      return failure("bad_json", reasonOf(body));
     }
     const parsed = ModelAnswer.safeParse(raw);
-    if (!parsed.success) return { ok: false, outcome: "schema" };
+    if (!parsed.success) return failure("schema", reasonOf(body));
     return { ok: true, answer: parsed.data, model: config.model };
   } finally {
     clearTimeout(timer);
@@ -106,7 +124,7 @@ export async function callGemini({ apiKey, context, question, config = askConfig
 }
 
 /** One call to one model, as the handler reports it (x-ask-outcome, the log). */
-export type GeminiAttempt = { model: string; outcome: GeminiFailure | "ok"; status?: number };
+export type GeminiAttempt = { model: string; outcome: GeminiFailure | "ok"; status?: number; detail?: string };
 
 /** Below this much of the budget, the fallback model isn't worth a call. */
 export const MIN_RETRY_MS = 1000;
@@ -124,7 +142,7 @@ export async function callGeminiWithFallback(
   const now = call.now ?? (() => performance.now());
   const t0 = now();
   const attempt = (r: GeminiResult, model: string): GeminiAttempt =>
-    r.ok ? { model, outcome: "ok" } : { model, outcome: r.outcome, ...(r.status ? { status: r.status } : {}) };
+    r.ok ? { model, outcome: "ok" } : { model, outcome: r.outcome, ...(r.status ? { status: r.status } : {}), ...(r.detail ? { detail: r.detail } : {}) };
 
   const first = await callGemini({ ...call, config: { ...config, thinking: thinkingFor(config.model, config.thinking) } });
   const attempts = [attempt(first, config.model)];

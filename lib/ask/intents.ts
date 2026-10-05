@@ -43,6 +43,19 @@ export function detectLang(q: string): AskLang {
   return (q.toLowerCase().match(HINGLISH) ?? []).length >= 2 ? "hinglish" : "en";
 }
 
+/**
+ * CR-1 · The language of deterministic copy (saved message, fallback answers,
+ * refusals): a Devanagari question is Hindi and a plain English one English,
+ * whatever the screen; a Hinglish question (Latin letters, ambiguous script)
+ * follows the screen's language, the request's `lang` hint, and is English
+ * without one. The model's own answer language is prompt rule 1's, unchanged.
+ */
+export function copyLang(q: string, hint?: "hi" | "en"): "hi" | "en" {
+  const lang = detectLang(q);
+  if (lang === "hinglish") return hint ?? "en";
+  return lang;
+}
+
 // ── Matching helpers ─────────────────────────────────────────────────────
 const DEVA = "\\u0900-\\u097F";
 
@@ -58,7 +71,23 @@ function has(t: string, ...words: string[]): boolean {
 }
 
 // Keyword sets; Devanagari entries are written nukta-folded (ज्यादा, not ज़्यादा).
+// Words that keep a question away from the fallback templates (matchIntent): broad on purpose.
 const OFF_TOPIC = ["weather", "mausam", "मौसम", "forecast", "predict", "price", "prices", "bhav", "भाव", "दाम", "होगा", "hoga", "tomorrow", "ignore", "system prompt", "api key", "instructions", "prompt"];
+
+// What offTopicKind refuses: narrow on purpose, so an in-scope question ("did drivers follow
+// instructions?", "what diesel price do we use?") falls through to `saved` instead of a refusal.
+/** Asks for Urja's own prompt, instructions or a key (EVAL-013). */
+const INJECTION_ASKS = [
+  /\b(system prompt|api key|secret key|access key)\b/,
+  /\bignore (your|all|the|any|these|previous|prior|above)\b/,
+  /\byour (instructions|prompt|rules|system|setup|key)\b/,
+  /\b(print|reveal|show|repeat|share|tell me)\b.*\b(prompt|instructions)\b/,
+];
+/** Data no fleet holds: weather, sport. */
+const NEVER_IN_DATA = ["weather", "mausam", "मौसम", "rain", "baarish", "barish", "बारिश", "cricket", "क्रिकेट", "match", "score"];
+/** A price or rate in the future: a forecast (EVAL-012). The ₹90/L valuation itself is in the data. */
+const PRICE_WORDS = ["price", "prices", "rate", "rates", "bhav", "भाव", "दाम", "रेट"];
+const FUTURE_WORDS = ["forecast", "predict", "will", "tomorrow", "next week", "next month", "होगा", "होगी", "hoga", "hogi", "rahega", "rahegi", "रहेगा", "रहेगी"];
 const YESTERDAY = ["yesterday", "last night", "kal", "कल", "raat", "रात", "last trip"];
 const DIESEL = ["diesel", "fuel", "डीजल", "फ्यूल", "तेल", "litre", "litres", "liter", "liters", "लीटर"];
 const MOST = ["most", "highest", "maximum", "max", "biggest", "top", "best", "sabse", "सबसे", "zyada", "jyada", "ज्यादा", "अधिक"];
@@ -86,6 +115,22 @@ export function truckIn(t: string): Plate | null {
     const hi = foldNukta(tr.driver.name.hi.split(" ")[0]);
     if (has(t, en, hi)) return tr.plate;
   }
+  return null;
+}
+
+/**
+ * Why a question is off-topic: `injection` when it asks for the prompt, the
+ * instructions or a key; `out_of_scope` when it asks for data the fleet doesn't
+ * hold (weather, prices, forecasts); null otherwise. Such a question never
+ * matches an intent, and gets a deterministic refusal when the model can't
+ * answer (technical-plan §6.5; evaluation-plan §4.7).
+ */
+export function offTopicKind(question: string): "injection" | "out_of_scope" | null {
+  const t = normaliseQuestion(question);
+  if (INJECTION_ASKS.some((re) => re.test(t))) return "injection";
+  if (has(t, ...NEVER_IN_DATA)) return "out_of_scope";
+  if (has(t, ...PRICE_WORDS) && has(t, ...FUTURE_WORDS)) return "out_of_scope";
+  if (has(t, "forecast", "predict")) return "out_of_scope";
   return null;
 }
 

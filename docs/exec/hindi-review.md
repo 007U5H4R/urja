@@ -8,7 +8,7 @@ AI pre-review 2026-09-29 applied H1–H10; native review pending.
   `UPDATE_HINDI_REVIEW=1 pnpm exec vitest run lib/brief/hindi-review.test.ts`.
 - **How to review:** write OK, or a better wording, in the Reviewer column. Keep numbers, `₹`, `L` and plates as they are.
 - **Wording rules:** say हिसाब नहीं मिल रहा (doesn't add up); never an accusation. Confidence words are पक्का / शायद / जाँचें.
-- **Strings:** 309.
+- **Strings:** 311.
 
 ## 1. Morning brief (/brief), 27 Sep
 
@@ -343,17 +343,19 @@ components/ask/copy.ts `ASK_COPY`, `ASK_CHIPS`; components/ask/askScope.ts: the 
 | 12 | saved banner (the fallback banner's first clause) | Urja का AI अभी जवाब नहीं दे पाया। | Urja’s AI couldn’t answer right now. | |
 | 13 | error line | Urja अपने सर्वर तक नहीं पहुँच पाया, इसलिए इस सवाल का जवाब अभी नहीं है। कुछ खोया नहीं है: आपका सवाल नीचे बॉक्स में ही है। | Urja couldn’t reach its server, so this question has no answer yet. Nothing is lost: your question is still in the box below. | |
 | 14 | saved answer (a question with no prepared answer) | आपका सवाल सहेज लिया गया है। लिखित जवाब के लिए एक मिनट बाद फिर पूछें। | Your question is saved. Try again in a minute for a written answer. | |
-| 15 | 429 heading (12 s left) | आपने पिछले एक मिनट में बहुत सवाल पूछे हैं। 12 सेकंड बाद फिर पूछें। | You’ve asked a lot in the last minute. Ask again in 12 s. | |
-| 16 | 429 heading, once the wait is over | अब आप फिर से पूछ सकते हैं। | You can ask again now. | |
-| 17 | 429 heading, a daily cap (no countdown, no try again) | आज के सवालों की सीमा पूरी हो गई है। कल फिर पूछें। | That’s today’s limit of questions. Ask again tomorrow. | |
-| 18 | 429 saved line | आपका सवाल सहेज लिया गया है। | Your question is saved. | |
-| 19 | try again button | फिर से कोशिश करें | Try again | |
-| 20 | try again button, disabled during a 429 (12 s left) | 12 सेकंड बाद फिर से कोशिश करें | Try again in 12 s | |
-| 21 | cited trips aria-label | इस जवाब में इस्तेमाल हुई ट्रिप | Trips this answer used | |
-| 22 | cite chip (0926-04) | ट्रिप 0926-04 | Trip 0926-04 | |
-| 23 | provenance scope (from the data) | 212 ट्रिप, 24 ट्रक, 1–27 सितंबर | 212 trips across 24 trucks, 1–27 Sep | |
-| 24 | provenance line · model answer | 212 ट्रिप, 24 ट्रक, 1–27 सितंबर के डेटा से · Gemini 3.5 Flash · 1.8 सेकंड में जवाब · Urja ग़लत हो सकता है, इसलिए कार्रवाई से पहले ट्रिप खोलें। | From 212 trips across 24 trucks, 1–27 Sep · Gemini 3.5 Flash · answered in 1.8 s · Urja can be wrong, so open the trips before acting. | |
-| 25 | provenance line · fallback answer | 212 ट्रिप, 24 ट्रक, 1–27 सितंबर के डेटा से · AI के बिना, सीधा हिसाब · 0.04 सेकंड में जवाब · Urja ग़लत हो सकता है, इसलिए कार्रवाई से पहले ट्रिप खोलें। | From 212 trips across 24 trucks, 1–27 Sep · straight from your data, no AI · answered in 0.04 s · Urja can be wrong, so open the trips before acting. | |
+| 15 | refusal · off-topic question (weather, prices, forecasts) when the model can't answer | मेरे पास इसका डेटा नहीं है। मैं सिर्फ़ शर्मा रोडलाइंस के अपने ट्रिप, ट्रक, डीज़ल और पैसों का हिसाब जानता हूँ, उनके बारे में पूछें। | I don't have that data. I only know Sharma Roadlines' own trips, trucks, diesel and money, so ask me about those. | |
+| 16 | refusal · a request for the instructions or a key when the model can't answer | मैं यह नहीं बता सकता: अपने निर्देश या कोई key मैं किसी से साझा नहीं करता। अपने ट्रिप, ट्रक, डीज़ल या पैसों के बारे में पूछें। | I can't answer that: I don't share my instructions or any key. Ask me about your trips, trucks, diesel or money. | |
+| 17 | 429 heading (12 s left) | आपने पिछले एक मिनट में बहुत सवाल पूछे हैं। 12 सेकंड बाद फिर पूछें। | You’ve asked a lot in the last minute. Ask again in 12 s. | |
+| 18 | 429 heading, once the wait is over | अब आप फिर से पूछ सकते हैं। | You can ask again now. | |
+| 19 | 429 heading, a daily cap (no countdown, no try again) | आज के सवालों की सीमा पूरी हो गई है। कल फिर पूछें। | That’s today’s limit of questions. Ask again tomorrow. | |
+| 20 | 429 saved line | आपका सवाल सहेज लिया गया है। | Your question is saved. | |
+| 21 | try again button | फिर से कोशिश करें | Try again | |
+| 22 | try again button, disabled during a 429 (12 s left) | 12 सेकंड बाद फिर से कोशिश करें | Try again in 12 s | |
+| 23 | cited trips aria-label | इस जवाब में इस्तेमाल हुई ट्रिप | Trips this answer used | |
+| 24 | cite chip (0926-04) | ट्रिप 0926-04 | Trip 0926-04 | |
+| 25 | provenance scope (from the data) | 212 ट्रिप, 24 ट्रक, 1–27 सितंबर | 212 trips across 24 trucks, 1–27 Sep | |
+| 26 | provenance line · model answer | 212 ट्रिप, 24 ट्रक, 1–27 सितंबर के डेटा से · Gemini 3.5 Flash · 1.8 सेकंड में जवाब · Urja ग़लत हो सकता है, इसलिए कार्रवाई से पहले ट्रिप खोलें। | From 212 trips across 24 trucks, 1–27 Sep · Gemini 3.5 Flash · answered in 1.8 s · Urja can be wrong, so open the trips before acting. | |
+| 27 | provenance line · fallback answer | 212 ट्रिप, 24 ट्रक, 1–27 सितंबर के डेटा से · AI के बिना, सीधा हिसाब · 0.04 सेकंड में जवाब · Urja ग़लत हो सकता है, इसलिए कार्रवाई से पहले ट्रिप खोलें। | From 212 trips across 24 trucks, 1–27 Sep · straight from your data, no AI · answered in 0.04 s · Urja can be wrong, so open the trips before acting. | |
 
 ## 10. Ask answers
 
