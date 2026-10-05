@@ -221,7 +221,7 @@ Vercel: each row records the pushed SHA. Since 2026-09-29 the VM reaches the pre
 | TASK-12 | EXE28 illustrative quotes | done | a528994 | why tests: the label renders when any quote is illustrative; e2e why.spec | pushed | The placeholder no longer shows. Open question: chapter 01 title (EXE28). |
 | TASK-19 | TSK-15.1 (Stage 8) | done | aa6a941, 1ae4f84, 5406f86, 55c8e1a | verify 1176; e2e 515 pass / 0 fail; QA on preview 30/32 → closed by unit F | docs/exec/stage8-critique.md, docs/exec/qa/stage8-qa.md | DES-2…39; EXE29. Parked DES-34…39 (34 and 35 need user decisions). |
 | TASK-19 | TSK-15.2 (Stage 9) | doing | 8bcb303, 3ab14d4, 8376c5d, f2a7753, e2db435, 7ced739, dc18e9c | CR-1 fixed; TC matrix 35/4/1; eval baseline-v1 FAIL 3/10; final-v1 attempt 1 BLOCKED (Gemini 429) | docs/exec/qa/tc-matrix.md, evals/reports/eval-report-v1.md | EXE30 (ask-v2). Retry 18:45 UTC. |
-| TASK-19 | TSK-15.3 (Stage 10) | todo | — | — | — | /security-review, QA-report.md (user gate) |
+| TASK-19 | TSK-15.3 (Stage 10) | review | (this commit) | /security-review main...build/stage7: 0 findings ≥ 8 confidence | QA-report.md | QA-report: GO for Stage 11, conditional on the 18:45 UTC final-v1 retry (or BLOCKED-upstream recorded). User gate: merge to main needs approval. |
 | TASK-20 | TSK-16.* | todo (out of Stage 7 scope) | — | — | — | TKT-16 Stage 11 (local @claude) |
 
 ## Gates
