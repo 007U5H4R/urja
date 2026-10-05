@@ -4,8 +4,10 @@
  * §5.4 as literals: an independent oracle. Never change one to make this pass.
  */
 import { describe, expect, it } from "vitest";
-import { formatTimeIST } from "@/lib/format";
+import { formatLitres, formatTimeIST } from "@/lib/format";
+import { ledgerFor } from "../aggregates";
 import { getDataset } from "../index";
+import { tankUsedCl } from "../rules/r3-excess";
 import { getTripIds, getTripView, topFlaggedTripId, type TripView } from "./trip";
 
 /** Typographic apostrophes → ASCII, for comparing with the test-case text. */
@@ -338,7 +340,10 @@ describe("§5.4 · R4, R5 and clean variants", () => {
     expect([t.fastagInr, t.claimedInr, t.diffInr]).toEqual([7400, 8620, 1220]);
   });
 
-  it("clean trip (0927-09): 'Every check passed' with the list of checks, fractional litres to 2 dp", () => {
+  // DES-34 (user decision, option a): 0927-09 is the only trip with fractional litres (189.89 L,
+  // balanced to the 27 Sep diesel anchor). The ledger and the check line both show it at one
+  // decimal so they agree; the rupee figure (−₹17,090) is untouched.
+  it("clean trip (0927-09): 'Every check passed' with the list of checks, fractional litres to 1 dp in both places", () => {
     const v = view("0927-09");
     expect(v.card.kind).toBe("clean");
     if (v.card.kind !== "clean") return;
@@ -346,8 +351,10 @@ describe("§5.4 · R4, R5 and clean variants", () => {
     expect(v.card.checks.map((c) => c.source)).toEqual(["Fuel sensor", "Fuel bill", "Fleet history", "Trip plan", "FASTag"]);
     expect(v.chart.desk.window).toBeUndefined();
     expect(v.chart.desk.expected).toBeUndefined();
+    expect(v.card.checks[2].text).toBe("Used 189.9 L; this truck’s normal on this route is 188 L");
     if (v.ledger.kind !== "done") throw new Error("expected done");
-    expect(v.ledger.rows[1].label).toBe("Diesel used · 189.89 L × ₹90");
+    expect(v.ledger.rows[1].label).toBe("Diesel used · 189.9 L × ₹90");
+    expect(v.ledger.rows[1].inr).toBe(-17090);
     expect(v.ledger.rows.some((r) => r.kind === "unaccounted")).toBe(false);
     expect(v.crumbs.viaEyes).toBe(false);
   });
@@ -358,6 +365,34 @@ describe("§5.4 · R4, R5 and clean variants", () => {
       if (v.ledger.kind !== "done") throw new Error("expected done");
       expect(v.ledger.rows[1].label).toMatch(/^Diesel used · \d[\d,]* L × ₹90$/);
     }
+  });
+});
+
+describe("DES-34 · one-decimal litres touch only 0927-09", () => {
+  const done = getDataset().trips;
+  /** The rules take a mutable Trip; the dataset is readonly (same cast as trip.ts). */
+  const used = (t: (typeof done)[number]) => tankUsedCl(t as unknown as Parameters<typeof tankUsedCl>[0]);
+
+  it("0927-09 is the only trip whose diesel or tank use has fractional litres", () => {
+    const fractional = done.filter((t) => ledgerFor(t.id).dieselCl % 100 !== 0 || used(t) % 100 !== 0).map((t) => t.id);
+    expect(fractional).toEqual(["0927-09"]);
+    expect(done.filter((t) => ledgerFor(t.id).unaccountedCl % 100 !== 0)).toEqual([]);
+  });
+
+  it("every other trip keeps its whole-litre ledger and check strings", () => {
+    for (const t of done) {
+      if (t.id === "0927-09") continue;
+      const v = view(t.id);
+      if (v.ledger.kind !== "done") throw new Error(`expected done: ${t.id}`);
+      expect(v.ledger.rows[1].label).toBe(`Diesel used · ${formatLitres(ledgerFor(t.id).dieselCl / 100)} × ₹90`);
+      if (v.card.kind === "clean") expect(v.card.checks[2].text).toMatch(new RegExp(`^Used ${Math.round(used(t) / 100)} L; `));
+    }
+  });
+
+  it("no trip page other than 0927-09 shows a decimal litre figure", () => {
+    const decimalLitres = /\d\.\d+ L\b/;
+    const hits = getTripIds().filter((id) => decimalLitres.test(JSON.stringify(view(id))));
+    expect(hits).toEqual(["0927-09"]);
   });
 });
 

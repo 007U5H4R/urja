@@ -4,6 +4,7 @@ import {
   formatDateIST,
   formatINR,
   formatLitres,
+  formatLitresCl,
   formatTimeIST,
   minToISTParts,
 } from "./format";
@@ -59,6 +60,22 @@ describe("format", () => {
     expect(formatLitres(104.89, 2)).toBe("104.89 L");
     expect(formatLitres(38, 2)).toBe("38.00 L");
     expect(formatLitres(1250)).toBe("1,250 L");
+  });
+
+  it("formats litres to one decimal", () => {
+    expect(formatLitres(189.89, 1)).toBe("189.9 L");
+    expect(formatLitres(-104.89, 1)).toBe("−104.9 L");
+    expect(formatLitres(-0.01, 1)).toBe("0.0 L");
+  });
+
+  it("formats centilitres: whole litres stay whole, fractional ones get one decimal", () => {
+    expect(formatLitresCl(18989)).toBe("189.9 L");
+    expect(formatLitresCl(19000)).toBe("190 L");
+    expect(formatLitresCl(125000)).toBe("1,250 L");
+    expect(formatLitresCl(3810)).toBe("38.1 L");
+    expect(formatLitresCl(0)).toBe("0 L");
+    expect(formatLitresCl(18995)).toBe("190 L");
+    expect(formatLitresCl(-18995)).toBe("−190 L");
   });
 
   it("formats IST times whatever the host TZ", () => {

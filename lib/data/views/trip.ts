@@ -17,7 +17,7 @@
  *   carries it), R5 adds a claims vs FASTag table.
  */
 import { DEMO_NOW } from "@/lib/clock";
-import { formatDateIST, formatINR, formatLitres, formatTimeIST, minToISTParts } from "@/lib/format";
+import { formatDateIST, formatINR, formatLitresCl, formatTimeIST, minToISTParts } from "@/lib/format";
 import { SHELL } from "@/lib/site-shell";
 import { flagsForTrip, ledgerFor, routeNormal as routeNormalOf, yesterday } from "../aggregates";
 import { DIESEL_INR_PER_L, r2Fires } from "../constants";
@@ -593,7 +593,7 @@ function card(ctx: Ctx): TripCard {
   const n = trip.refuels.length;
   const fastag = trip.fastag.reduce((a, e) => a + e.inr, 0);
   const claim = trip.claims.tollsInr;
-  const used = L(tankUsedCl(asTrip(trip)));
+  const used = formatLitresCl(tankUsedCl(asTrip(trip)));
   const base = L(baselineClFor(truckByPlate(trip.plate), trip.routeId));
   const check = (text: string, source: Evidence["source"]): EvidenceLine => ({ text, source, icon: "check" });
   return {
@@ -604,7 +604,7 @@ function card(ctx: Ctx): TripCard {
     checks: [
       check("No fuel drop while parked or at a stop", "Fuel sensor"),
       check(n === 0 ? "No refuel on this trip" : n === 1 ? "The fuel bill matches the tank rise" : `All ${n} fuel bills match the tank rise`, "Fuel bill"),
-      check(`Used ${used} L; this truck’s normal on this route is ${base} L`, "Fleet history"),
+      check(`Used ${used}; this truck’s normal on this route is ${base} L`, "Fleet history"),
       check(`Drove ${grouped.format(Math.round(trip.actualKm))} km against a planned ${grouped.format(route.plannedKm)} km`, "Trip plan"),
       check(
         trip.fastag.length === 0 && claim === 0
@@ -1152,11 +1152,11 @@ function ledger(ctx: Ctx): TripLedgerView {
     return { kind: "live", rows: [freight], note: "Diesel, tolls and profit are worked out when the trip arrives." };
   }
   const l = ledgerFor(trip.id);
-  const litres = formatLitres(l.dieselCl / 100, l.dieselCl % 100 === 0 ? 0 : 2);
+  const litres = formatLitresCl(l.dieselCl);
   const n = trip.fastag.length;
   const rows: LedgerRow[] = [freight, { label: `Diesel used · ${litres} × ${inr(DIESEL_INR_PER_L)}`, inr: neg(l.dieselInr), kind: "row" }];
   if (l.unaccountedCl > 0) {
-    rows.push({ label: `of which unaccounted · ${formatLitres(l.unaccountedCl / 100, l.unaccountedCl % 100 === 0 ? 0 : 2)}`, inr: neg(l.unaccountedInr), kind: "unaccounted" });
+    rows.push({ label: `of which unaccounted · ${formatLitresCl(l.unaccountedCl)}`, inr: neg(l.unaccountedInr), kind: "unaccounted" });
   }
   rows.push(
     { label: n === 0 ? "Tolls · no FASTag plazas" : `Tolls · FASTag, ${n} ${n === 1 ? "plaza" : "plazas"}`, inr: neg(l.tollsInr), kind: "row" },

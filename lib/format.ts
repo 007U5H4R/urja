@@ -30,6 +30,10 @@ const LITRES_0 = new Intl.NumberFormat("en-IN", {
   minimumFractionDigits: 0,
   maximumFractionDigits: 0,
 });
+const LITRES_1 = new Intl.NumberFormat("en-IN", {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
 const LITRES_2 = new Intl.NumberFormat("en-IN", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
@@ -45,13 +49,19 @@ export function formatINR(n: number, opts?: { sign?: "auto" | "never" }): string
   return negative && opts?.sign !== "never" ? `${MINUS}${body}` : body;
 }
 
-/** `38 L`, or `104.89 L` with `decimals = 2`; negatives as `−12 L` (U+2212). */
-export function formatLitres(l: number, decimals: 0 | 2 = 0): string {
+/** `38 L`, `104.9 L` with `decimals = 1`, or `104.89 L` with `decimals = 2`; negatives as `−12 L` (U+2212). */
+export function formatLitres(l: number, decimals: 0 | 1 | 2 = 0): string {
   const scale = 10 ** decimals;
   const abs = Math.round(Math.abs(l) * scale) / scale;
-  const body = `${(decimals === 2 ? LITRES_2 : LITRES_0).format(abs)} L`;
+  const body = `${(decimals === 2 ? LITRES_2 : decimals === 1 ? LITRES_1 : LITRES_0).format(abs)} L`;
   // No sign when the value rounds to zero, so "−0 L" never appears.
   return l < 0 && abs !== 0 ? `${MINUS}${body}` : body;
+}
+
+/** Centilitres as litres: whole litres stay whole (`190 L`), anything else gets one decimal (`189.9 L`). */
+export function formatLitresCl(cl: number): string {
+  // Decide on the rounded value, so 18995 cl reads "190 L", not "190.0 L".
+  return formatLitres(cl / 100, Math.round(Math.abs(cl) / 10) % 10 === 0 ? 0 : 1);
 }
 
 export interface ISTParts {
