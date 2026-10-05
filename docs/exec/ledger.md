@@ -95,7 +95,15 @@
   - `pnpm verify`: 1235 passed, 1 skipped.
   - build + check:bundle: clean.
   - `pnpm test:e2e`: 515 passed, 115 skipped, 0 failed.
-- **Still open:** final-v1 live eval. The retry is scheduled for 18:45 UTC, once both quotas have reset.
+- **final-v1 attempt 2** (2026-10-05 ~18:50 UTC, d72f4d9, `evals/results/ask-final-v1-d72f4d9.json`): Gemini answered all 13 cases live (none cached).
+  - Prepared: **7/10 by the model**. Off-topic: 3/3 refused by the model.
+  - p50 3.1 s; forbidden words 0; unsupported figures 0.
+  - **Gate: FAIL**, a real measurement now.
+  - Misses:
+    - EVAL-001 omits the plate and says "10 trips"; the right count is 3 flagged trips.
+    - EVAL-005 omits the count.
+    - EVAL-007 omits ₹58,240 and 37%.
+  - Next: ask-v3 (a guard check on trip counts and stricter answer rules), not done. Recorded in `evals/reports/eval-report-v1.md`.
 - **Open for the user:** none blocking. The free-tier quota limits live answers on busy days (the deterministic fallback then answers). TC-030 and TC-032 manual runs on the Mac.
 
 
