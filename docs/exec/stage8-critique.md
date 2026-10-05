@@ -44,7 +44,7 @@ Their 40 raw findings (A1–A14, B1–B13, C1–C13) merge into DES-2…DES-39 b
 | DES-31 | nit | B12 | `/message` Hindi headline orphans "नहीं" | fix | S2 |
 | DES-32 | nit | C12 | No skip link | fix | S1 |
 | DES-33 | nit | C13 | 320 px: "−₹" splits at a line break; eyes "who" ellipsised | fix (the map label left as is) | S1 |
-| DES-34 | minor | A10 | Clean trip 0927-09 shows "189.89 L" beside "190 L" | **park: user decision** (27 Sep diesel is an anchor; options: show "189.9 L" on both, or drop "× ₹90" on fractional rows) | — |
+| DES-34 | minor | A10 | Clean trip 0927-09 shows "189.89 L" beside "190 L" | **fixed (user chose option a)**: "189.9 L" in both the ledger row and the check line via `formatLitresCl` (whole litres stay whole, so no other trip changes); ₹17,090 and the 27 Sep anchor untouched | commit pending |
 | DES-35 | minor | A11 | Expanded table repeats 5,924 km for 8 hidden trucks | **park: user decision** (needs a generator change and a regenerated scenario.json; anchors unchanged) | — |
 | DES-36 | minor | A12 | R4 trip map doesn't show the 92.5 km deviation | **park** (R4 isn't on the demo path; Stage 9 candidate) | — |
 | DES-37 | nit | B13 | `/message` link card shows the per-deploy preview host | **park** (production shows the production host; set `NEXT_PUBLIC_SITE_URL` if the demo runs on a preview) | — |
