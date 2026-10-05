@@ -1,0 +1,293 @@
+/**
+ * The /api/ask request handler (technical-plan §6.1, §6.5). app/api/ask/route.ts
+ * wraps it; tests build their own with injected fetch, env and limiter.
+ *
+ * 400 for a body that fails AskRequest; 413 for a body over 8 KB; 429 when rate-limited (with
+ * retryAfterS, and a fallback answer if the question is recognised); 200 for
+ * every model, fallback and saved answer. Never 500: any error becomes a
+ * fallback or saved answer.
+ *
+ * Frugal on the Gemini free tier (EXE31):
+ * - every request takes a per-IP minute token (abuse protection);
+ * - a repeated question is answered from the answer cache (model answers only),
+ *   with no Gemini call and no daily budget spent; a request with
+ *   `x-ask-cache: bypass` (the eval runner) skips the cache read, so it is always a
+ *   live call under every limit, and its fresh model answer is still written;
+ * - when every model is benched by a cooldown (429 retry hint, 404), the
+ *   deterministic path answers at once, with outcome `cooldown` and no budget spent;
+ * - otherwise the daily budget (per IP and global, ASK_DAILY_MODEL_BUDGET) is
+ *   spent, then Gemini is called.
+ */
+import "server-only";
+import { randomUUID } from "node:crypto";
+import { cacheKey, createAnswerCache, type AnswerCache } from "./answer-cache";
+import { askConfig, dailyModelBudget, type AskConfig } from "./config";
+import { AskRequest, type AskResponse } from "./contract";
+import { getAskContext } from "./context";
+import { checkCaveat, fallbackAnswer, refusalAnswer, SAVED_MESSAGE } from "./fallback";
+import { createModelCooldowns, type ModelCooldowns } from "./cooldown";
+import { callGeminiWithFallback, canCallGemini, type GeminiAttempt } from "./gemini";
+import { guardAnswer, missingSpecifics, type Specific } from "./guard";
+import { copyLang } from "./intents";
+import { citeLabels } from "./labels";
+import { consoleSink, hashQuestion, writeAskLog, type AskOutcome, type LogSink } from "./log";
+import { PROMPT_VERSION } from "./prompt";
+import { clientIp, createRateLimiter, hashIp, type RateLimiter } from "./rate-limit";
+
+/**
+ * Bodies past this size get 413 before parsing (a 500-character question is
+ * at most ~1.5 KB even in Devanagari). 413 rather than §6.1's 400: the body
+ * isn't malformed, it's oversized, and only a non-UI client can send one, so
+ * the UI's contract (200/400/429) is unchanged.
+ */
+const MAX_BODY_BYTES = 8 * 1024;
+
+export interface AskDeps {
+  limiter?: RateLimiter;
+  fetchImpl?: typeof fetch;
+  /** Where GEMINI_API_KEY, ASK_MODEL and ASK_THINKING_LEVEL are read; process.env by default. */
+  env?: Partial<Record<string, string | undefined>>;
+  sink?: LogSink;
+  /** EXE31: the answer cache; a fresh one by default, `null` for none. */
+  cache?: AnswerCache<CachedAnswer> | null;
+  /** EXE31: the model cooldowns; fresh ones by default. */
+  cooldowns?: ModelCooldowns;
+  /** Wall clock for the default cache, cooldowns and limiter (Date.now by default, as in rate-limit.ts). */
+  now?: () => number;
+}
+
+/** EXE31: what a cache entry keeps of a model answer, to replay it and its log line. */
+export interface CachedAnswer {
+  body: AskResponse;
+  model: string;
+  lang: string;
+  cites: string[];
+  unsupported: number[];
+  missing: Specific[];
+}
+
+/**
+ * The route's answer cache and cooldowns (app/api/ask/route.ts). They live as long
+ * as the server instance; tests clear them between cases.
+ */
+export const routeMemory = { cache: createAnswerCache<CachedAnswer>(), cooldowns: createModelCooldowns() };
+
+const HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } as const;
+
+function json(status: number, body: unknown, extra: Record<string, string> = {}): Response {
+  return new Response(JSON.stringify(body), { status, headers: { ...HEADERS, ...extra } });
+}
+
+const attemptCode = (a: GeminiAttempt) => (a.status ? `${a.outcome}:${a.status}` : a.outcome);
+/** Log form of a busy first attempt: "gemini-3.5-flash http_429:429". */
+const attemptLog = (a: GeminiAttempt) => `${a.model} ${attemptCode(a)}`;
+
+/**
+ * EXE24/EXE26 · "<outcome>[:<detail>][; model=<model>][; after=<first outcome> <first model>][; missing=<facts>]".
+ * Outcome codes, model ids and fact names only: never the key or the question.
+ * `missing` (Stage 9) names decisive facts a model answer left out (guard.ts missingSpecifics).
+ */
+function outcomeHeader(code: string, model: string | null, first?: GeminiAttempt, missing: readonly Specific[] = []): string {
+  return [code, model ? `model=${model}` : null, first ? `after=${attemptCode(first)} ${first.model}` : null, missing.length ? `missing=${missing.join(",")}` : null]
+    .filter(Boolean)
+    .join("; ");
+}
+
+/** Caveats as one line of sentences: "Check the trips before acting. Trip 0926-11 is a Check flag: …". */
+function joinCaveats(...parts: (string | undefined)[]): string | undefined {
+  const kept = parts.filter((p): p is string => !!p);
+  if (kept.length < 2) return kept[0];
+  return kept.map((p) => (/[.!?।]$/.test(p) ? p : `${p}.`)).join(" ");
+}
+
+export function createAskHandler(deps: AskDeps = {}) {
+  const now = deps.now ?? Date.now;
+  // EXE31: the global daily cap is the Gemini budget; ASK_DAILY_MODEL_BUDGET sets it (default 300).
+  const limiter = deps.limiter ?? createRateLimiter({ now, globalPerDay: dailyModelBudget(deps.env ?? process.env) });
+  const cache = deps.cache === undefined ? createAnswerCache<CachedAnswer>({ now }) : deps.cache;
+  const cooldowns = deps.cooldowns ?? createModelCooldowns({ now });
+  const sink = deps.sink ?? consoleSink;
+  let contextLogged = false;
+
+  return async function handle(req: Request): Promise<Response> {
+    const t0 = performance.now();
+    const reqId = randomUUID().slice(0, 8);
+    const ipHash = hashIp(clientIp(req.headers));
+    const env = deps.env ?? process.env;
+    const config: AskConfig = askConfig(env);
+    const elapsed = () => Math.round(performance.now() - t0);
+
+    const log = (e: {
+      mode: AskResponse["mode"] | null;
+      outcome: AskOutcome;
+      model?: string | null;
+      question?: string;
+      lang?: string | null;
+      cites?: string[];
+      unsupported?: number[];
+      guard?: string;
+      firstAttempt?: string;
+      missing?: Specific[];
+      cached?: boolean;
+    }) =>
+      writeAskLog(
+        {
+          ts: new Date().toISOString(),
+          reqId,
+          mode: e.mode,
+          outcome: e.outcome,
+          ms: elapsed(),
+          model: e.model ?? null,
+          promptVersion: PROMPT_VERSION,
+          qHash: e.question ? hashQuestion(e.question) : null,
+          qLen: e.question?.length ?? 0,
+          lang: e.lang ?? null,
+          cites: e.cites ?? [],
+          unsupportedNumbers: e.unsupported ?? [],
+          ipHash,
+          ...(e.guard ? { guard: e.guard } : {}),
+          ...(e.firstAttempt ? { firstAttempt: e.firstAttempt } : {}),
+          ...(e.missing?.length ? { missing: e.missing } : {}),
+          ...(e.cached ? { cached: true } : {}),
+        },
+        sink,
+      );
+
+    // ── Size, then parse ─────────────────────────────────────────────────
+    const tooLarge = () => {
+      log({ mode: null, outcome: "too_large" });
+      return json(413, { error: "payload_too_large", message: `The body must be at most ${MAX_BODY_BYTES} bytes.` });
+    };
+    const declared = Number(req.headers.get("content-length") ?? "");
+    if (Number.isFinite(declared) && declared > MAX_BODY_BYTES) return tooLarge();
+    let parsed: ReturnType<typeof AskRequest.safeParse> | null = null;
+    try {
+      const raw = await req.text();
+      if (Buffer.byteLength(raw, "utf8") > MAX_BODY_BYTES) return tooLarge();
+      parsed = AskRequest.safeParse(JSON.parse(raw));
+    } catch {
+      parsed = null;
+    }
+    if (!parsed?.success) {
+      log({ mode: null, outcome: "invalid" });
+      return json(400, { error: "invalid_request", message: "Send JSON {question} with 1 to 500 characters." });
+    }
+    const { question, lang: uiLang } = parsed.data;
+    // CR-1: deterministic copy (saved, fallback, refusal) follows the screen's language when the script is ambiguous.
+    const qLang = copyLang(question, uiLang);
+
+    // ── Answers that don't come from the model ───────────────────────────
+    const degrade = (
+      outcome: AskOutcome,
+      status = 200,
+      extra: { retryAfterS?: number; guard?: string; model?: string | null; upstream?: number; reason?: string; first?: GeminiAttempt } = {},
+    ) => {
+      let body: AskResponse;
+      let cites: string[] = [];
+      let scope = "";
+      let datasetHash = "";
+      try {
+        const bundle = getAskContext();
+        scope = bundle.scope;
+        datasetHash = bundle.hash;
+      } catch {
+        // No context: the saved answer below still goes out with empty provenance.
+      }
+      let fb: ReturnType<typeof fallbackAnswer> = null;
+      try {
+        fb = fallbackAnswer(question, uiLang);
+      } catch {
+        fb = null;
+      }
+      const provenance = { scope, model: null, ms: elapsed(), promptVersion: PROMPT_VERSION, datasetHash };
+      // Stage 9: an off-topic question (weather, prices, the prompt) is refused, not "saved": trying
+      // again won't bring that into the data. Same mode as saved, so the drawer shows it unchanged.
+      const refusal = fb ? null : refusalAnswer(question, uiLang);
+      if (fb) {
+        cites = fb.cites;
+        body = { mode: "fallback", answer: fb.answer, lang: fb.lang, cites: citeLabels(fb.cites, fb.lang), provenance };
+      } else if (refusal) {
+        body = { mode: "saved", answer: refusal.answer, lang: refusal.lang, cites: [], refusal: refusal.kind, provenance };
+      } else {
+        body = { mode: "saved", answer: SAVED_MESSAGE[qLang], lang: qLang, cites: [], provenance };
+      }
+      if (extra.retryAfterS) body.retryAfterS = extra.retryAfterS;
+      log({ mode: body.mode, outcome, model: extra.model ?? null, question, lang: body.lang, cites, guard: extra.guard, firstAttempt: extra.first && attemptLog(extra.first) });
+      // EXE24: the outcome code (never the key or the question) in a header, so a
+      // preview's fallbacks can be diagnosed without its runtime logs.
+      const detail = extra.guard ?? (extra.upstream ? String(extra.upstream) : (extra.reason ?? null));
+      const diag = { "x-ask-outcome": outcomeHeader(detail ? `${outcome}:${detail}` : outcome, extra.model ?? null, extra.first) };
+      return json(status, body, extra.retryAfterS ? { ...diag, "retry-after": String(extra.retryAfterS) } : diag);
+    };
+
+    try {
+      const ip = clientIp(req.headers);
+      // Every request, cached or not, takes a per-IP minute token (abuse protection).
+      const limit = limiter.takeRequest(ip);
+      if (!limit.ok) return degrade(limit.outcome, 429, { retryAfterS: limit.retryAfterS });
+
+      const bundle = getAskContext();
+      if (!contextLogged) {
+        contextLogged = true;
+        sink(JSON.stringify({ event: "ask_context", buildMs: bundle.buildMs, chars: bundle.json.length, datasetHash: bundle.hash }));
+      }
+
+      // EXE31: a repeated question gets the model's own earlier answer: same prompt version, same dataset.
+      const key = cacheKey({ question, lang: qLang, promptVersion: PROMPT_VERSION, datasetHash: bundle.hash });
+      // The eval runner sends `x-ask-cache: bypass`: every case measures the model, never the cache.
+      const bypassCache = req.headers.get("x-ask-cache")?.trim().toLowerCase() === "bypass";
+      const hit = bypassCache ? undefined : cache?.get(key);
+      if (hit) {
+        const body: AskResponse = { ...hit.body, provenance: { ...hit.body.provenance, ms: elapsed() } };
+        log({ mode: "model", outcome: "ok", model: hit.model, question, lang: hit.lang, cites: hit.cites, unsupported: hit.unsupported, missing: hit.missing, cached: true });
+        return json(200, body, { "x-ask-outcome": outcomeHeader("ok; cached", hit.model, undefined, hit.missing) });
+      }
+
+      const apiKey = env.GEMINI_API_KEY?.trim();
+      if (!apiKey) return degrade("no_key");
+
+      // A call that can't succeed isn't made, and spends no budget: callGeminiWithFallback answers `cooldown`.
+      if (canCallGemini(config, cooldowns)) {
+        const budget = limiter.spendModelCall(ip);
+        if (!budget.ok) return degrade(budget.outcome, 429, { retryAfterS: budget.retryAfterS });
+      }
+
+      const result = await callGeminiWithFallback({ apiKey, context: bundle.json, question, config, fetchImpl: deps.fetchImpl ?? fetch, cooldowns, wallClock: now });
+      // EXE26: the model that answered (or failed last), and the busy first attempt if the fallback model was asked.
+      const answeredBy = result.attempts[result.attempts.length - 1].model;
+      const first = result.attempts.length > 1 ? result.attempts[0] : undefined;
+      if (!result.ok) return degrade(result.outcome, 200, { model: answeredBy, upstream: result.status, reason: result.detail, first });
+
+      const g = guardAnswer(result.answer, { question, allowed: bundle.allowed, tripIds: bundle.tripIds, plates: bundle.plates });
+      if (!g.ok) return degrade("guard", 200, { guard: g.reason, model: result.model, first });
+
+      const lang = result.answer.lang;
+      const labelLang = lang === "hi" ? "hi" : "en";
+      // DES-9: a cited Check flag always carries the fallback's caveat, whatever the model wrote,
+      // after the guard's own caveat when it added one (an unsupported figure); both are kept.
+      const caveat = joinCaveats(g.caveat, checkCaveat(g.cites, labelLang));
+      const body: AskResponse = {
+        mode: "model",
+        answer: g.answer,
+        lang,
+        cites: citeLabels(g.cites, labelLang),
+        ...(caveat ? { caveat } : {}),
+        provenance: { scope: bundle.scope, model: result.model, ms: elapsed(), promptVersion: PROMPT_VERSION, datasetHash: bundle.hash },
+      };
+      // Stage 9: decisive facts the cited records carry but the answer omits, named for the eval (never rewritten).
+      const missing = result.answer.out_of_scope ? [] : missingSpecifics(g.answer, g.cites, bundle.context.flags);
+      log({ mode: "model", outcome: "ok", model: result.model, question, lang, cites: g.cites, unsupported: g.unsupported, firstAttempt: first && attemptLog(first), missing });
+      // Only an answer that passed the guard as the model's goes in the cache.
+      cache?.set(key, { body, model: result.model, lang, cites: g.cites, unsupported: g.unsupported, missing });
+      return json(200, body, { "x-ask-outcome": outcomeHeader("ok", result.model, first, missing) });
+    } catch {
+      try {
+        return degrade("error");
+      } catch {
+        // Last resort, still not a 500: the saved answer with empty provenance.
+        const provenance = { scope: "", model: null, ms: elapsed(), promptVersion: PROMPT_VERSION, datasetHash: "" };
+        return json(200, { mode: "saved", answer: SAVED_MESSAGE[qLang], lang: qLang, cites: [], provenance } satisfies AskResponse);
+      }
+    }
+  };
+}

@@ -1,0 +1,8 @@
+/* The one stylesheet every route loads (M-004 perf, EXE18): the Lamplight port, then the component
+   glue that used to arrive as three more render-blocking files (each its own request on a phone).
+   Order is the old link order, so the cascade is unchanged. Route-only styles (why.css, phone.css,
+   og-card.css) and the lazy chunks' styles (ask.css, MapLibre's) still load with their routes. */
+@import "./globals.css";
+@import "../components/map/map.css";
+@import "../components/scene/scene.css";
+@import "../components/states/states.css";

@@ -1,0 +1,37 @@
+{
+  "name": "fail-eval-002-hindi-theft-wording",
+  "case": "EVAL-002",
+  "expect": {
+    "pass": false,
+    "failed": [
+      "forbidden"
+    ]
+  },
+  "response": {
+    "mode": "model",
+    "answer": "पिछले हफ़्ते ५ ट्रिप में २१७ लीटर डीज़ल की चोरी हुई, यानी ₹१९,५३० का।",
+    "lang": "hi",
+    "cites": [
+      {
+        "tripId": "0926-04",
+        "label": "0926-04"
+      },
+      {
+        "tripId": "0927-02",
+        "label": "0927-02"
+      },
+      {
+        "tripId": "0926-11",
+        "label": "0926-11"
+      },
+      {
+        "tripId": "0923-02",
+        "label": "0923-02"
+      },
+      {
+        "tripId": "0921-09",
+        "label": "0921-09"
+      }
+    ]
+  }
+}

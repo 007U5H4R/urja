@@ -1,0 +1,54 @@
+/* Ask Urja (TKT-12). The drawer's look is lamp.css's `.drawer` block, already in
+   app/globals.css; this file only adds what the Radix port needs:
+   - Motion (Design.md §15) as keyframes on Radix's data-state, so Radix keeps the
+     sheet mounted until the exit animation ends: translateX 102% → 0 in 240 ms
+     cubic-bezier(.2,.8,.2,1), scrim opacity in 180 ms. lamp.css's global
+     reduced-motion rule (`animation: none !important`) turns both off, and Radix
+     then mounts and unmounts at once.
+   - The fallback block from final/states.html's own <style> (`.ask-body h3`, `.fallback`),
+     which lamp.css doesn't carry. */
+/* The layer order again, as in app/globals.css: this sheet can load first (the layout
+   imports the provider before globals.css), and the first statement fixes the order. */
+@layer theme, base, components, utilities;
+
+@layer components {
+  .scrim[data-state="open"] { opacity: 1; pointer-events: auto; transition: none; animation: ask-scrim-in 180ms ease; }
+  .scrim[data-state="closed"] { opacity: 0; transition: none; animation: ask-scrim-out 180ms ease; }
+  .drawer[data-state="open"] { transform: none; transition: none; animation: ask-drawer-in 240ms cubic-bezier(.2,.8,.2,1); }
+  .drawer[data-state="closed"] { transform: translateX(102%); transition: none; animation: ask-drawer-out 240ms cubic-bezier(.2,.8,.2,1); }
+
+  @keyframes ask-scrim-in { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes ask-scrim-out { from { opacity: 1; } to { opacity: 0; } }
+  @keyframes ask-drawer-in { from { transform: translateX(102%); } to { transform: none; } }
+  @keyframes ask-drawer-out { from { transform: none; } to { transform: translateX(102%); } }
+
+  /* The conversation keeps the body's 16px rhythm inside its live region. */
+  .drawer .convo { display: grid; gap: 16px; }
+  /* Empty (idle), the live region stays in the tree so the first answer is announced; it only gives back its gap. */
+  .drawer .convo:empty { margin-bottom: -16px; }
+  .drawer .asking { font-size: var(--t-sm); color: var(--fg-muted); }
+  .drawer .a li .cite { vertical-align: middle; }
+
+  /* final/states.html: the fallback answer, straight from the data. */
+  .drawer .ask-banner { font-size: 1.15rem; font-weight: 500; letter-spacing: -0.01em; line-height: 1.35; max-width: 42ch; }
+  .drawer .fallback { display: grid; gap: 12px; padding: 14px 16px; border-radius: var(--r-lg); background: var(--surface-1); border: 1px solid var(--line-soft); font-size: var(--t-sm); line-height: 1.6; }
+  .drawer .fallback .cites { display: flex; flex-wrap: wrap; gap: 6px; }
+  .drawer .fallback .cite { margin-left: 0; font-size: var(--t-xs); }
+  .drawer .fallback .saved { font-size: var(--t-sm); color: var(--fg-muted); border-top: 1px solid var(--line-soft); padding-top: 10px; }
+  .drawer .actions { display: flex; gap: 8px; }
+  /* Try again waits out a 429 countdown disabled; it reads as unavailable, not broken. */
+  .drawer .actions .btn:disabled { opacity: .55; cursor: not-allowed; }
+
+  /* Touch: the composer's button, the chips, the close button (the phone sheet's only way out)
+     and Try again reach 44px (Design.md §14, TC-023, DES-4). */
+  @media (pointer: coarse) {
+    .drawer .composer .btn, .drawer .composer input { height: 44px; }
+    .drawer header .iconbtn { width: 44px; height: 44px; }
+    .drawer .actions .btn { height: 44px; }
+    .drawer .sugg button { min-height: 44px; }
+    .drawer .cite { min-height: 24px; }
+  }
+  @media (max-width: 760px) {
+    .drawer .composer { padding-bottom: calc(14px + env(safe-area-inset-bottom)); }
+  }
+}

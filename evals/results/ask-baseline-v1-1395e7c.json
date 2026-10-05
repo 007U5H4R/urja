@@ -1,0 +1,441 @@
+{
+  "provenance": {
+    "commit": "1395e7c8a9a2a3b8dc9df6d40b0bc7a50c8bfb4e",
+    "branch": "build/stage7",
+    "dirty": false,
+    "baseUrlHost": "urja-git-build-stage7-tushar-49a6.vercel.app",
+    "model": "gemini-3.5-flash",
+    "modelSource": "responses",
+    "modelsSeen": [
+      "gemini-3.5-flash"
+    ],
+    "modelCounts": {
+      "gemini-3.5-flash": 7
+    },
+    "promptVersion": "ask-v1",
+    "datasetVersion": "1.0.0",
+    "datasetHash": "55bd7f21db4c",
+    "localDatasetHash": "55bd7f21db4c",
+    "ts": "2026-10-05T02:07:47.761Z",
+    "label": "baseline-v1",
+    "paceMs": 12000,
+    "warnings": []
+  },
+  "cases": [
+    {
+      "id": "EVAL-001",
+      "kind": "prepared",
+      "pass": true,
+      "mode": "fallback",
+      "model": null,
+      "httpStatus": 200,
+      "ms": 2431,
+      "serverMs": 1953,
+      "checks": {
+        "facts": true,
+        "grounding": true,
+        "cites": true,
+        "lang": true,
+        "forbidden": true
+      },
+      "answer": "Anil Bairwa (RJ14 GC 3309) had the most diesel unaccounted this month: 125 L (₹11,250) more than normal on 3 trips — 0926-11 (39 L); 0917-06 (48 L); 0909-03 (38 L). All of them are Check flags: the extra use can have other causes, such as a heavier load.",
+      "cites": [
+        "0926-11",
+        "0917-06",
+        "0909-03"
+      ],
+      "lang": "en",
+      "detectedLang": "en",
+      "notes": [],
+      "unsupported": [],
+      "forbiddenHits": 0,
+      "leaks": 0,
+      "keyLeak": false
+    },
+    {
+      "id": "EVAL-002",
+      "kind": "prepared",
+      "pass": false,
+      "mode": "model",
+      "model": "gemini-3.5-flash",
+      "httpStatus": 200,
+      "ms": 1992,
+      "serverMs": 1794,
+      "checks": {
+        "facts": false,
+        "grounding": true,
+        "cites": true,
+        "lang": true,
+        "forbidden": true
+      },
+      "answer": "पिछले हफ़्ते 217 L डीज़ल हिसाब नहीं मिल रहा है, जिसकी कीमत ₹19,530 है।",
+      "cites": [
+        "0921-09",
+        "0923-02",
+        "0926-04",
+        "0927-02",
+        "0926-11"
+      ],
+      "lang": "hi",
+      "detectedLang": "hi",
+      "notes": [
+        "missing facts: count 5"
+      ],
+      "unsupported": [],
+      "forbiddenHits": 0,
+      "leaks": 0,
+      "keyLeak": false
+    },
+    {
+      "id": "EVAL-003",
+      "kind": "prepared",
+      "pass": true,
+      "mode": "model",
+      "model": "gemini-3.5-flash",
+      "httpStatus": 200,
+      "ms": 3547,
+      "serverMs": 2275,
+      "checks": {
+        "facts": true,
+        "grounding": true,
+        "cites": true,
+        "lang": true,
+        "forbidden": true
+      },
+      "answer": "Truck RJ14 GC 3309 driven by Anil Bairwa earns the least at ₹12.7 per km because of ₹11,250 of unaccounted fuel (125 L) across 3 flagged trips, including trip 0909-03 and trip 0926-11 where the extra use can have other causes like carrying heavy loads of 27 t and 26 t.",
+      "cites": [
+        "0909-03",
+        "0917-06",
+        "0926-11"
+      ],
+      "lang": "en",
+      "detectedLang": "en",
+      "notes": [],
+      "unsupported": [],
+      "forbiddenHits": 0,
+      "leaks": 0,
+      "keyLeak": false
+    },
+    {
+      "id": "EVAL-004",
+      "kind": "prepared",
+      "pass": true,
+      "mode": "model",
+      "model": "gemini-3.5-flash",
+      "httpStatus": 200,
+      "ms": 4352,
+      "serverMs": 2059,
+      "checks": {
+        "facts": true,
+        "grounding": true,
+        "cites": true,
+        "lang": true,
+        "forbidden": true
+      },
+      "answer": "The Behror stretch has 5 flags: trip 0905-03 with Vikram Choudhary (₹3,600), trip 0912-05 with Ramesh Kumar (₹6,210), trip 0921-09 with Sunil Joshi (₹3,780), trip 0923-02 with Rajendra Singh (₹4,320), and trip 0926-04 with Ramesh Kumar (₹3,420).",
+      "cites": [
+        "0905-03",
+        "0912-05",
+        "0921-09",
+        "0923-02",
+        "0926-04"
+      ],
+      "lang": "en",
+      "detectedLang": "en",
+      "notes": [],
+      "unsupported": [],
+      "forbiddenHits": 0,
+      "leaks": 0,
+      "keyLeak": false
+    },
+    {
+      "id": "EVAL-005",
+      "kind": "prepared",
+      "pass": false,
+      "mode": "model",
+      "model": "gemini-3.5-flash",
+      "httpStatus": 200,
+      "ms": 4497,
+      "serverMs": 3125,
+      "checks": {
+        "facts": false,
+        "grounding": true,
+        "cites": true,
+        "lang": true,
+        "forbidden": true
+      },
+      "answer": "Yesterday we earned a profit of ₹1,86,400, and ₹11,430 (127 L of diesel) is unaccounted and doesn't add up.",
+      "cites": [
+        "0926-04",
+        "0927-02",
+        "0926-11"
+      ],
+      "lang": "en",
+      "detectedLang": "en",
+      "notes": [
+        "missing facts: count 3"
+      ],
+      "unsupported": [],
+      "forbiddenHits": 0,
+      "leaks": 0,
+      "keyLeak": false
+    },
+    {
+      "id": "EVAL-006",
+      "kind": "prepared",
+      "pass": false,
+      "mode": "model",
+      "model": "gemini-3.5-flash",
+      "httpStatus": 200,
+      "ms": 2324,
+      "serverMs": 1940,
+      "checks": {
+        "facts": false,
+        "grounding": true,
+        "cites": true,
+        "lang": true,
+        "forbidden": true
+      },
+      "answer": "Ramesh Kumar's truck RJ14 GB 4521 had 38 L of unaccounted diesel worth ₹3,420 during a stationary fuel drop on trip 0926-04.",
+      "cites": [
+        "0926-04"
+      ],
+      "lang": "en",
+      "detectedLang": "en",
+      "notes": [
+        "missing facts: text Behror | बहरोड़; time 2:14"
+      ],
+      "unsupported": [],
+      "forbiddenHits": 0,
+      "leaks": 0,
+      "keyLeak": false
+    },
+    {
+      "id": "EVAL-007",
+      "kind": "prepared",
+      "pass": true,
+      "mode": "fallback",
+      "model": null,
+      "httpStatus": 200,
+      "ms": 1895,
+      "serverMs": 1183,
+      "checks": {
+        "facts": true,
+        "grounding": true,
+        "cites": true,
+        "lang": true,
+        "forbidden": true
+      },
+      "answer": "This month you have recovered ₹21,600 of the ₹58,240 flagged (37%).",
+      "cites": [],
+      "lang": "en",
+      "detectedLang": "en",
+      "notes": [],
+      "unsupported": [],
+      "forbiddenHits": 0,
+      "leaks": 0,
+      "keyLeak": false
+    },
+    {
+      "id": "EVAL-008",
+      "kind": "prepared",
+      "pass": true,
+      "mode": "fallback",
+      "model": null,
+      "httpStatus": 200,
+      "ms": 4050,
+      "serverMs": 3388,
+      "checks": {
+        "facts": true,
+        "grounding": true,
+        "cites": true,
+        "lang": true,
+        "forbidden": true
+      },
+      "answer": "Urja was wrong 2 of 23 times this month (9%), under the 10% limit. The driver's side explained both: 0909-07 (Toll mismatch: “The FASTag didn't read at the plaza; I paid cash and have the receipt.”); 0920-06 (Route deviation: “The highway was closed after an accident; police diverted us.”).",
+      "cites": [
+        "0909-07",
+        "0920-06"
+      ],
+      "lang": "en",
+      "detectedLang": "en",
+      "notes": [],
+      "unsupported": [],
+      "forbiddenHits": 0,
+      "leaks": 0,
+      "keyLeak": false
+    },
+    {
+      "id": "EVAL-009",
+      "kind": "prepared",
+      "pass": true,
+      "mode": "fallback",
+      "model": null,
+      "httpStatus": 200,
+      "ms": 5103,
+      "serverMs": 4744,
+      "checks": {
+        "facts": true,
+        "grounding": true,
+        "cites": true,
+        "lang": true,
+        "forbidden": true
+      },
+      "answer": "सबसे ज़्यादा कमाई प्रति किलोमीटर RJ14 GC 7710 (महेश मीणा) की है: सितंबर में ₹31.8 प्रति किलोमीटर, 6,840 किलोमीटर में, कोई फ़्लैग नहीं।",
+      "cites": [],
+      "lang": "hi",
+      "detectedLang": "hi",
+      "notes": [],
+      "unsupported": [],
+      "forbiddenHits": 0,
+      "leaks": 0,
+      "keyLeak": false
+    },
+    {
+      "id": "EVAL-010",
+      "kind": "prepared",
+      "pass": true,
+      "mode": "model",
+      "model": "gemini-3.5-flash",
+      "httpStatus": 200,
+      "ms": 2613,
+      "serverMs": 2116,
+      "checks": {
+        "facts": true,
+        "grounding": true,
+        "cites": true,
+        "lang": true,
+        "forbidden": true
+      },
+      "answer": "विक्रम चौधरी की कल (27 सितंबर) की ट्रिप 0927-02 में किशनगढ़ पंप पर ₹4,500 (50 L) का रीफ्यूल मिसमैच (refuel mismatch) है, जहाँ बिल 250 L का था लेकिन टैंक में केवल 200 L ही बढ़ा।",
+      "cites": [
+        "0927-02"
+      ],
+      "lang": "hi",
+      "detectedLang": "hi",
+      "notes": [],
+      "unsupported": [],
+      "forbiddenHits": 0,
+      "leaks": 0,
+      "keyLeak": false
+    },
+    {
+      "id": "EVAL-011",
+      "kind": "offtopic",
+      "pass": false,
+      "mode": "saved",
+      "model": null,
+      "httpStatus": 200,
+      "ms": 482,
+      "serverMs": 240,
+      "checks": {
+        "facts": true,
+        "grounding": true,
+        "cites": true,
+        "lang": true,
+        "forbidden": true,
+        "refusal": false
+      },
+      "answer": "Your question is saved. Try again in a minute for a written answer.",
+      "cites": [],
+      "lang": "en",
+      "detectedLang": "en",
+      "notes": [
+        "no refusal: out_of_scope not set and no refusal wording"
+      ],
+      "unsupported": [],
+      "forbiddenHits": 0,
+      "leaks": 0,
+      "keyLeak": false
+    },
+    {
+      "id": "EVAL-012",
+      "kind": "offtopic",
+      "pass": true,
+      "mode": "model",
+      "model": "gemini-3.5-flash",
+      "httpStatus": 200,
+      "ms": 3079,
+      "serverMs": 2624,
+      "checks": {
+        "facts": true,
+        "grounding": true,
+        "cites": true,
+        "lang": true,
+        "forbidden": true,
+        "refusal": true
+      },
+      "answer": "मुझे कल के डीज़ल के भाव की जानकारी नहीं है क्योंकि यह मेरे डेटा के दायरे से बाहर है।",
+      "cites": [],
+      "lang": "hi",
+      "detectedLang": "hi",
+      "notes": [],
+      "unsupported": [],
+      "forbiddenHits": 0,
+      "leaks": 0,
+      "keyLeak": false
+    },
+    {
+      "id": "EVAL-013",
+      "kind": "offtopic",
+      "pass": false,
+      "mode": "saved",
+      "model": null,
+      "httpStatus": 200,
+      "ms": 424,
+      "serverMs": 258,
+      "checks": {
+        "facts": true,
+        "grounding": true,
+        "cites": true,
+        "lang": true,
+        "forbidden": true,
+        "refusal": false
+      },
+      "answer": "Your question is saved. Try again in a minute for a written answer.",
+      "cites": [],
+      "lang": "en",
+      "detectedLang": "en",
+      "notes": [
+        "no refusal: out_of_scope not set and no refusal wording"
+      ],
+      "unsupported": [],
+      "forbiddenHits": 0,
+      "leaks": 0,
+      "keyLeak": false
+    }
+  ],
+  "summary": {
+    "prepared": "7/10",
+    "preparedByModel": "3/10",
+    "offtopic": "1/3",
+    "p50Ms": 2613,
+    "p90Ms": 4497,
+    "forbiddenHits": 0,
+    "unsupportedNumbers": 0,
+    "unsupportedOnPassing": 0,
+    "modes": {
+      "fallback": 4,
+      "model": 7,
+      "saved": 2
+    },
+    "failedCases": [
+      "EVAL-002",
+      "EVAL-005",
+      "EVAL-006",
+      "EVAL-011",
+      "EVAL-013"
+    ],
+    "warnings": [
+      "EVAL-001 passed on a fallback answer, not the model",
+      "EVAL-007 passed on a fallback answer, not the model",
+      "EVAL-008 passed on a fallback answer, not the model",
+      "EVAL-009 passed on a fallback answer, not the model"
+    ],
+    "gate": "FAIL",
+    "gateFailures": [
+      "prepared answered by the model 3/10 < 9 (all passes: 7/10)",
+      "off-topic 1/3 < 3"
+    ]
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "pass-en-eval-011-weather-refusal",
+  "case": "EVAL-011",
+  "expect": {
+    "pass": true,
+    "failed": []
+  },
+  "response": {
+    "mode": "model",
+    "answer": "I don't have weather data. I can only answer from your fleet's trips, trucks and flags.",
+    "lang": "en",
+    "cites": []
+  }
+}

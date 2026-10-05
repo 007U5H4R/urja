@@ -1,0 +1,21 @@
+{
+  "name": "fail-eval-009-wrong-language",
+  "case": "EVAL-009",
+  "expect": {
+    "pass": false,
+    "failed": [
+      "lang"
+    ]
+  },
+  "response": {
+    "mode": "model",
+    "answer": "RJ14 GC 7710 (Mahesh Meena) earns the most: ₹31.8 per km in September.",
+    "lang": "en",
+    "cites": [
+      {
+        "tripId": "0927-06",
+        "label": "0927-06"
+      }
+    ]
+  }
+}

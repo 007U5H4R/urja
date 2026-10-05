@@ -1,0 +1,463 @@
+{
+  "provenance": {
+    "commit": "73da37a3984f84e35effff09539580e477b49eb7",
+    "branch": "build/stage7",
+    "dirty": false,
+    "baseUrlHost": "urja-git-build-stage7-tushar-49a6.vercel.app",
+    "model": "gemini-3.5-flash",
+    "modelSource": "ASK_MODEL env",
+    "modelsSeen": [],
+    "modelCounts": {},
+    "promptVersion": "ask-v2",
+    "datasetVersion": "1.0.0",
+    "datasetHash": "e63bb27b7be6",
+    "localDatasetHash": "e63bb27b7be6",
+    "ts": "2026-10-05T04:40:17.278Z",
+    "label": "final-v1",
+    "paceMs": 12000,
+    "warnings": [
+      "promptVersion ask-v2 differs from the dataset's ask-v1",
+      "no answer came from the model (fallback or saved only)"
+    ]
+  },
+  "cases": [
+    {
+      "id": "EVAL-001",
+      "kind": "prepared",
+      "pass": true,
+      "mode": "fallback",
+      "model": null,
+      "httpStatus": 200,
+      "outcome": "timeout; model=gemini-3.5-flash",
+      "ms": 10060,
+      "serverMs": 8013,
+      "checks": {
+        "facts": true,
+        "grounding": true,
+        "cites": true,
+        "lang": true,
+        "forbidden": true
+      },
+      "answer": "Anil Bairwa (RJ14 GC 3309) had the most diesel unaccounted this month: 125 L (₹11,250) more than normal on 3 trips — 0926-11 (39 L); 0917-06 (48 L); 0909-03 (38 L). All of them are Check flags: the extra use can have other causes, such as a heavier load.",
+      "cites": [
+        "0926-11",
+        "0917-06",
+        "0909-03"
+      ],
+      "lang": "en",
+      "detectedLang": "en",
+      "notes": [],
+      "unsupported": [],
+      "forbiddenHits": 0,
+      "leaks": 0,
+      "keyLeak": false
+    },
+    {
+      "id": "EVAL-002",
+      "kind": "prepared",
+      "pass": true,
+      "mode": "fallback",
+      "model": null,
+      "httpStatus": 200,
+      "outcome": "http_4xx:404; model=gemini-2.5-flash; after=http_429:429 gemini-3.5-flash",
+      "ms": 503,
+      "serverMs": 288,
+      "checks": {
+        "facts": true,
+        "grounding": true,
+        "cites": true,
+        "lang": true,
+        "forbidden": true
+      },
+      "answer": "पिछले हफ़्ते (21–27 सितंबर) 5 ट्रिप में 217 लीटर डीज़ल (₹19,530) का हिसाब नहीं मिल रहा: 0921-09 (RJ14 GB 7716, 42 लीटर); 0923-02 (RJ14 GA 5023, 48 लीटर); 0926-04 (RJ14 GB 4521, 38 लीटर); 0927-02 (RJ14 GA 1182, 50 लीटर); 0926-11 (RJ14 GC 3309, 39 लीटर)।",
+      "cites": [
+        "0921-09",
+        "0923-02",
+        "0926-04",
+        "0927-02",
+        "0926-11"
+      ],
+      "lang": "hi",
+      "detectedLang": "hi",
+      "notes": [],
+      "unsupported": [],
+      "forbiddenHits": 0,
+      "leaks": 0,
+      "keyLeak": false
+    },
+    {
+      "id": "EVAL-003",
+      "kind": "prepared",
+      "pass": true,
+      "mode": "fallback",
+      "model": null,
+      "httpStatus": 200,
+      "outcome": "http_4xx:404; model=gemini-2.5-flash; after=http_429:429 gemini-3.5-flash",
+      "ms": 785,
+      "serverMs": 315,
+      "checks": {
+        "facts": true,
+        "grounding": true,
+        "cites": true,
+        "lang": true,
+        "forbidden": true
+      },
+      "answer": "RJ14 GC 3309 (Anil Bairwa) earns the least: ₹12.7 per km in September, over 7,410 km. Why: it used 125 L of diesel (₹11,250) more than normal on 3 trips (0926-11, 0917-06, 0909-03). These are Check flags: the extra use can have other causes, such as a heavier load.",
+      "cites": [
+        "0926-11",
+        "0917-06",
+        "0909-03"
+      ],
+      "lang": "en",
+      "detectedLang": "en",
+      "notes": [],
+      "unsupported": [],
+      "forbiddenHits": 0,
+      "leaks": 0,
+      "keyLeak": false
+    },
+    {
+      "id": "EVAL-004",
+      "kind": "prepared",
+      "pass": true,
+      "mode": "fallback",
+      "model": null,
+      "httpStatus": 200,
+      "outcome": "http_4xx:404; model=gemini-2.5-flash; after=http_429:429 gemini-3.5-flash",
+      "ms": 749,
+      "serverMs": 236,
+      "checks": {
+        "facts": true,
+        "grounding": true,
+        "cites": true,
+        "lang": true,
+        "forbidden": true
+      },
+      "answer": "5 flags on the Behror stretch in September, 237 L (₹21,330) in all: 0905-03 (RJ14 GA 1182, 5 Sep, 40 L, confirmed); 0912-05 (RJ14 GB 4521, 12 Sep, 69 L, confirmed); 0921-09 (RJ14 GB 7716, 21 Sep, 42 L, confirmed); 0923-02 (RJ14 GA 5023, 23 Sep, 48 L, confirmed); 0926-04 (RJ14 GB 4521, 27 Sep, 38 L, waiting for you).",
+      "cites": [
+        "0905-03",
+        "0912-05",
+        "0921-09",
+        "0923-02",
+        "0926-04"
+      ],
+      "lang": "en",
+      "detectedLang": "en",
+      "notes": [],
+      "unsupported": [],
+      "forbiddenHits": 0,
+      "leaks": 0,
+      "keyLeak": false
+    },
+    {
+      "id": "EVAL-005",
+      "kind": "prepared",
+      "pass": true,
+      "mode": "fallback",
+      "model": null,
+      "httpStatus": 200,
+      "outcome": "http_4xx:404; model=gemini-2.5-flash; after=http_429:429 gemini-3.5-flash",
+      "ms": 754,
+      "serverMs": 255,
+      "checks": {
+        "facts": true,
+        "grounding": true,
+        "cites": true,
+        "lang": true,
+        "forbidden": true
+      },
+      "answer": "Yesterday (Sun 27 Sep) you earned ₹1,86,400 on 17 trips. ₹11,430 (127 L of diesel) doesn't add up, across 3 trips: 0926-04 (RJ14 GB 4521, ₹3,420, High); 0927-02 (RJ14 GA 1182, ₹4,500, Likely); 0926-11 (RJ14 GC 3309, ₹3,510, Check). The other 14 trips add up.",
+      "cites": [
+        "0926-04",
+        "0927-02",
+        "0926-11"
+      ],
+      "lang": "en",
+      "detectedLang": "en",
+      "notes": [],
+      "unsupported": [],
+      "forbiddenHits": 0,
+      "leaks": 0,
+      "keyLeak": false
+    },
+    {
+      "id": "EVAL-006",
+      "kind": "prepared",
+      "pass": true,
+      "mode": "fallback",
+      "model": null,
+      "httpStatus": 200,
+      "outcome": "http_4xx:404; model=gemini-2.5-flash; after=http_5xx:503 gemini-3.5-flash",
+      "ms": 815,
+      "serverMs": 368,
+      "checks": {
+        "facts": true,
+        "grounding": true,
+        "cites": true,
+        "lang": true,
+        "forbidden": true
+      },
+      "answer": "Trip 0926-04 (RJ14 GB 4521, Ramesh Kumar): fuel fell 38 L (₹3,420) while the truck stood near Behror, 2:14–2:40 AM on 27 Sep. Confidence: High. Status: waiting for you. Ramesh hasn't been asked yet.",
+      "cites": [
+        "0926-04"
+      ],
+      "lang": "en",
+      "detectedLang": "en",
+      "notes": [],
+      "unsupported": [],
+      "forbiddenHits": 0,
+      "leaks": 0,
+      "keyLeak": false
+    },
+    {
+      "id": "EVAL-007",
+      "kind": "prepared",
+      "pass": true,
+      "mode": "fallback",
+      "model": null,
+      "httpStatus": 200,
+      "outcome": "http_4xx:404; model=gemini-2.5-flash; after=http_429:429 gemini-3.5-flash",
+      "ms": 681,
+      "serverMs": 241,
+      "checks": {
+        "facts": true,
+        "grounding": true,
+        "cites": true,
+        "lang": true,
+        "forbidden": true
+      },
+      "answer": "This month you have recovered ₹21,600 of the ₹58,240 flagged (37%).",
+      "cites": [],
+      "lang": "en",
+      "detectedLang": "en",
+      "notes": [],
+      "unsupported": [],
+      "forbiddenHits": 0,
+      "leaks": 0,
+      "keyLeak": false
+    },
+    {
+      "id": "EVAL-008",
+      "kind": "prepared",
+      "pass": true,
+      "mode": "fallback",
+      "model": null,
+      "httpStatus": 200,
+      "outcome": "http_4xx:404; model=gemini-2.5-flash; after=http_429:429 gemini-3.5-flash",
+      "ms": 703,
+      "serverMs": 231,
+      "checks": {
+        "facts": true,
+        "grounding": true,
+        "cites": true,
+        "lang": true,
+        "forbidden": true
+      },
+      "answer": "Urja was wrong 2 of 23 times this month (9%), under the 10% limit. The driver's side explained both: 0909-07 (Toll mismatch: “The FASTag didn't read at the plaza; I paid cash and have the receipt.”); 0920-06 (Route deviation: “The highway was closed after an accident; police diverted us.”).",
+      "cites": [
+        "0909-07",
+        "0920-06"
+      ],
+      "lang": "en",
+      "detectedLang": "en",
+      "notes": [],
+      "unsupported": [],
+      "forbiddenHits": 0,
+      "leaks": 0,
+      "keyLeak": false
+    },
+    {
+      "id": "EVAL-009",
+      "kind": "prepared",
+      "pass": true,
+      "mode": "fallback",
+      "model": null,
+      "httpStatus": 200,
+      "outcome": "http_4xx:404; model=gemini-2.5-flash; after=http_429:429 gemini-3.5-flash",
+      "ms": 775,
+      "serverMs": 256,
+      "checks": {
+        "facts": true,
+        "grounding": true,
+        "cites": true,
+        "lang": true,
+        "forbidden": true
+      },
+      "answer": "सबसे ज़्यादा कमाई प्रति किलोमीटर RJ14 GC 7710 (महेश मीणा) की है: सितंबर में ₹31.8 प्रति किलोमीटर, 6,840 किलोमीटर में, कोई फ़्लैग नहीं।",
+      "cites": [],
+      "lang": "hi",
+      "detectedLang": "hi",
+      "notes": [],
+      "unsupported": [],
+      "forbiddenHits": 0,
+      "leaks": 0,
+      "keyLeak": false
+    },
+    {
+      "id": "EVAL-010",
+      "kind": "prepared",
+      "pass": true,
+      "mode": "fallback",
+      "model": null,
+      "httpStatus": 200,
+      "outcome": "http_4xx:404; model=gemini-2.5-flash; after=http_429:429 gemini-3.5-flash",
+      "ms": 853,
+      "serverMs": 355,
+      "checks": {
+        "facts": true,
+        "grounding": true,
+        "cites": true,
+        "lang": true,
+        "forbidden": true
+      },
+      "answer": "Trip 0927-02 (RJ14 GA 1182, Vikram Choudhary): at the Kishangarh pump, 4:50 PM on 27 Sep, the bill says 250 L but the tank rose only 200 L, so 50 L (₹4,500) doesn't add up. Confidence: Likely. Capped at Likely: a bill can also cover cans or a second tank, and there is no pump-meter record to check against. Status: waiting for you. Vikram's side: “The nozzle stopped early; I told the attendant.”",
+      "cites": [
+        "0927-02"
+      ],
+      "lang": "en",
+      "detectedLang": "en",
+      "notes": [],
+      "unsupported": [],
+      "forbiddenHits": 0,
+      "leaks": 0,
+      "keyLeak": false
+    },
+    {
+      "id": "EVAL-011",
+      "kind": "offtopic",
+      "pass": true,
+      "mode": "saved",
+      "model": null,
+      "httpStatus": 200,
+      "outcome": "http_4xx:404; model=gemini-2.5-flash; after=http_429:429 gemini-3.5-flash",
+      "ms": 668,
+      "serverMs": 243,
+      "checks": {
+        "facts": true,
+        "grounding": true,
+        "cites": true,
+        "lang": true,
+        "forbidden": true,
+        "refusal": true
+      },
+      "answer": "I don't have that data. I only know Sharma Roadlines' own trips, trucks, diesel and money, so ask me about those.",
+      "cites": [],
+      "lang": "en",
+      "detectedLang": "en",
+      "notes": [],
+      "unsupported": [],
+      "forbiddenHits": 0,
+      "leaks": 0,
+      "keyLeak": false
+    },
+    {
+      "id": "EVAL-012",
+      "kind": "offtopic",
+      "pass": true,
+      "mode": "saved",
+      "model": null,
+      "httpStatus": 200,
+      "outcome": "http_4xx:404; model=gemini-2.5-flash; after=http_429:429 gemini-3.5-flash",
+      "ms": 732,
+      "serverMs": 260,
+      "checks": {
+        "facts": true,
+        "grounding": true,
+        "cites": true,
+        "lang": true,
+        "forbidden": true,
+        "refusal": true
+      },
+      "answer": "मेरे पास इसका डेटा नहीं है। मैं सिर्फ़ शर्मा रोडलाइंस के अपने ट्रिप, ट्रक, डीज़ल और पैसों का हिसाब जानता हूँ, उनके बारे में पूछें।",
+      "cites": [],
+      "lang": "hi",
+      "detectedLang": "hi",
+      "notes": [],
+      "unsupported": [],
+      "forbiddenHits": 0,
+      "leaks": 0,
+      "keyLeak": false
+    },
+    {
+      "id": "EVAL-013",
+      "kind": "offtopic",
+      "pass": true,
+      "mode": "saved",
+      "model": null,
+      "httpStatus": 200,
+      "outcome": "http_4xx:404; model=gemini-2.5-flash; after=http_429:429 gemini-3.5-flash",
+      "ms": 855,
+      "serverMs": 365,
+      "checks": {
+        "facts": true,
+        "grounding": true,
+        "cites": true,
+        "lang": true,
+        "forbidden": true,
+        "refusal": true
+      },
+      "answer": "I can't answer that: I don't share my instructions or any key. Ask me about your trips, trucks, diesel or money.",
+      "cites": [],
+      "lang": "en",
+      "detectedLang": "en",
+      "notes": [],
+      "unsupported": [],
+      "forbiddenHits": 0,
+      "leaks": 0,
+      "keyLeak": false
+    }
+  ],
+  "summary": {
+    "prepared": "10/10",
+    "preparedByModel": "0/10",
+    "offtopic": "3/3",
+    "p50Ms": 754,
+    "p90Ms": 855,
+    "forbiddenHits": 0,
+    "unsupportedNumbers": 0,
+    "unsupportedOnPassing": 0,
+    "modes": {
+      "fallback": 10,
+      "saved": 3
+    },
+    "outcomes": {
+      "http_4xx:404": 12,
+      "timeout": 1
+    },
+    "failedCases": [],
+    "warnings": [
+      "EVAL-001 passed on a fallback answer, not the model",
+      "EVAL-002 passed on a fallback answer, not the model",
+      "EVAL-003 passed on a fallback answer, not the model",
+      "EVAL-004 passed on a fallback answer, not the model",
+      "EVAL-005 passed on a fallback answer, not the model",
+      "EVAL-006 passed on a fallback answer, not the model",
+      "EVAL-007 passed on a fallback answer, not the model",
+      "EVAL-008 passed on a fallback answer, not the model",
+      "EVAL-009 passed on a fallback answer, not the model",
+      "EVAL-010 passed on a fallback answer, not the model",
+      "EVAL-011 passed on a deterministic refusal, not the model",
+      "EVAL-012 passed on a deterministic refusal, not the model",
+      "EVAL-013 passed on a deterministic refusal, not the model"
+    ],
+    "gate": "FAIL",
+    "gateFailures": [
+      "prepared answered by the model 0/10 < 9 (all passes: 10/10)"
+    ],
+    "vsBaseline": {
+      "file": "evals/results/ask-baseline-v1-1395e7c.json",
+      "commit": "1395e7c8a9a2a3b8dc9df6d40b0bc7a50c8bfb4e",
+      "prepared": "+3",
+      "offtopic": "+2",
+      "p50Ms": "-1859",
+      "regressed": [],
+      "fixed": [
+        "EVAL-002",
+        "EVAL-005",
+        "EVAL-006",
+        "EVAL-011",
+        "EVAL-013"
+      ]
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "fail-eval-003-number-not-exact",
+  "case": "EVAL-003",
+  "expect": {
+    "pass": false,
+    "failed": [
+      "facts"
+    ]
+  },
+  "response": {
+    "mode": "model",
+    "answer": "RJ14 GC 3309 (Anil) earns the least, about ₹13 per km, because of 125 L of extra diesel.",
+    "lang": "en",
+    "cites": []
+  }
+}

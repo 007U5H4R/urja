@@ -1,0 +1,29 @@
+{
+  "name": "fail-eval-001-missing-fact",
+  "case": "EVAL-001",
+  "expect": {
+    "pass": false,
+    "failed": [
+      "facts"
+    ]
+  },
+  "response": {
+    "mode": "model",
+    "answer": "Anil Bairwa (RJ14 GC 3309) used 125 L more diesel than normal on trips 0926-11, 0917-06 and 0909-03.",
+    "lang": "en",
+    "cites": [
+      {
+        "tripId": "0926-11",
+        "label": "0926-11"
+      },
+      {
+        "tripId": "0917-06",
+        "label": "0917-06"
+      },
+      {
+        "tripId": "0909-03",
+        "label": "0909-03"
+      }
+    ]
+  }
+}

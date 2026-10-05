@@ -403,7 +403,7 @@ These tests mock the model. Answer quality is measured separately, in `evals/`.
 
 **Expected.**
 - For a recognised question, a response in about 8 s with `mode:"fallback"` and the deterministic report (₹1,86,400 / ₹11,430).
-- For an unrecognised question, `mode:"saved"`.
+- For an unrecognised in-scope question, `mode:"saved"`. An off-topic question gets the fixed refusal (`mode:"saved"`, `refusal` set; EXE30).
 - The log outcome is `timeout`.
 
 ### TC-042 · Upstream errors → fallback
@@ -416,12 +416,12 @@ These tests mock the model. Answer quality is measured separately, in `evals/`.
 ### TC-043 · Rate limit and daily cap
 **Expected.**
 - The 6th request from one IP within a minute gets a 429 with `retryAfterS`, plus a fallback answer if the intent is recognised.
-- Past 40 requests per IP per day, or 300 per day in total, the model is never called: the mock records no calls.
+- Past 40 Gemini calls per IP per day, or the global daily budget (`ASK_DAILY_MODEL_BUDGET`, default 300), the model is never called: the mock records no calls. Answers served from the answer cache spend no daily budget, but they still take the per-minute token (EXE31).
 
 ### TC-044 · Citation guard
 **Expected.**
 - A model answer citing `0999-99` has that citation stripped.
-- If a data question ends up with 0 valid citations, it falls back.
+- If a data question ends up with 0 valid citations, it falls back. A flag id (`0926-11-R3`) counts as its trip; a cited fleet plate counts only when the answer names that truck (EXE30).
 - A forbidden word in the answer triggers the fallback.
 
 ### TC-045 · Gemini key hygiene

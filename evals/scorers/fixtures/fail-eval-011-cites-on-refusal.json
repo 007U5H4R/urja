@@ -1,0 +1,21 @@
+{
+  "name": "fail-eval-011-cites-on-refusal",
+  "case": "EVAL-011",
+  "expect": {
+    "pass": false,
+    "failed": [
+      "cites"
+    ]
+  },
+  "response": {
+    "mode": "model",
+    "answer": "I don't have weather data.",
+    "lang": "en",
+    "cites": [
+      {
+        "tripId": "0926-04",
+        "label": "0926-04"
+      }
+    ]
+  }
+}

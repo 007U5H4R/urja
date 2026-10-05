@@ -1,0 +1,75 @@
+/* Screen states: a port of the page styles in .design/exploration/final/states.html
+   (<style> block), values unchanged. Tokens and components come from app/globals.css.
+   It joins the components layer declared in globals.css and loads after it, as the
+   mockup's <style> follows lamp.css.
+   Scoping (the only change): the specimen rules sit under .st-view so the short class
+   names (.state, .copy, .actions, .trips, .progress) cannot reach other routes after
+   client-side navigation. The skeleton rules keep their own prefix (.sk, .sk-rows,
+   .sk-row) and stay unscoped: the Today, Brief and Trip loading skeletons all use them.
+   On a live view the specimen's headline is the page's h1 (the mockup's h3), so each
+   `.state h3` rule also names `.state h1` (not the loading card, whose h1 is its tag). */
+@layer components {
+  /* Page styles for the state specimens only; tokens and components come from lamp.css. */
+  .st-view .st-head { padding: 30px 0 22px; }
+  .st-view .st-head .greet { font-size: var(--t-sm); color: var(--fg-muted); margin-bottom: 10px; }
+  .st-view .st-head h1 { font-size: clamp(1.6rem, 1.1rem + 1.6vw, 2.4rem); font-weight: 420; letter-spacing: -0.025em; line-height: 1.1; }
+  .st-view .states { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding-bottom: 72px; }
+  .st-view .state { padding: 22px; display: flex; flex-direction: column; min-width: 0; }
+  .st-view .state.wide { grid-column: 1 / -1; }
+  .st-view .st-tag { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: var(--t-sm); font-weight: 450; color: var(--fg-muted); margin-bottom: 20px; }
+  .st-view .state :is(h1:not(.st-tag), h3) { font-size: clamp(1.35rem, 1.1rem + .8vw, 1.75rem); font-weight: 450; letter-spacing: -0.02em; line-height: 1.18; max-width: 28ch; text-wrap: balance; }
+  .st-view .state .copy { margin-top: 10px; color: var(--fg-muted); max-width: 58ch; }
+  .st-view .state .copy b { color: var(--fg); font-weight: 520; }
+  .st-view .state .actions { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 22px; }
+  /* one tick per trip; capped so 17 ticks read as a rail, not a ruler */
+  .st-view .trips { max-width: 440px; }
+
+  /* loading: a static skeleton of Today (no shimmer); only the real progress is lit */
+  .sk { display: block; background: var(--surface-2); border-radius: 6px; }
+  .sk-rows { margin-top: 20px; border-top: 1px solid var(--line-soft); }
+  .sk-row { display: grid; grid-template-columns: 24px 96px minmax(0, 1fr) 64px; gap: 10px 12px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--line-soft); }
+  .sk-row .dot { width: 24px; height: 24px; border-radius: 50%; }
+  .sk-row .pl { height: 24px; border-radius: 5px; }
+  .sk-row .ln { height: 12px; }
+  .sk-row .am { height: 18px; }
+  .sk-row .ln2 { grid-column: 2 / -1; height: 14px; width: 82%; }
+  .st-view .progress { margin-top: 18px; }
+  .st-view .progress p { font-size: var(--t-sm); color: var(--fg-muted); }
+  .st-view .progress p b { color: var(--fg); font-weight: 520; }
+  .st-view .progress .rail { margin-top: 10px; }
+
+  /* working, a clean day: the emotional peak gets the lamp */
+  .st-view .state.clean { border-color: var(--lamp-line); box-shadow: 0 0 0 1px oklch(0.705 0.166 53 / .08) inset, 0 30px 80px -40px var(--glow); }
+  .st-view .state.clean::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    background: radial-gradient(640px 360px at 10% -12%, oklch(0.705 0.166 53 / .20), transparent 70%),
+                radial-gradient(420px 260px at 96% 112%, oklch(0.705 0.166 53 / .07), transparent 70%); }
+  .st-view .state.clean > * { position: relative; z-index: 1; }
+  .st-view .state.clean :is(h1:not(.st-tag), h3) { font-size: var(--t-verdict); font-weight: 400; letter-spacing: -0.028em; line-height: 1.12; max-width: 30ch; }
+  .st-view .state.clean .copy { font-size: 1.05rem; }
+  .st-view .state.clean .rail { margin-top: 22px; }
+  .st-view .state.clean .rail svg { filter: drop-shadow(0 0 6px var(--glow)); }
+  .st-view .state.clean .rail-ends { color: var(--fg-muted); }
+
+  /* DES-19: on the brief (main.m.st-view) the brief's own line rule `.m .clean` (app/globals.css,
+     the "other trips add up" line) also matches this card and its rail: it dimmed the headline to
+     --fg-muted and changed the card's gap and alignment and the rail's colour. The card keeps its
+     own look, as on Today's clean state. */
+  .m.st-view .state.clean { gap: normal; align-items: normal; padding: 22px; font-size: inherit; color: var(--fg); }
+  .m.st-view .state.clean .rail svg { color: inherit; margin-top: 0; flex: 0 1 auto; }
+
+  /* DES-4: the state actions are primary phone actions, 44px on touch (Design.md §14, TC-023).
+     .st-trip-error is TripErrorSpecimen's wrapper, there only to scope this rule. */
+  .st-trip-error { display: contents; }
+  @media (pointer: coarse) {
+    .st-view .actions .btn, .st-trip-error .btn { height: 44px; }
+  }
+
+  /* DES-24: a state moves focus to its heading (focus.ts) for screen readers. The heading is not a
+     control (tabindex="-1" keeps it out of the tab order), so it draws no focus ring. Intentionally
+     global, not under .st-view: the route error page (app/(site)/error.tsx) and the working views
+     that recovery focuses use the same programmatic heading focus. */
+  :is(h1, h2, h3)[tabindex="-1"]:focus { outline: none; }
+
+  @media (max-width: 900px) { .st-view .states { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 760px) { .st-view .state, .m.st-view .state.clean { padding: 18px 16px; } .st-view .st-head { padding-top: 22px; } }
+}
