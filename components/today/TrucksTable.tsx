@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 
 import { Icon } from "@/components/ui/Icon";
 import { Money } from "@/components/ui/Money";
@@ -13,6 +13,28 @@ const KM = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
 const NOW_TONE: Record<TrucksTableRow["now"]["state"], StatusTone | undefined> = { moving: "moving", yard: undefined, workshop: "warn" };
 const TONE_CLASS: Record<TrucksTableRow["tone"], string> = { top: " top", mid: "", low: " low" };
 const UNACCOUNTED_CLASS: Record<TrucksTableRow["unaccountedTone"], string> = { subtle: "r subtle", plain: "r", loss: "r loss" };
+
+/**
+ * The scroll region is a tab stop only while its table overflows it (WCAG 2.1.1 needs the keyboard
+ * to reach scrollable content; a stop that scrolls nothing is noise). The server and the first
+ * client render have no tabindex, so hydration matches; a ResizeObserver on the region and the
+ * table re-measures on every resize, text zoom included.
+ */
+function useScrollsSideways() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [overflows, setOverflows] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const measure = () => setOverflows(el.scrollWidth > el.clientWidth);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    if (el.firstElementChild) ro.observe(el.firstElementChild);
+    return () => ro.disconnect();
+  }, []);
+  return [ref, overflows] as const;
+}
 
 function Row({ r }: { r: TrucksTableRow }) {
   const tone = TONE_CLASS[r.tone];
@@ -51,6 +73,7 @@ export function TrucksTable({ trucks }: { trucks: TrucksTableView }) {
   const [expanded, setExpanded] = useState(false);
   const rows = expanded ? trucks.rows : trucks.rows.filter((r) => !r.hidden);
   const showGap = !expanded && trucks.gapText != null;
+  const [scrollRef, scrolls] = useScrollsSideways();
 
   return (
     <section className="sec" id="trucks" aria-labelledby="trucks-h" style={{ padding: "28px 0 72px" }}>
@@ -73,8 +96,15 @@ export function TrucksTable({ trucks }: { trucks: TrucksTableView }) {
           }
         />
         {/* DES-3 (WCAG 1.4.10): the table fits at every width it can (hide-sm, hide-md), and this
-            focusable region scrolls it where it can't (320 px, 200% text), so no column is cut off. */}
-        <div className="tbl-scroll" role="region" tabIndex={0} aria-labelledby="trucks-h">
+            region scrolls it where it can't (200% text), so no column is cut off. Its own name keeps
+            it apart from the section landmark (axe landmark-unique); it is focusable only while it scrolls. */}
+        <div
+          ref={scrollRef}
+          className="tbl-scroll"
+          role="region"
+          aria-label="All trucks table, scrolls sideways"
+          tabIndex={scrolls ? 0 : undefined}
+        >
           <table className="tbl" aria-labelledby="trucks-h">
             <thead>
               <tr>

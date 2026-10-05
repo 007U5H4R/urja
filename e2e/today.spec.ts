@@ -157,15 +157,18 @@ test("the Trucks nav target #trucks exists", async ({ page }) => {
   await expect(page.locator("h2#trucks-h")).toHaveText("Trucks by profit per km");
 });
 
-test("TC-031: axe finds no serious or critical violations on Today, and there is one h1", async ({ page }) => {
-  await page.goto("/");
-  await page.waitForLoadState("networkidle");
-  await expect(page.locator("h1")).toHaveCount(1);
-  const results = await axeBuilder(page).analyze();
-  const bad = results.violations
-    .filter((v) => v.impact === "serious" || v.impact === "critical")
-    .map((v) => `${v.id} (${v.impact}): ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`);
-  expect(bad).toEqual([]);
+// Also fails on the moderate `landmark-unique`: the trucks section and its scroll region once shared a name.
+test("TC-031: axe finds no serious or critical violations (nor landmark-unique) on Today and its map view, and there is one h1", async ({ page }) => {
+  for (const path of ["/", "/?view=map"]) {
+    await page.goto(path);
+    await page.waitForLoadState("networkidle");
+    await expect(page.locator("h1")).toHaveCount(1);
+    const results = await axeBuilder(page).analyze();
+    const bad = results.violations
+      .filter((v) => v.impact === "serious" || v.impact === "critical" || v.id === "landmark-unique")
+      .map((v) => `${v.id} (${v.impact}): ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`);
+    expect(bad, path).toEqual([]);
+  }
 });
 
 /* ---------- Stage 8 fixes (S1: DES-2, 3, 4, 5, 7, 10, 15, 33) ---------- */
@@ -188,9 +191,9 @@ test("DES-2: the glass card and rail box keep their backdrop blur in the product
 test("DES-3: the trucks table fits at 320, 761–900 and desktop widths, and scrolls in a labelled region when it can't", async ({ page }, info) => {
   test.skip(info.project.name !== "desktop", "sets its own viewports");
   await page.goto("/");
-  const region = page.getByRole("region", { name: "Trucks by profit per km" }).and(page.locator(".tbl-scroll"));
-  await expect(region).toHaveAttribute("tabindex", "0");
-  await expect(region).toHaveAttribute("aria-labelledby", "trucks-h");
+  const region = page.getByRole("region", { name: "All trucks table, scrolls sideways" }).and(page.locator(".tbl-scroll"));
+  // It fits at 1440, so it isn't a tab stop there; it becomes one only when it overflows (below).
+  await expect(region).not.toHaveAttribute("tabindex");
   await expect(region.locator("table.tbl")).toHaveCount(1);
   expect(await region.evaluate((e) => getComputedStyle(e).overflowX)).toBe("auto");
   for (const width of [320, 340, 761, 800, 860, 900, 1024, 1440]) {
@@ -212,6 +215,27 @@ test("DES-3: the trucks table fits at 320, 761–900 and desktop widths, and scr
   expect(scroll.sw).toBeGreaterThan(scroll.cw);
   expect(scroll.left).toBeGreaterThan(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
+  await expect(region).toHaveAttribute("tabindex", "0");
+});
+
+test("DES-3: the trucks scroll region has its own name and is a tab stop only while it overflows", async ({ page }, info) => {
+  test.skip(info.project.name !== "desktop", "sets its own viewports");
+  await page.goto("/");
+  const region = page.locator("section#trucks .tbl-scroll");
+  await expect(region).toHaveAttribute("role", "region");
+  await expect(region).toHaveAttribute("aria-label", "All trucks table, scrolls sideways");
+  await expect(region).not.toHaveAttribute("aria-labelledby");
+  await expect(region).not.toHaveAttribute("tabindex");
+  // 320 px with the text at 200%: the table overflows, so the region scrolls and takes focus.
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.evaluate(() => (document.documentElement.style.fontSize = "200%"));
+  await expect(region).toHaveAttribute("tabindex", "0");
+  await region.focus();
+  await expect(region).toBeFocused();
+  // Back to 1440 at 100%: it fits again and drops out of the tab order.
+  await page.evaluate(() => (document.documentElement.style.fontSize = ""));
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(region).not.toHaveAttribute("tabindex");
 });
 
 test("DES-4: the Evidence links are at least 24 px tall (44 px on a coarse pointer) without moving the row", async ({ page }, info) => {

@@ -8,6 +8,10 @@
   /* Page styles for the Why Urja essay; tokens and components come from lamp.css. */
   .essay { max-width: 1120px; margin: 0 auto; padding: 0 clamp(16px, 3vw, 32px) 104px; }
   .topbar .btn { flex: none; }
+  /* DES-28: with the text alone at 200% on a phone, "Start the demo" shrinks and wraps (its height
+     grows: .btn has min-height: fit-content) instead of pushing the menu off-screen. At 100% it has
+     room, so it neither shrinks nor wraps and the bar measures as before. */
+  @media (max-width: 420px) { .topbar .btn { flex: 0 1 auto; min-width: 0; white-space: normal; text-align: center; } }
 
   /* small label above every big title (case-study treatment) */
   .essay .kicker { display: flex; align-items: center; gap: 10px; font-size: var(--t-xs); font-weight: 520; letter-spacing: .12em; text-transform: uppercase; color: var(--fg-muted); }

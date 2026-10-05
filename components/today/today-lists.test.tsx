@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, within } from "@testing-library/react";
+import { renderToString } from "react-dom/server";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -187,6 +188,58 @@ describe("TrucksTable", () => {
       ["23", "RJ14 GB 4521", "Ramesh Kumar", "6,480", `${R}15.1`, "", `${R}9,630`, "Okhla, Delhi"],
       ["24", "RJ14 GC 3309", "Anil Bairwa", "7,410", `${R}12.7`, "", `${R}11,250`, "Bhiwandi"],
     ]);
+  });
+
+  it("names the scroll region apart from the section, and server-renders it without a tab stop", () => {
+    const html = renderToString(<TrucksTable trucks={table} />);
+    const host = document.createElement("div");
+    host.innerHTML = html;
+    const region = host.querySelector("section#trucks .tbl-scroll")!;
+    expect(region.getAttribute("role")).toBe("region");
+    expect(region.getAttribute("aria-label")).toBe("All trucks table, scrolls sideways");
+    expect(region.hasAttribute("aria-labelledby")).toBe(false);
+    expect(region.hasAttribute("tabindex")).toBe(false);
+  });
+
+  it("makes the region a tab stop only while it overflows, re-measured on resize, and disconnects on unmount", () => {
+    const observers: { cb: () => void; targets: Element[]; disconnected: boolean }[] = [];
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        o: (typeof observers)[number];
+        constructor(cb: () => void) {
+          this.o = { cb, targets: [], disconnected: false };
+          observers.push(this.o);
+        }
+        observe(t: Element) {
+          this.o.targets.push(t);
+        }
+        disconnect() {
+          this.o.disconnected = true;
+        }
+      },
+    );
+    try {
+      const size = { sw: 300, cw: 300 };
+      vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockImplementation(() => size.sw);
+      vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockImplementation(() => size.cw);
+      const { container, unmount } = render(<TrucksTable trucks={table} />);
+      const region = container.querySelector(".tbl-scroll")!;
+      expect(region.hasAttribute("tabindex")).toBe(false);
+      expect(observers).toHaveLength(1);
+      expect(observers[0].targets).toEqual([region, region.querySelector("table.tbl")]);
+      size.sw = 420;
+      act(() => observers[0].cb());
+      expect(region.getAttribute("tabindex")).toBe("0");
+      size.sw = 300;
+      act(() => observers[0].cb());
+      expect(region.hasAttribute("tabindex")).toBe(false);
+      unmount();
+      expect(observers[0].disconnected).toBe(true);
+    } finally {
+      vi.restoreAllMocks();
+      vi.unstubAllGlobals();
+    }
   });
 
   it("ports the row classes: rank badges, lit best ₹/km, minibars, unaccounted tones and now chips", () => {

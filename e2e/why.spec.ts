@@ -93,6 +93,44 @@ test("DES-28 · with text-only zoom at 200%, the metric figures wrap inside thei
   expect(over).toEqual([]);
 });
 
+test("DES-28 · at 375 with the text alone at 200%, the top bar's CTA shrinks and wraps, so the page doesn't scroll sideways and the menu stays on screen", async ({ page }, info) => {
+  test.skip(info.project.name !== "desktop", "sets its own viewport");
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto("/why");
+  await page.evaluate(() => (document.documentElement.style.fontSize = "200%"));
+  const { sw, cw } = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
+  expect(sw).toBeLessThanOrEqual(cw);
+  const cta = page.locator("header.topbar").getByRole("link", { name: "Start the demo" });
+  await expect(cta).toBeVisible();
+  // it wraps inside its box, which grows, rather than clipping its words
+  const clip = await cta.evaluate((e) => ({ sw: e.scrollWidth, cw: e.clientWidth, sh: e.scrollHeight, ch: e.clientHeight }));
+  expect(clip.sw).toBeLessThanOrEqual(clip.cw + 1);
+  expect(clip.sh).toBeLessThanOrEqual(clip.ch + 1);
+  const menu = (await page.locator("header.topbar .m-menu summary").boundingBox())!;
+  expect(menu.x).toBeGreaterThanOrEqual(0);
+  expect(menu.x + menu.width).toBeLessThanOrEqual(cw);
+});
+
+test("DES-28 · at 100% text the /why top bar lays out exactly as with the CTA's old flex: none, at 375 and 1440", async ({ page }, info) => {
+  test.skip(info.project.name !== "desktop", "sets its own viewports");
+  const boxes = () =>
+    page.locator("header.topbar .wordmark, header.topbar .btn, header.topbar .m-menu summary").evaluateAll((es) =>
+      es.filter((e) => (e as HTMLElement).offsetParent !== null).map((e) => {
+        const r = e.getBoundingClientRect();
+        return [e.className || e.tagName, r.left, r.top, r.width, r.height];
+      }),
+    );
+  for (const width of [375, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/why");
+    const now = await boxes();
+    expect(now.length, `${width}`).toBeGreaterThanOrEqual(2);
+    const style = await page.addStyleTag({ content: ".topbar .btn { flex: none !important; min-width: auto !important; white-space: nowrap !important; }" });
+    expect(await boxes(), `${width}`).toEqual(now);
+    await style.evaluate((s) => (s as HTMLElement).remove());
+  }
+});
+
 test("chapter 01 labels its four quotes as illustrative, not from interviews, and shows no placeholder", async ({ page }) => {
   await page.goto("/why");
   const c1 = page.locator("section[aria-labelledby='c1']");
