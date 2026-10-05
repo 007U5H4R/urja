@@ -65,13 +65,28 @@
     Two reviews, with 1 fix round on blockers B1 (any plate grounded an answer) and B2 (unflagged deterministic off-topic passes). Docs: technical-plan §6.8, TC-041 and TC-044, evaluation-plan §5.
   - **final-v1 attempt 1** (8376c5d, at 73da37a): every call got `gemini-3.5-flash` **429** (quota), then the fallback model's 404. Prepared 10/10 but 0/10 by the model; off-topic 3/3 on refusals; gate FAIL. **BLOCKED: Gemini quota or billing (the user's item).**
   - The retry is scheduled for 2026-10-05 18:45 UTC, after both quotas reset.
-- **Open for the user:**
-  - Gemini billing or quota on the Vercel key (the main blocker).
-  - EXE30 B2: should off-topic cases count only model answers?
-  - DES-34 and DES-35.
-  - EXE29: is the substitute critique OK?
-  - TC-030 and TC-032 manual runs.
-  - The native Hindi review (311 strings).
+- **After the user's decisions (EXE32, 2026-10-05):**
+  - **Free tier kept; Ask made frugal** (EXE31, 7ced739):
+    - An in-memory answer cache, for model answers only.
+    - Cooldowns: 429 → 1 s–10 min; 404 → 10 min on the primary, 6 h on the fallback.
+    - `ASK_DAILY_MODEL_BUDGET`.
+    - The eval runner always bypasses the cache and counts first-attempt codes.
+    - Two reviews; 1 fix round on two blockers: cache vs the eval, and the 404 bench.
+  - **DES-34 fixed** (e2db435): "189.9 L".
+  - **DES-35:** no change.
+  - **B2:** deterministic off-topic refusals count, with warnings.
+  - **Hindi review:** deferred, not a blocker.
+  - **TC-043 reworded** (47abd6e).
+- **TC-055 re-measured on the preview at b2b5d69: PASS.**
+  - `/` LCP median 1.80 s (5 runs); `/why` 1.62 s.
+  - First-load JS on `/`: 186.7 KiB gzip (budget 200 KB).
+- **TC-020, full path on the preview: PASS** at 375, 1440 and Fast 3G, with Ask mocked to save quota (`docs/exec/qa/stage9-tc055-tc020.md`).
+- **Checks on dc18e9c:**
+  - `pnpm verify`: 1235 passed, 1 skipped.
+  - build + check:bundle: clean.
+  - `pnpm test:e2e`: 515 passed, 115 skipped, 0 failed.
+- **Still open:** final-v1 live eval. The retry is scheduled for 18:45 UTC, once both quotas have reset.
+- **Open for the user:** none blocking. The free-tier quota limits live answers on busy days (the deterministic fallback then answers). TC-030 and TC-032 manual runs on the Mac.
 
 
 ## Stage 7 summary (updated 2026-09-29, second cloud session)
@@ -205,7 +220,7 @@ Vercel: each row records the pushed SHA. Since 2026-09-29 the VM reaches the pre
 | TASK-10 | EXE27 Hindi H1–H10 | done | 1d92c67 | copy, fallback (both chip 2 wordings → 217 L answer), hindi-review generator, TC-015 mockup parity; `pnpm verify` 1039 pass; e2e why, ask, phone, trip, today, html-lang 222 pass | pushed | Implementer in a worktree. Orchestrator check: diff is wording and formatting only, and no number changed. No separate subagent reviews, to save usage. |
 | TASK-12 | EXE28 illustrative quotes | done | a528994 | why tests: the label renders when any quote is illustrative; e2e why.spec | pushed | The placeholder no longer shows. Open question: chapter 01 title (EXE28). |
 | TASK-19 | TSK-15.1 (Stage 8) | done | aa6a941, 1ae4f84, 5406f86, 55c8e1a | verify 1176; e2e 515 pass / 0 fail; QA on preview 30/32 → closed by unit F | docs/exec/stage8-critique.md, docs/exec/qa/stage8-qa.md | DES-2…39; EXE29. Parked DES-34…39 (34 and 35 need user decisions). |
-| TASK-19 | TSK-15.2 (Stage 9) | doing | 8bcb303, 73da37a, 3ab14d4, 8376c5d, f2a7753 | CR-1 fixed; TC matrix 35/4/1; eval baseline-v1 FAIL 3/10; final-v1 attempt 1 BLOCKED (Gemini 429) | docs/exec/qa/tc-matrix.md, evals/reports/eval-report-v1.md | EXE30 (ask-v2). Retry 18:45 UTC. |
+| TASK-19 | TSK-15.2 (Stage 9) | doing | 8bcb303, 3ab14d4, 8376c5d, f2a7753, e2db435, 7ced739, dc18e9c | CR-1 fixed; TC matrix 35/4/1; eval baseline-v1 FAIL 3/10; final-v1 attempt 1 BLOCKED (Gemini 429) | docs/exec/qa/tc-matrix.md, evals/reports/eval-report-v1.md | EXE30 (ask-v2). Retry 18:45 UTC. |
 | TASK-19 | TSK-15.3 (Stage 10) | todo | — | — | — | /security-review, QA-report.md (user gate) |
 | TASK-20 | TSK-16.* | todo (out of Stage 7 scope) | — | — | — | TKT-16 Stage 11 (local @claude) |
 
