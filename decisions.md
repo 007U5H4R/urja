@@ -342,3 +342,13 @@
 ## EXE28 · Field quotes are illustrative and labelled as such — accepted 2026-09-29 (user decision)
 - `content/field-notes.ts` has four composite quotes with `illustrative: true`. Chapter 01 of Why Urja shows the label "Illustrative quotes, not from interviews: composites written to show what fleet owners commonly describe. Real field notes will replace them." above the cards, and each card has an "Illustrative" chip. They are never presented as interviews.
 - **Open for the user:** chapter 01's title, "I went and asked", now sits above illustrative quotes. It is unchanged here, because titles are part of the Why Urja IA and copy under the Design Freeze.
+
+## EXE29 · Stage 8 critique without the `bw-design-critique` skill — judgement call 2026-10-05 (to confirm)
+- **Why:** TSK-15.1 names `bw-design-critique` (milestones.md says `impeccable`). Neither skill is installed in this cloud session, and the user asked to move to the next stage.
+- **Done instead:** three fresh critic subagents reviewed the preview (`urja-git-build-stage7-tushar-49a6.vercel.app`, build/stage7 at 68aced0) against Design.md (Design Freeze, §7, §12–§19, §24–§26) and `.design/exploration/final/`, split by area:
+  - A: Today and Trip;
+  - B: the phone screens, Ask and states;
+  - C: Why Urja and OG, plus the Stage 8 accessibility items Design.md §17 defers (320 px reflow, 200% text, a keyboard-only pass).
+- **Findings and fixes:** findings are numbered DES-2 onward (DES-1 is already fixed). Pixel, accessibility, browser and performance findings are fixed on build/stage7 without approval. Anything touching a Design Freeze item is parked for the user.
+- **Browser access:** the sandbox Chromium doesn't trust the agent proxy's CA in this session. The critique helper fetches each request Node-side (`NODE_EXTRA_CA_CERTS`, TLS verified) and fulfils it in the page. TLS checks are never disabled.
+- **Option for the user:** run `bw-design-critique` locally against the preview as well. Its findings join the same DES list.
