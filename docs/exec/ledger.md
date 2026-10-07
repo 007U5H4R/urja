@@ -237,11 +237,11 @@ Vercel: each row records the pushed SHA. Since 2026-09-29 the VM reaches the pre
 | TASK-22 | Stream fusion + action ladder data | done | 2e00425 (007U5H4R/urja#6) | 1303 pass in the worktree; invariant: last real step = flag confidence on all 23 flags; L4 = High + 2 families; contradicting stream not counted | CI green; production smoke 200 | Spec+quality review FAIL (families undisclosed; e-way bill counted against a load cap) → round 1; re-review PASS; round 2 (orchestrator): R2 cap copy matched to the dataset, "stream families" → "families". EXE43. |
 | TASK-23 | Truck / lender-view data | done | 129c758 (007U5H4R/urja#5) | 1301 pass; 24 trucks reconcile to 58,240 / 21,600; golden RJ14 GC 3309 = 63.9; 27 of 180 verified days, no projected months | CI green; production smoke 200 | Review FAIL (EMI read as a projection) → round 1; re-review FAIL (consent/partnership cited beyond sources) → round 2; final re-review PASS. EXE44. |
 | TASK-24 | Pricing data | done | 6f97c53 (007U5H4R/urja#4) | 1300 pass; tiers ₹0/299/499/799, cost ₹78, margins 74/84/90%, share of recovered 30/50/80% | CI green; production smoke 200 | Review FAIL → round 1 (labels, ranges, guards) → round 2 (consent claims overstated: 3 new unverified sources, design labelled an assumption); final re-review PASS. EXE42. |
-| TASK-25 | Flag lab UI | doing | — | — | — | Wave 2. |
-| TASK-26 | Lender view UI | doing | — | — | — | Wave 2. |
-| TASK-27 | Tiers UI + honesty pass | doing | — | — | — | Wave 2; also fixes copy.ts claims that outrun their snippets. |
-| TASK-28 | /bet overview | todo | — | — | — | Wave 3. |
-| TASK-29 | Entry points (/why chapter 08, banner) | todo | — | — | — | Wave 3. |
+| TASK-25 | Flag lab UI | done | d1d47b0 (007U5H4R/urja#7) | 1397 unit; e2e flag-lab 42 + trip/bet-routes/metadata/shell/states on 3 viewports, axe 0 across step/tier states | production: /trips/0926-04 has #flag-lab | Review FAIL (a sourced 10–40 L figure uncited; no Sources) → round 1; re-review PASS; orchestrator applied the re-review notes (softer 10–40 L wording, panel ::before, comments). Known flake: "sends no request" ~1/12 on desktop (late nav/map prefetches), being fixed with TASK-29. |
+| TASK-26 | Lender view UI | done | d639fe3 (007U5H4R/urja#8) | 1425 unit; e2e truck 7×3 + bet-routes/metadata/trip/shell, axe 0 | production 200; "27 of 180 verified days", "driver since 2019" | Review FAIL (headline summed wrong flags; score shown as "Measured"; unlabelled assumptions; no caption) → round 1; re-review PASS. Adds `.bet .cite` to bet.css. |
+| TASK-27 | Tiers UI + honesty pass | done | b322772 (007U5H4R/urja#9) | 1471 unit; e2e bet-tiers + truck + bet-routes on 3 viewports, axe 0 | production 200 | Review FAIL (3 overclaims) → round 1 → re-review FAIL (11.5 px chart text; source order) → round 2 → final re-review: one truck.spec count stale after rebase onto TASK-26, fixed by the orchestrator as integration (BET_TRUCK claims grouped under "Why a lender would care"). |
+| TASK-28 | /bet overview | doing | — | — | — | Wave 3. |
+| TASK-29 | Entry points (/why chapter 08, banner) | doing | — | — | — | Wave 3; in review. |
 
 ## Gates
 
