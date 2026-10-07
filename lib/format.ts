@@ -26,6 +26,7 @@ const MONTHS_LONG = [
 ] as const;
 
 const INR_GROUPING = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
+const KM = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
 const LITRES_0 = new Intl.NumberFormat("en-IN", {
   minimumFractionDigits: 0,
   maximumFractionDigits: 0,
@@ -47,6 +48,11 @@ export function formatINR(n: number, opts?: { sign?: "auto" | "never" }): string
   const body = `₹${INR_GROUPING.format(abs)}`;
   const negative = n < 0 && abs !== 0;
   return negative && opts?.sign !== "never" ? `${MINUS}${body}` : body;
+}
+
+/** `6,950 km`, `1,25,000 km`: whole kilometres, grouped the Indian way. */
+export function formatKm(km: number): string {
+  return `${KM.format(km)} km`;
 }
 
 /** `38 L`, `104.9 L` with `decimals = 1`, or `104.89 L` with `decimals = 2`; negatives as `−12 L` (U+2212). */
