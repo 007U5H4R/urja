@@ -28,6 +28,10 @@ const LANGS: [string, "hi" | "en"][] = [
   ["/", "en"],
   ["/why", "en"],
   ["/trips/0926-04", "en"],
+  // TASK-21: the bet pages are English only (EXE39).
+  ["/bet", "en"],
+  ["/bet/tiers", "en"],
+  ["/trucks/rj14-gb-4521", "en"],
 ];
 
 async function noJs(browser: import("@playwright/test").Browser, run: (page: Page) => Promise<void>) {

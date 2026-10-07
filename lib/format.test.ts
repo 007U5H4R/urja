@@ -3,6 +3,7 @@ import {
   EPOCH_UTC_MS,
   formatDateIST,
   formatINR,
+  formatKm,
   formatLitres,
   formatLitresCl,
   formatTimeIST,
@@ -60,6 +61,14 @@ describe("format", () => {
     expect(formatLitres(104.89, 2)).toBe("104.89 L");
     expect(formatLitres(38, 2)).toBe("38.00 L");
     expect(formatLitres(1250)).toBe("1,250 L");
+  });
+
+  it("formats kilometres: whole, grouped the Indian way", () => {
+    expect(formatKm(0)).toBe("0 km");
+    expect(formatKm(842)).toBe("842 km");
+    expect(formatKm(6950)).toBe("6,950 km");
+    expect(formatKm(125000)).toBe("1,25,000 km");
+    expect(formatKm(1249.6)).toBe("1,250 km");
   });
 
   it("formats litres to one decimal", () => {

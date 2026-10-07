@@ -17,6 +17,10 @@ const ROUTES: Route[] = [
   { path: "/brief", title: "सुबह का हिसाब · Urja" },
   { path: "/brief?lang=en", title: "Morning brief · Urja", canonical: "/brief" },
   { path: "/message", title: "सुबह 7 बजे का संदेश · Urja" },
+  // TASK-21: the bet section.
+  { path: "/bet", title: "The bet: Munshi → credit · Urja" },
+  { path: "/bet/tiers", title: "Tiers and who pays · Urja" },
+  { path: "/trucks/rj14-gb-4521", title: "Truck RJ14 GB 4521 · Urja — Sharma Roadlines" },
 ];
 
 const ALT = "Where did the diesel go? RJ14 GB 4521 lost 38 L near Behror at 2:14 AM — ₹3,420";

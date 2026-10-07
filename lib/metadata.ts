@@ -4,14 +4,16 @@
  * /brief and /message take their (language-aware) titles from the TKT-06 templates.
  */
 import type { Metadata } from "next";
+import { BET_OVERVIEW, BET_TIERS } from "@/content/bet/copy";
 import { WHY_TITLE } from "@/content/why";
+import { plateToSlug } from "@/lib/bet/slug";
 import type { Lang } from "@/lib/brief/dict";
 import { renderBrief, renderMessage } from "@/lib/brief/template";
 import { DEMO_NOW, MIN_PER_DAY } from "@/lib/clock";
-import { YESTERDAY_DAY } from "@/lib/data/aggregates";
+import { trucks, YESTERDAY_DAY } from "@/lib/data/aggregates";
 import { getTripView } from "@/lib/data/views/trip";
 import { getTodayHead } from "@/lib/data/views/today";
-import { formatDateIST, formatINR } from "@/lib/format";
+import { formatDateIST, formatINR, formatKm } from "@/lib/format";
 import { pageMetadata } from "@/lib/og";
 import { SHELL } from "@/lib/site-shell";
 
@@ -72,5 +74,30 @@ export function messageMetadata(lang: Lang = "hi"): Metadata {
     title: { absolute: renderMessage(YESTERDAY_DAY, lang).title },
     description: `The 7 AM WhatsApp message Urja sends the owner of ${SHELL.fleetName}: ${v.earned} earned on ${v.day}; ${v.unaccounted} doesn’t add up, across ${v.trips}.`,
     path: "/message",
+  });
+}
+
+// ── The bet section (TASK-21; docs/bet/bet-spec.md) ─────────────────────
+export function betMetadata(): Metadata {
+  const { title, description, path } = BET_OVERVIEW;
+  return pageMetadata({ title: { absolute: title }, description, path });
+}
+
+export function betTiersMetadata(): Metadata {
+  const { title, description, path } = BET_TIERS;
+  return pageMetadata({ title: { absolute: title }, description, path });
+}
+
+/** The lender view of one truck; its numbers come from the truck's trucks() row. Null for a plate outside the fleet. */
+export function truckMetadata(plate: string): Metadata | null {
+  const rows = trucks();
+  const r = rows.find((t) => t.plate === plate);
+  if (!r) return null;
+  return pageMetadata({
+    title: { absolute: `Truck ${r.plate} · Urja — ${SHELL.fleetName}` },
+    description:
+      `${r.plate} · ${r.driver.en}: ${formatINR(r.profitInr)} profit in September over ${formatKm(r.km)}, ` +
+      `₹${r.perKm.toFixed(1)} per km, rank ${r.rank} of ${rows.length}. The record a lender could finance against, on simulated data.`,
+    path: `/trucks/${plateToSlug(r.plate)}`,
   });
 }

@@ -394,3 +394,36 @@
 - **DES-35:** no generator change this close to the interview. Repeated km on 8 hidden trucks is accepted. A regenerated scenario.json could disturb the anchors, and every fixed number is guarded.
 - **EXE29:** the substitute three-critic critique stands as the Stage 8 critique. Running `bw-design-critique` locally is optional, not required.
 - **TC-043 wording** (47abd6e): the daily caps count Gemini calls. Cached answers spend no daily budget but still take the per-minute token.
+
+## EXE33 · The bet work (TASK-21..29) merges straight to main — accepted 2026-10-07 (user decision, plan "SuprFleet 2030 take-home")
+- **Why:** the take-home ships its prototype to production at urja-three.vercel.app, so each reviewed unit goes PR → CI green → merge to main → production smoke check, with Vercel's instant rollback as the safety net.
+- **Note:** CLAUDE.md still says "never push to main"; editing CLAUDE.md itself needs the user's OK, so this decision records the exception rather than changing the file.
+
+## EXE34 · The bet prototype is TASK-21..29 — accepted 2026-10-07 (user decision)
+- Nine units in waves 21 → (22, 23, 24) → (25, 26, 27) → (28, 29), at most three in parallel with disjoint files; each gets TDD, a spec review and a quality review, and one commit `<summary> (TASK-n)`.
+- Off-limits to every unit: `lib/data/**`, `content/field-notes.ts`, `lib/brief/**`, `components/shell/nav.ts`, `components/today/**`, `app/(site)/page.tsx`. The existing TASK-5..20 IDs and the fixed numbers don't change.
+
+## EXE35 · The fusion model: confidence rises only as independent stream families agree — accepted 2026-10-07 (user decision)
+- The CAN fuel gauge reads in 10–40 L steps (H5 is weak), so no single stream can carry a High flag. Streams are India's existing rails (GPS/ignition, CAN fuel level, FASTag, e-way bill, fuel-bill OCR, an optional camera), and each step of the ladder adds one.
+- Invariant: the last real step equals the flag's actual confidence on all 23 flags. Camera and bill OCR are simulated and labelled so; 0926-11 stays at Check as the honest counter-example.
+
+## EXE36 · No projected months on the lender view — accepted 2026-10-07 (user decision)
+- The dataset holds 27 days, so the truck page shows "27 of 180 verified days" and a trust score labelled provisional. It never extrapolates months a lender could mistake for history.
+
+## EXE37 · Entry points: a /why chapter and a slim banner below the hero — accepted 2026-10-07 (user decision)
+- The bet pages are linked from /why (chapter 08 plus a slim text banner) and from trip pages, never from Today or the phone routes, and the main nav keeps its 6 destinations (TC-023 unchanged).
+- The banner sits below the /why hero so the LCP element (2.44 s) is unaffected; a perf check confirms it.
+
+## EXE38 · Tier pricing: clamp(cost × margin, floor, WTP), and lending partners pay for Free — accepted 2026-10-07 (user decision)
+- The WTP anchor is research, not invention: a small owner already spends about ₹150–300 per truck a month on GPS plus khata, and the tiers (Free, Munshi, Pro, Autopilot) sit inside that spend with no new hardware.
+- The free tier is funded by referral fees or revenue share on consented loans (SuprFleet as a referral or lending-service partner under the RBI Digital Lending Directions 2025), not by selling data: no evidence was found of a lender paying a third party for telematics data.
+
+## EXE39 · The bet pages are English only — accepted 2026-10-07 (user decision)
+- The panel reads English, and Hindi strings would need the native review that EXE32 deferred. Should a Hindi string ever appear, it goes through `lib/brief/hindi-review.ts`. The bet pages' `<html lang>` is "en" (e2e/html-lang.spec.ts).
+
+## EXE40 · Trucks first; EV 2W/3W delivery fleets are phase 2 of the same ledger — accepted 2026-10-07 (user decision)
+- The JD says "Indian commercial fleets", and the 1–20 truck long tail is the most underserved segment. Bytebeam's public base is EV 2W OEMs, so the same ledger engine, plus battery health, becomes the finance record for EV delivery fleets (L5 e-3W penetration above 31%; banks cite resale-value fear).
+
+## EXE41 · Research status: every figure is verified or labelled — accepted 2026-10-07 (user decision)
+- Page fetches were blocked when the research ran, so every source in `content/bet/sources.ts` is `"unverified"` (search snippets only), and the pages show that status next to each citation and in the source list.
+- The verification pass opens each page, records `accessed` and a verbatim `quote`, then marks it verified; a source that fails is dropped and its claim becomes a labelled assumption. `tests/bet-guards.test.ts` keeps every cited id resolvable.
