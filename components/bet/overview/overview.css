@@ -170,6 +170,9 @@
 .ov-metric-list li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px; padding: 9px 0; border-bottom: 1px solid var(--line-soft); color: var(--fg); }
 .ov-line { color: var(--cream); font-weight: 520; }
 .ov-line-none { color: var(--fg-subtle); font-weight: 450; }
+/* An EXE47 target: the line, with its Assumption tag and basis under it. */
+.ov-target { display: grid; justify-items: end; gap: 2px; margin-left: auto; text-align: right; }
+.ov-target .bet-assume { font-size: var(--t-xs); }
 
 /* ---------- hypotheses ---------- */
 .ov-hyps { display: grid; gap: 8px; padding: 0; list-style: none; }

@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { getFlagLabView } from "@/lib/bet/views/flag-lab";
 import { BET_OVERVIEW } from "./copy";
@@ -72,6 +74,28 @@ describe("TASK-28 · overview copy", () => {
     const steps = getFlagLabView("0926-04")!.flags[0].steps;
     expect(steps.at(-1)?.streamId).toBe("camera");
     expect(steps.at(-1)?.families).toBe(2);
+  });
+
+  it("EXE45: streams raise confidence; autonomy, not confidence, needs independent families to agree", () => {
+    expect(AUTONOMY.confidenceLede).toBe(
+      "Confidence rises as each stream rules out an innocent cause; autonomy needs independent families to agree. The truck's own tracker can reach High, but it counts as one family, so the L4 auto-hold also needs a second, independent family. A typed claim never vouches for itself.",
+    );
+    expect(AUTONOMY.confidenceHeading).toBe("Streams raise confidence; families unlock autonomy");
+  });
+
+  it("EXE45: no /bet copy says confidence needs independent families to agree", () => {
+    const files = ["content/bet", "lib/bet", "lib/bet/views", "components/bet", "components/bet/overview"].flatMap((d) =>
+      readdirSync(d)
+        .filter((f) => /\.tsx?$/.test(f) && !/\.test\./.test(f))
+        .map((f) => join(d, f)),
+    );
+    expect(files.length).toBeGreaterThan(20);
+    const hits = files.filter((f) =>
+      /confidence rises only|only (when|as|if) independent|independent families,? more confidence|independent families raise confidence/i.test(
+        readFileSync(f, "utf8"),
+      ),
+    );
+    expect(hits).toEqual([]);
   });
 
   it("the ladder is L1–L5 with the tier each unlocks, and links to the real flag", () => {

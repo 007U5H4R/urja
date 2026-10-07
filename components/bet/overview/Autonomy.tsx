@@ -7,8 +7,8 @@ export interface AutonomyProps {
 }
 
 /**
- * bet-spec §6–§7 in one view: independent families raise confidence (three real flags show it),
- * and confidence on a higher tier unlocks L1–L5. The link opens the flag lab on a real trip.
+ * bet-spec §6–§7 in one view: each stream rules out an innocent cause (three real flags show it),
+ * and confidence on a higher tier unlocks L1–L5; L4 also needs independent families (EXE45). The link opens the flag lab on a real trip.
  */
 export function Autonomy({ autonomy: a }: AutonomyProps) {
   return (

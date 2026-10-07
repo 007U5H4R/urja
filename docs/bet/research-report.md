@@ -17,7 +17,7 @@
 | 1 | 75% of ~3.5 M operators own fewer than 5 trucks | Sizes the segment | [S36] | Other sources say 68% (no quote found) and 80% [S105]; read the Zinka prospectus directly |
 | 2 | Diesel leakage ~8% of fuel filled | The core pain claim | [S41] | A vendor blog citing MotorIndia; a citation of a citation |
 | 3 | WhatsApp utility message ₹0.145 | Cost to serve | [S54] | Reseller blog; check Meta's own rate card |
-| 4 | CV Stage 3 of 3.35–4.79%; used-vehicle loans growing at 15% CAGR vs 11% new | The credit thesis | [S55]–[S57], [S59] | Rating rationales and press, not annual reports |
+| 4 | CV Stage 3 of 3.35% [S56] and 3.7% [S57]; the wider range is our assumption [A]; used-vehicle loans growing at 15% CAGR vs 11% new | The credit thesis | [S55]–[S57], [S59] | Rating rationales and press, not annual reports |
 | 5 | FASTag >98% of NH tolls; 140.6 M e-way bills in Mar 2026; ₹1.67 lakh cr disbursed via AA in FY25 | "Why now" | [S43], [S52], [S61] | Press coverage of government figures |
 | 6 | IRDAI made pay-as-you-drive a mandatory first offer (Jun 2024) | The insurance timing | [S66] | A personal-finance site paraphrasing the master circular |
 | 7 | CAN fuel level moves in 10–40 L steps | H5 and the "no new hardware" claim | [S75] | A generic US patent, not a measurement of Indian BS-VI trucks |
@@ -188,11 +188,11 @@ Say it plainly: **the leakage number is soft.**
 
 ### 7.4 Credit
 
-- Shriram Finance: AUM ₹2.6 tn, CV 45.05%, CV Stage 3 4.79%; about a quarter of organised used-CV finance [S55].
+- Shriram Finance: AUM ₹2.6 tn, CV 45.05%, CV Stage 3 4.79%; about a quarter of organised used-CV finance [S55] (4.79% is not in our S55 snippet; to confirm).
 - Cholamandalam: Stage 3 3.35% (Sep 2025) [S56]. Mahindra Finance: Stage 3 3.7% (Mar 2025) [S57]. Tata Motors Finance merged into Tata Capital [S58].
 - NBFC vehicle-loan AUM is heading to ₹11 tn by FY27. Used-vehicle loans grew at a 15% CAGR over FY20–25, vs 11% for new [S59].
 - BlackBuck's NBFC says real-time data "enables faster underwriting" [S64], but it kept the data in-house. Its lending revenue was ₹5.34 cr in FY25 [S98]. No lender paying a third party for telematics data was found.
-- RBI's Digital Lending Directions of 8 May 2025 govern referral and lending-service partners [S63].
+- RBI's Digital Lending Directions of 8 May 2025 replaced the 2022 guidelines [S63]; that they govern our referral role is our reading [A].
 
 ### 7.5 Insurance
 
@@ -250,7 +250,7 @@ FY25: 609,762 e-3W passenger units, 14,803 e-goods carriers (+167%) and 3,570 e-
 | Mid-market SaaS | ₹300–600/vehicle/month | [S85] |
 | Munshi software | ₹4,999/yr to ₹8k–25k/yr | [S107] |
 
-**Implication:** a small owner already pays roughly ₹150–300 per truck per month across GPS and khata (memo estimate). A ₹299 Munshi tier [A] sits inside that spend only if it needs no new hardware.
+**Implication:** we estimate a small owner already spends roughly ₹150–300 per truck per month across GPS and khata [A, from listed prices]. A ₹299 Munshi tier [A] sits inside that spend only if it needs no new hardware.
 
 ---
 
@@ -266,7 +266,7 @@ FY25: 609,762 e-3W passenger units, 14,803 e-goods carriers (+167%) and 3,570 e-
 
 1. **The brief points there.** "Indian commercial fleets", with cargo/commercial listed first [S110].
 2. **Money density.** A heavy truck burns ₹10.5–12 of diesel per km [S40]. A leak on that line is worth thousands of rupees per truck per month (see §7.2), which an owner will act on.
-3. **The credit hook is large and under-informed.** Used-CV lending is big and growing [S55], [S59], and lenders carry 3.35–4.79% Stage 3 [S55]–[S57] without operating data.
+3. **The credit hook is large and under-informed.** Used-CV lending is big and growing [S55], [S59], and lenders carry Stage 3 of 3.35% [S56] and 3.7% [S57] (the wider range is our assumption [A]) without operating data.
 4. **The long tail is unserved.** 75% of operators run fewer than 5 trucks [S36]; incumbents sell hardware and renewals.
 5. **The streams exist without new hardware.** AIS-140 boxes, FASTag and e-way bills are already in place [S43], [S47], [S52].
 
@@ -286,8 +286,8 @@ All seven are **untested by field calls**. Verdicts use bet-spec wording.
 |---|---|---|---|---|
 | H1 | Leakage is material for small fleets | Fuel is 45–55% of cost [S39], [S41]; ~8% of diesel filled [S41]; 10–20% in an opinion column [S42] | No primary or small-fleet study; the 8% is a citation of a citation; higher figures are vendor marketing | Supported, but the number is soft (~8% oft-cited; vendor 10–37%) |
 | H2 | Owners act on a daily WhatsApp brief | 500 M+ WhatsApp users [S53]; transport ops already run on WhatsApp [S108]; TransportBook claims 10 lakh+ transporters [S107] | Nothing measures action rates; small owners "don't understand vehicle telematics" [S105] | Untested. No evidence either way, so it's an assumption. The pilot measures it |
-| H3 | Small operators' software WTP is low | GPS renewals are only ₹1,000–2,500/yr (memo summary) | WheelsEye earns ₹152.7 cr from subscriptions [S74]; owners pay ₹4,999–25k/yr for khata apps [S107] | Partly contradicted: they pay ₹150–300 per truck per month for GPS plus khata. Paying for bookkeeping is unproven |
-| H4 | Lenders value verified per-truck cash flow | CV Stage 3 3.35–4.79% [S55]–[S57]; used loans growing fastest [S59]; BlackBuck's NBFC says data speeds underwriting [S64]; ₹1.67 lakh cr via AA [S61] | No lender found paying a third party for telematics data; BlackBuck kept its data in-house [S64] | The direction is supported. No evidence of a lender paying a third party, so the model is a lending partnership |
+| H3 | Small operators' software WTP is low | GPS renewals are only ₹1,000–2,500/yr (memo summary) | WheelsEye earns ₹152.7 cr from subscriptions [S74]; owners pay ₹4,999–25k/yr for khata apps [S107] | Partly contradicted: we estimate they spend ₹150–300 per truck per month [A, from listed prices] for GPS plus khata. Paying for bookkeeping is unproven |
+| H4 | Lenders value verified per-truck cash flow | CV Stage 3 of 3.35% [S56] and 3.7% [S57]; the wider range is our assumption [A]; used loans growing fastest [S59]; BlackBuck's NBFC says data speeds underwriting [S64]; ₹1.67 lakh cr via AA [S61] | No lender found paying a third party for telematics data; BlackBuck kept its data in-house [S64] | The direction is supported. No evidence of a lender paying a third party, so the model is a lending partnership |
 | H5 | Factory fuel data is enough without a sensor | OEM telematics is standard on new M&HCVs [S49], [S50] | CAN fuel steps of 10–40 L (generic patent) [S75]; ~0.67 M OEM-connected vs ~12.5 M trucks [S36]; small owners buy used; API access unverified | Weak: CAN steps are 10–40 L. Hence stream fusion and honest confidence |
 | H6 | Flags that skip the driver's side drive drivers away | None found in research | None found in research | Untested. Kept as the guardrail metric |
 | H7 | Insurers would price on telemetry (India) | IRDAI allowed PAYD/PHYD in 2022 [S65] and reportedly made PAYD a first offer in 2024 [S66] | Five obstacles named by IRDAI [S76]; products are private-car; no CV programme found | Weak now. Phase 3 |
@@ -373,7 +373,7 @@ All entries come from search-result snippets. **Status: UNVERIFIED** unless note
 39. Impacts of Diesel Price Increases on India's Trucking Industry. IISD/IRADe, 2012. https://irade.org/ffs_india_irade_trucking.pdf — "Fuel costs account for around 55 per cent of total operating costs." UNVERIFIED.
 40. Truck cost calculator. FreightFox, 2025. https://www.freightfox.ai/blog/truck-cost-calculator-understand-the-real-cost-of-running-a-truck-in-india — "Fuel: ₹10.5 – ₹12.0/km; Driver & Helper Wages: ₹2.5 – ₹3.0/km; Toll & State Entry Fees: ₹3.5 – ₹5.0/km." UNVERIFIED.
 41. Fuel monitoring system India: how much can fleet owners realistically save. Fleetx blog, 2025. https://blog.fleetx.io/fuel-monitoring-system-india-how-much-can-fleet-owners-realistically-save-per-vehicle/ — "originally from MotorIndia, is about 8 percent of all fuel filled in Indian trucks." UNVERIFIED.
-42. India's commercial vehicle segment runs on fuel and guesswork. Autocar Professional (opinion), 2025. https://www.autocarpro.in/opinion-column/indias-commercial-vehicle-segment-runs-on-fuel-and-guesswork-134142 — "lose between 10 and 20 percent of their total fuel expenditure to theft and pilferage annually." (Source wording.) UNVERIFIED.
+42. India's commercial vehicle segment runs on fuel and guesswork. Autocar Professional (opinion), 2025. https://www.autocarpro.in/opinion-column/indias-commercial-vehicle-segment-runs-on-fuel-and-guesswork-134142 — "lose between 10 and 20 percent of their total fuel expenditure to [leakage] and pilferage annually." (Source wording, one word replaced per our wording rule.) UNVERIFIED.
 43. FASTag accounts for over 98 percent of toll collection on National Highways. Times Drive, citing MoRTH, 2025. https://www.timesdrive.in/news/fastag-accounts-for-over-98-percent-of-toll-collection-on-national-highways-morth-article-153531512/amp — "More than 98 percent of user fees on National Highways are now collected through the electronic toll collection system." UNVERIFIED.
 44. 5.9 cr FASTags active, 11.86 cr issued. Business Standard, Feb 2026. https://www.business-standard.com/industry/news/nitin-gadkari-5-9-cr-fastags-active-india-11-86-cr-issued-so-far-126020401576_1.html — "5.9 crore FASTags active ... 11.86 crore issued." UNVERIFIED.
 45. Clarifying the road ahead: no satellite-based tolling. Fox Mandal, Apr 2025. https://foxmandal.in/news/clarifying-the-road-ahead-no-satellite-based-tolling-fastag-continues/ — "press release dated April 18, 2025, clarifying that there is no decision to launch a nationwide satellite-based tolling system from May 1, 2025." UNVERIFIED.

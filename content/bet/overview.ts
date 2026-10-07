@@ -10,7 +10,7 @@ import { BET_OVERVIEW, BET_TIERS, BET_TRUCK } from "./copy";
 import { hypothesisClaims } from "./hypotheses";
 import { HYPE, STRUCTURAL } from "./hype";
 import { GUARDRAIL_MIN_FAMILIES, LADDER_LEVELS, TIERS, type LadderLevelId } from "./ladder";
-import { METRICS_COPY, NORTH_STAR } from "./metrics";
+import { METRICS_COPY, NORTH_STAR, metricTargets } from "./metrics";
 import { ROADMAP_COPY } from "./roadmap";
 import { claimMatching, type Claim } from "./sources";
 import { FAMILIES_NOTE, type StreamLevel } from "./streams";
@@ -151,8 +151,10 @@ const GATES: Readonly<Record<LadderLevelId, string>> = {
 const tierLabel = (id: string | null) => (id ? TIERS.find((t) => t.id === id)!.label : "No tier yet");
 
 export const AUTONOMY = {
-  confidenceHeading: "More independent families, more confidence",
-  confidenceLede: "Confidence rises only as independent stream families agree. A typed claim never vouches for itself.",
+  confidenceHeading: "Streams raise confidence; families unlock autonomy",
+  // EXE45: confidence and autonomy are separate. One family can reach High; L4 needs a second.
+  confidenceLede:
+    "Confidence rises as each stream rules out an innocent cause; autonomy needs independent families to agree. The truck's own tracker can reach High, but it counts as one family, so the L4 auto-hold also needs a second, independent family. A typed claim never vouches for itself.",
   familiesNote: FAMILIES_NOTE,
   levelWord: { check: "Check", likely: "Likely", high: "High" } as const satisfies Record<StreamLevel, string>,
   showcases: [
@@ -190,7 +192,9 @@ export function overviewClaims(): Claim[] {
     ...DROPPED.flatMap((d) => d.claims),
     ...[...STRUCTURAL, ...HYPE].flatMap((i) => [i.mechanism, ...i.evidence]),
     ROADMAP_COPY.claim,
+    ROADMAP_COPY.funding,
     ...NORTH_STAR.definition,
+    ...metricTargets(),
     METRICS_COPY.claim,
     ...hypothesisClaims(),
   ];

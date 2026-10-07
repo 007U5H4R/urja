@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { GUARDRAILS, METRICS_COPY, NORTH_STAR, PRIMARY_METRICS } from "./metrics";
+import { GUARDRAILS, METRICS_COPY, NORTH_STAR, PRIMARY_METRICS, TARGET_BASIS } from "./metrics";
 import { isCited } from "./sources";
 import { VERIFIED_DAY, VERIFIED_MONTH } from "./trust";
 
@@ -18,8 +18,8 @@ describe("TASK-28 · metrics", () => {
 
   it("lists bet-spec's six primary metrics", () => {
     expect(PRIMARY_METRICS).toHaveLength(6);
-    expect(PRIMARY_METRICS[0]).toBe("% of mornings the brief is opened");
-    expect(PRIMARY_METRICS).toContain("Loan-ready trucks and loans referred");
+    expect(PRIMARY_METRICS[0].name).toBe("% of mornings the brief is opened");
+    expect(PRIMARY_METRICS.map((m) => m.name)).toContain("Loan-ready trucks and loans referred");
   });
 
   it("lists bet-spec's six guardrails with their lines", () => {
@@ -34,6 +34,26 @@ describe("TASK-28 · metrics", () => {
     expect(GUARDRAILS[0].threshold).toBe("Under 10%");
     expect(GUARDRAILS[3].threshold).toBe("Eval ≥ 9/10 by the model");
     expect(GUARDRAILS[5].threshold).toBe("Under ₹100 per truck per month");
+  });
+
+  it("EXE47: one set of targets, each an assumption to calibrate in the pilot", () => {
+    expect(TARGET_BASIS).toBe("Our target; to calibrate in the pilot (EXE47)");
+    const all = [...PRIMARY_METRICS, ...GUARDRAILS];
+    const targets = Object.fromEntries(all.filter((m) => m.target).map((m) => [m.name.split(" (")[0], m.target!.text]));
+    expect(targets).toEqual({
+      "% of flags acted on within 24 h": "50% or more",
+      "Daily-close completion rate": "On 25 or more days a month",
+      "Free → Munshi conversion": "10% within 90 days",
+      "Owner churn": "Under 3% a month",
+      "Consent revocations": "Under 2% a month",
+    });
+    for (const m of all.filter((x) => x.target)) {
+      expect(isCited(m.target!), m.name).toBe(false);
+      expect(m.target, m.name).toMatchObject({ assumption: true, basis: TARGET_BASIS });
+    }
+    // A guardrail has a bet-spec line or an EXE47 target, never both; only driver retention has neither.
+    for (const g of GUARDRAILS) expect(g.threshold !== null && g.target !== null, g.name).toBe(false);
+    expect(GUARDRAILS.filter((g) => g.threshold === null && g.target === null).map((g) => g.name)).toEqual(["Driver 90-day retention"]);
   });
 
   it("labels the guardrail lines as targets", () => {

@@ -26,4 +26,14 @@ describe("TASK-28 · roadmap", () => {
     expect(isCited(ROADMAP_COPY.claim)).toBe(false);
     expect(ROADMAP_COPY.claim.basis).toMatch(/bet-spec §10/);
   });
+
+  it("EXE46: says who funds Free until a lending partner signs, as a labelled assumption", () => {
+    const c = ROADMAP_COPY.funding;
+    expect(c.text).toBe("Until a lending partner signs, the paid tiers and the pilot budget fund Free.");
+    expect(isCited(c)).toBe(false);
+    expect(c.basis).toMatch(/EXE46/);
+    expect(c.basis).toMatch(/referral fee is a hypothesis/);
+    // No launch gate on /bet waits on a signed lender: the signing sits in Phase 2.
+    expect(JSON.stringify(ROADMAP)).not.toMatch(/lending partner signed/);
+  });
 });

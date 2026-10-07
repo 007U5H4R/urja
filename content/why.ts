@@ -66,7 +66,10 @@ export const PIPELINE: readonly PipeNode[] = [
   { name: "WhatsApp alerts", detail: "delivery at 7 AM", isNew: false },
 ];
 
-/** Chapter 05: the success metric (lit) and the guardrail. The metric names a unit, not an amount. */
+/**
+ * Chapter 05: the North Star (lit), with ₹ recovered per truck as a primary metric, and the
+ * guardrail. The tiles name units, not amounts (bet-spec §8–§9: the North Star is verified truck-months).
+ */
 export interface MetricTile {
   label: string;
   ariaLabel: string;
@@ -80,11 +83,12 @@ export interface MetricTile {
 
 export const METRICS: readonly MetricTile[] = [
   {
-    label: "Success metric",
-    ariaLabel: "Success metric: rupees recovered per truck per month",
-    value: "₹ recovered",
-    unit: "/ truck / month",
+    label: "North Star",
+    ariaLabel: "North Star: verified truck-months",
+    value: "Verified",
+    unit: "truck-months",
     lit: true,
+    lead: "Primary metric: ₹ recovered per truck per month.",
     detail: "Leading signals: share of mornings the owner opens the brief; share of flags acted on within 24 hours.",
   },
   {
@@ -112,11 +116,11 @@ export const FIRST_90_DAYS: readonly PlanPhase[] = [
   },
   {
     phase: "Days 31–60",
-    text: "Pilot the five rules on 3 fleets’ real CAN data. Measure the false-flag rate before any owner sees a flag.",
+    text: "Pilot the five rules in shadow mode on 3 fleets’ real CAN data. Measure the false-flag rate before any owner sees a flag.",
   },
   {
     phase: "Days 61–90",
-    text: "Ship the WhatsApp brief to the pilot owners. Go or no-go on ₹ recovered per truck and the guardrail.",
+    text: "Ship the WhatsApp brief to the pilot owners, and start referral-pilot talks with one NBFC. Go or no-go on ₹ recovered per truck and the guardrail.",
   },
 ];
 

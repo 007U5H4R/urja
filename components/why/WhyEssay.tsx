@@ -17,7 +17,7 @@ export interface WhyEssayProps {
 }
 
 /**
- * Why Urja (final/why.html, main.essay): heard → owner → market gap → built on
+ * Why Urja (final/why.html, main.essay): the owner’s day → owner → market gap → built on
  * Bytebeam → metric and guardrail → first 90 days → what's real (Design.md §25) → the bet (TASK-29).
  * The slim bet banner sits below the hero, never above it, so the hero keeps the LCP element (EXE37).
  */
@@ -27,23 +27,24 @@ export function WhyEssay({ view, quotes }: WhyEssayProps) {
       <WhyHero byline={view.byline} />
       <BetBanner className="mt-8 md:mt-10" />
 
-      <Chapter n="01" label="What I heard" title="I’m new to trucking, so I went and asked.">
+      <Chapter n="01" label="The owner’s day" title="I’m new to trucking. Here’s what owners commonly describe.">
         <div className="body">
           <FieldNotes quotes={quotes} />
           <p>
-            What vendor research says, to be tested against the field: fuel is 35–45% of a truck’s operating cost, and
-            industry blogs claim 15–20% of fuel spend is lost to missing diesel or bill fraud. Those numbers are
-            directional, not proven.
+            What published research says, to be tested against the field: fuel is about 45–55% of a truck’s operating
+            cost, and diesel leakage is often cited at about 8% of fuel filled (a soft figure; vendor blogs claim
+            more). Those numbers are directional, not proven.
           </p>
         </div>
       </Chapter>
 
-      <Chapter n="02" label="The owner" title="10 to 100 trucks, run from a phone.">
+      <Chapter n="02" label="The owner" title="1 to 20 trucks, run from a phone.">
         <div className="body">
           <p>
             The owner doesn’t sit in a control room. They think in rupees per trip, live on WhatsApp, and often prefer
             Hindi. Today a munshi reconciles trips by hand from paper slips, days late. Every competitor built a
-            dashboard for an enterprise fleet manager. Nobody built for this person.
+            dashboard for an enterprise fleet manager. Nobody built for this person. Bigger fleets describe the same pain,
+            but the first segment is the owner with 1 to 20 trucks.
           </p>
         </div>
       </Chapter>
@@ -82,7 +83,8 @@ export function WhyEssay({ view, quotes }: WhyEssayProps) {
         <div className="body">
           <p>
             {view.fleetName} is fictional, and its {view.truckCount} trucks and {view.tripDays} days of trips are
-            simulated. The leakage rules really run on that data, every rupee on screen is computed, and Ask Urja is a
+            simulated. That’s a little above the 1-to-20-truck owner in chapter 02; the rules check each trip the same
+            way at any fleet size. The leakage rules really run on that data, every rupee on screen is computed, and Ask Urja is a
             live model answering only from it. Nothing here is a Bytebeam product.
           </p>
         </div>

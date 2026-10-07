@@ -63,4 +63,10 @@ export const ROADMAP_COPY = {
     assumption: true,
     basis: "bet-spec §10. The pilots, the lending partner and the EV ledger are all still to be won.",
   } satisfies Claim,
+  /** EXE46: who funds Free before the referral fee exists. */
+  funding: {
+    text: "Until a lending partner signs, the paid tiers and the pilot budget fund Free.",
+    assumption: true,
+    basis: "EXE46: no lending partner is signed yet, and the referral fee is a hypothesis to test, not a launch dependency.",
+  } satisfies Claim,
 } as const;
