@@ -21,10 +21,12 @@ import type { Confidence, FlagStatus, Plate, RuleId, TripId } from "@/lib/data/t
 import type { CitedClaim, Claim } from "@/content/bet/sources";
 import {
   GPS_GAP_MIN,
+  LEAKAGE_ZERO_AT_SHARE,
   LOAN_ASSUMPTIONS,
   LOAN_CONSENT,
   LOAN_CONTEXT,
   LOAN_PARTNERSHIP,
+  STABILITY_ZERO_AT_CV,
   TRUST_FACTORS,
   VERIFIED_DAY,
   VERIFIED_DAYS_TARGET,
@@ -41,6 +43,8 @@ export interface TruckHeadline {
   of: number;
   plate: Plate;
   driver: string;
+  /** The year the driver joined (the trucks() row's `since`). */
+  since: number;
   trips: number;
   km: number;
   profitInr: number;
@@ -90,9 +94,12 @@ export interface TrustFactorRow {
   value: number;
   /** weight × value, one decimal place. */
   points: number;
+  /** The factor's score (0–1) as a percentage: not a measurement. */
   valueText: string;
   pointsText: string;
   measure: string;
+  /** The measurement behind the score, in its own units: '5.6% of diesel ₹', 'Weekly CV 0.73', '14 of 27 days'. */
+  measureText: string;
   claim: Claim;
 }
 
@@ -136,9 +143,19 @@ export interface TruckView {
     text: string;
     definition: string;
     note: string;
+    /** The definitions this section rests on: a verified day, a verified truck-month, the 180-day target. */
+    claims: Claim[];
   };
   months: MonthSlot[];
-  trust: { score: number; scoreText: string; label: string; factors: TrustFactorRow[]; note: string };
+  trust: {
+    score: number;
+    scoreText: string;
+    label: string;
+    factors: TrustFactorRow[];
+    note: string;
+    /** The thresholds behind the leakage and stability scores, and the leakage benchmark they lean on. */
+    assumptions: Claim[];
+  };
   loan: {
     illustrative: true;
     verifiedSurplusInr: number;
@@ -180,6 +197,14 @@ const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? o
 /** Indicative amounts are shown to the nearest ₹100. */
 const round100 = (x: number) => Math.round(x / 100) * 100;
 
+/** Coefficient of variation (population), as lib/bet/trust.ts scores stability; null at a mean ≤ 0. */
+function cvOf(xs: readonly number[]): number | null {
+  if (xs.length === 0) return null;
+  const mean = xs.reduce((a, x) => a + x, 0) / xs.length;
+  if (!(mean > 0)) return null;
+  return Math.sqrt(xs.reduce((a, x) => a + (x - mean) ** 2, 0) / xs.length) / mean;
+}
+
 /** 'YYYY-MM-DD' → '1 Sep', through the IST formatter. */
 function dayLabel(key: DayKey): string {
   const [y, m, d] = key.split("-").map(Number);
@@ -219,6 +244,7 @@ export function getTruckView(slug: string): TruckView | null {
     of: rows.length,
     plate: row.plate,
     driver: row.driver.en,
+    since: row.since,
     trips: row.trips,
     km: row.km,
     profitInr: row.profitInr,
@@ -242,7 +268,7 @@ export function getTruckView(slug: string): TruckView | null {
     text: pct(trust.factors.completeness),
     note:
       m.gapMinutes === 0
-        ? `Every trip-minute has GPS within ${GPS_GAP_MIN} min. The simulated feed has no gaps; a real feed would.`
+        ? `Every trip-minute has GPS within ${GPS_GAP_MIN} min. The simulated feed has no gaps; a real feed likely would.`
         : `${plural(m.gapMinutes, "trip-minute")} of ${m.tripMinutes} fall in GPS gaps over ${GPS_GAP_MIN} min.`,
   };
 
@@ -289,6 +315,7 @@ export function getTruckView(slug: string): TruckView | null {
     dayKeys: daily.filter((d) => d.verified).map((d) => d.dayKey),
     text: `${nVerified} of ${target} verified days`,
     definition: VERIFIED_DAY.definition,
+    claims: [VERIFIED_DAY.claim, VERIFIED_MONTH.claim, VERIFIED_DAYS_TARGET.claim],
     note:
       `Resolution times aren't stored in this prototype, so a confirmed or wrong flag counts as resolved within ${VERIFIED_DAY.resolveWithinH} h; ` +
       "a flag still waiting counts from its event time, checked at the end of each day." +
@@ -309,11 +336,31 @@ export function getTruckView(slug: string): TruckView | null {
       : { label, state: "not-yet", verifiedDays: null, surplusInr: null, surplusText: null, note: "Not yet recorded" },
   );
 
-  // Trust score.
+  // Trust score. Each row states its measurement in its own units beside the 0–1 score.
+  const cv = cvOf(m.weeklyPerDayInr);
+  const measureText: Record<TrustFactorId, string> = {
+    completeness: `${pct(m.tripMinutes > 0 ? 1 - m.gapMinutes / m.tripMinutes : 1)} of trip-minutes`,
+    resolution:
+      m.flags === 0 ? "No flags" : `${m.flags - m.overdueFlags} of ${plural(m.flags, "flag")} not waiting over ${VERIFIED_DAY.resolveWithinH} h`,
+    leakage: m.dieselInr > 0 ? `${((m.unaccountedInr / m.dieselInr) * 100).toFixed(1)}% of diesel ₹` : "No diesel bought",
+    stability: cv === null ? "Weekly profit at or below zero" : `Weekly CV ${cv.toFixed(2)}`,
+    utilisation: `${m.activeDays} of ${m.totalDays} days`,
+  };
   const factors: TrustFactorRow[] = TRUST_FACTORS.map((f) => {
     const value = trust.factors[f.id];
     const points = trustPoints(f.weight, value);
-    return { id: f.id, label: f.label, weight: f.weight, value, points, valueText: pct(value), pointsText: `${points} of ${f.weight}`, measure: f.measure, claim: f.claim };
+    return {
+      id: f.id,
+      label: f.label,
+      weight: f.weight,
+      value,
+      points,
+      valueText: pct(value),
+      pointsText: `${points} of ${f.weight}`,
+      measure: f.measure,
+      measureText: measureText[f.id],
+      claim: f.claim,
+    };
   });
   const trustView = {
     score: trust.score,
@@ -321,6 +368,7 @@ export function getTruckView(slug: string): TruckView | null {
     label: `Provisional (${nVerified} days)`,
     factors,
     note: `Provisional until ${target} verified days. Weights are our assumption, to be tuned with a lending partner.`,
+    assumptions: [LEAKAGE_ZERO_AT_SHARE.claim, LEAKAGE_ZERO_AT_SHARE.benchmark, STABILITY_ZERO_AT_CV.claim],
   };
 
   // Loan readiness (illustrative).

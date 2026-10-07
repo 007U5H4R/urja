@@ -1,0 +1,155 @@
+/* The truck lender view (TASK-26): /trucks/[plate]. Lamplight tokens and lamp.css classes only
+   (.panel, .sec-head, .chip, .conf, .meter, .tbl, .minibar, .btn) plus bet.css (.bet-sec,
+   .bet-figures, claims); this file adds the lender view's own pieces under the `tk-` prefix. */
+
+.tk .tk-lede { max-width: 72ch; margin: -4px 0 14px; color: var(--fg-muted); font-size: var(--t-sm); line-height: 1.55; }
+.tk .tk-fine { margin-top: 10px; max-width: 60ch; color: var(--fg-subtle); font-size: var(--t-xs); line-height: 1.55; }
+.tk .tk-h3 { margin: 18px 0 10px; font-size: var(--t-sm); font-weight: 520; color: var(--fg-muted); letter-spacing: .01em; }
+
+/* ---------- headline figures ---------- */
+.tk-figures dd small { font-size: var(--t-sm); color: var(--fg-muted); letter-spacing: 0; font-weight: 400; }
+
+/* ---------- trust score ---------- */
+.tk-trust-grid { display: grid; grid-template-columns: minmax(240px, 4fr) minmax(0, 7fr); gap: 20px 32px; align-items: start; }
+.tk-score { display: grid; justify-items: start; align-content: start; }
+.tk-score-v { display: flex; align-items: baseline; gap: 8px; line-height: 1; margin-bottom: 12px; }
+.tk-score-v .lit { font-size: clamp(2.6rem, 1.9rem + 2vw, 3.6rem); font-weight: 400; letter-spacing: -0.035em; font-variant-numeric: tabular-nums; }
+.tk-score-v small { font-size: var(--t-sm); color: var(--fg-muted); }
+.tk-meter { justify-self: stretch; height: 10px; border-radius: 5px; margin-top: 16px; }
+.tk-meter .val { border-radius: 5px; background: linear-gradient(90deg, var(--lamp-deep), var(--lamp) 70%, var(--cream)); box-shadow: 0 0 16px var(--glow); }
+.tk-score .meter-l { justify-self: stretch; }
+.tk-factors { margin: -4px 0 0; }
+.tk-factors .tbl th, .tk-factors .tbl td { padding-top: 10px; padding-bottom: 10px; }
+.tk-factors .tbl thead th { padding-top: 0; }
+.tk-factor { text-align: left; font-weight: 450; white-space: normal; }
+.tk-factors tbody tr:last-child th { border-bottom: 0; }
+.tk-factor .tk-factor-l { display: block; color: var(--fg); font-size: var(--t-sm); }
+.tk-factor small { display: block; margin-top: 2px; color: var(--fg-subtle); font-size: var(--t-xs); font-weight: 400; line-height: 1.4; }
+.tk-points { width: 1%; }
+.tk-measured { color: var(--fg-muted); white-space: normal; min-width: 6.5em; }
+.tk-points .minibar { width: 56px; margin-right: 10px; }
+.tk-points .minibar b { background: linear-gradient(90deg, var(--lamp-deep), var(--lamp)); }
+.tk-basis { display: block; margin-top: 16px; max-width: 90ch; line-height: 1.55; }
+
+/* ---------- daily ledger chart ---------- */
+.tk-chart { margin: 0; }
+/* padding-right: a flag marker on the last day may overhang its narrow day column */
+.tk-plot { padding-right: 4px; display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: 16px 160px 6px auto; column-gap: 10px; row-gap: 6px; }
+.tk-y { grid-column: 1; grid-row: 2; position: relative; font-size: var(--t-xs); color: var(--fg-subtle); text-align: right; font-variant-numeric: tabular-nums; }
+.tk-y span { position: absolute; right: 0; transform: translateY(-50%); white-space: nowrap; line-height: 1; }
+.tk-y .tk-y-sizer { position: static; display: block; height: 0; overflow: hidden; visibility: hidden; transform: none; }
+.tk-flags, .tk-ver { grid-column: 2; display: grid; }
+.tk-flags { grid-row: 1; align-items: end; }
+.tk-flags span { display: flex; justify-content: center; }
+.tk-bars { grid-column: 2; grid-row: 2; width: 100%; height: 100%; display: block; overflow: visible; }
+.tk-ver { grid-row: 3; gap: 2px; }
+.tk-ver span { display: block; height: 6px; border-radius: 2px; }
+.tk-ver .is-verified, .tk-legend .sw-verified { background: var(--gain); opacity: .8; }
+.tk-ver .is-unverified, .tk-legend .sw-unverified { background: repeating-linear-gradient(135deg, var(--surface-3) 0 2px, transparent 2px 4px); box-shadow: inset 0 0 0 1px var(--line); }
+.tk-x { grid-column: 2; grid-row: 4; position: relative; height: 16px; font-size: var(--t-xs); color: var(--fg-subtle); }
+.tk-x span { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; }
+.tk-x .first { left: 0; transform: none; }
+.tk-x .last { right: 0; transform: none; }
+/* a flag: a red diamond (shape + legend word, never colour alone); a count when a day has two */
+.tk-flagmark { position: relative; z-index: 0; flex: none; display: inline-grid; place-items: center; width: 14px; height: 14px; font-size: 10px; font-style: normal; font-weight: 650; color: oklch(0.15 0.02 27); }
+.tk-flagmark::before { content: ""; position: absolute; inset: 2.5px; transform: rotate(45deg); border-radius: 2px; background: var(--loss); box-shadow: 0 0 10px oklch(0.690 0.190 27 / .5); z-index: -1; }
+.tk-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 14px; font-size: var(--t-xs); color: var(--fg-muted); }
+.tk-legend span { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+.tk-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
+.tk-legend .sw-profit { background: linear-gradient(0deg, var(--lamp-deep), var(--lamp) 62%, var(--cream)); }
+.tk-legend .sw-loss { background: linear-gradient(0deg, oklch(0.45 0.14 27), var(--loss)); }
+.tk-legend .sw-verified, .tk-legend .sw-unverified { width: 14px; height: 6px; }
+.tk-legend .tk-flagmark { width: 12px; height: 12px; border-radius: 0; }
+.tk-notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 32px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line-soft); }
+.tk-notes dt { font-size: var(--t-xs); color: var(--fg-subtle); margin-bottom: 4px; }
+.tk-notes dd { margin: 0; display: grid; gap: 3px; font-size: var(--t-sm); color: var(--fg-muted); line-height: 1.5; }
+.tk-notes dd b { color: var(--fg); font-weight: 520; font-size: 1rem; }
+
+/* ---------- verified days ---------- */
+.tk-big { font-size: var(--t-num-lg); font-weight: 400; letter-spacing: -0.025em; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.tk-progress { position: relative; height: 8px; margin: 12px 0 14px; border-radius: 4px; overflow: hidden;
+  background: repeating-linear-gradient(135deg, var(--surface-2) 0 3px, oklch(0.19 0.005 60) 3px 6px); box-shadow: inset 0 0 0 1px var(--line-soft); }
+.tk-progress span { position: absolute; inset: 0 auto 0 0; border-radius: 4px; background: linear-gradient(90deg, var(--lamp-deep), var(--lamp), var(--cream)); box-shadow: 0 0 14px var(--glow); }
+.tk-months { list-style: none; padding: 0; display: grid; grid-template-columns: minmax(0, 2.2fr) repeat(5, minmax(0, 1fr)); gap: 10px; }
+.tk-month { display: grid; align-content: start; gap: 6px; min-height: 124px; padding: 12px 14px; border-radius: var(--r-lg); border: 1px solid var(--line-soft); }
+.tk-month.is-recorded { background: var(--surface-2); box-shadow: inset 2px 0 0 var(--gain); }
+.tk-month.is-empty { border-style: dashed; border-color: var(--line); background: repeating-linear-gradient(135deg, transparent 0 6px, oklch(1 0 0 / .025) 6px 12px); }
+.tk-month-l { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: var(--t-sm); font-weight: 520; color: var(--fg); }
+.tk-month.is-empty .tk-month-l { color: var(--fg-muted); }
+.tk-month-v { font-size: 1.15rem; font-weight: 450; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.tk-month-v small { font-size: var(--t-xs); color: var(--fg-muted); letter-spacing: 0; font-weight: 400; }
+.tk-month-n { font-size: var(--t-xs); color: var(--fg-subtle); line-height: 1.45; }
+.tk-month.is-empty .tk-month-n { margin-top: auto; }
+.tk-def { margin-top: 18px; padding-top: 2px; border-top: 1px solid var(--line-soft); max-width: 90ch; }
+.tk-def .tk-fine { max-width: none; }
+
+/* ---------- loan readiness ---------- */
+.tk-loan-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 40px; }
+.tk-loan-grid > div > .tk-h3:first-child { margin-top: 0; }
+.tk-lines { list-style: none; padding: 0; display: grid; gap: 0; }
+.tk-lines li { padding: 10px 0 10px 14px; border-bottom: 1px solid var(--line-soft); font-size: var(--t-sm); line-height: 1.5; color: var(--fg); position: relative; }
+.tk-lines li::before { content: ""; position: absolute; left: 0; top: 17px; width: 5px; height: 5px; border-radius: 50%; background: var(--lamp); }
+.tk-lines li:first-child { padding-top: 0; }
+.tk-lines li:first-child::before { top: 7px; }
+.tk-claims .bet-claims { font-size: var(--t-sm); gap: 8px; }
+.tk-share { margin: 16px 0 4px; display: grid; justify-items: start; gap: 10px; }
+.tk-share .btn { min-height: fit-content; white-space: normal; text-align: center; }
+.tk-consent { justify-self: stretch; padding: 14px 16px; border-radius: var(--r-lg); background: var(--surface-2); border: 1px solid var(--lamp-line); }
+.tk-consent[hidden] { display: none; }
+.tk-consent h3 { font-size: var(--t-sm); font-weight: 560; margin-bottom: 8px; }
+.tk-consent ol { padding-left: 1.3em; display: grid; gap: 6px; font-size: var(--t-sm); color: var(--fg-muted); line-height: 1.5; }
+.tk-consent li::marker { color: var(--lamp); font-variant-numeric: tabular-nums; }
+.tk-share-note { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; font-size: var(--t-sm); color: var(--fg-muted); }
+.tk-share-note:empty { display: none; }
+
+/* ---------- flags ---------- */
+.tk-flaglist { list-style: none; padding: 0; display: grid; }
+.tk-flag { display: grid; grid-template-columns: 64px minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.2fr) auto; gap: 8px 18px; align-items: center;
+  padding: 14px 0; border-top: 1px solid var(--line-soft); font-size: var(--t-sm); }
+.tk-flag:last-child { padding-bottom: 2px; }
+.tk-flag-day { color: var(--fg-muted); font-variant-numeric: tabular-nums; }
+.tk-flag-what, .tk-flag-state { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.tk-flag-state small { color: var(--fg-subtle); font-size: var(--t-xs); }
+.tk-flag-amt { display: grid; gap: 2px; font-variant-numeric: tabular-nums; }
+.tk-flag-amt small { color: var(--fg-subtle); font-size: var(--t-xs); display: inline-block; min-width: 64px; }
+.tk-flag-amt b { font-weight: 500; }
+.tk-open { display: inline-flex; align-items: center; gap: 4px; min-height: 24px; color: var(--lamp); font-weight: 520; white-space: nowrap; }
+.tk-open:hover { color: var(--cream); }
+
+/* ---------- responsive ---------- */
+@media (max-width: 1100px) {
+  .tk-months { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .tk-month.is-recorded { grid-column: span 3; min-height: 0; }
+  .tk-month { min-height: 84px; }
+  .tk-flag { grid-template-columns: 56px minmax(0, 1fr) minmax(0, 1fr); }
+  .tk-flag-state { grid-column: 2; }
+  .tk-flag-amt { grid-column: 3; grid-row: 1 / span 2; align-self: start; }
+  .tk-open { grid-column: 2 / -1; }
+}
+@media (max-width: 900px) {
+  .tk-trust-grid, .tk-loan-grid { grid-template-columns: minmax(0, 1fr); }
+  .tk-loan-grid > div + div > .tk-h3:first-child { margin-top: 18px; }
+}
+@media (max-width: 760px) {
+  .tk-plot { grid-template-rows: 16px 132px 6px auto; column-gap: 8px; }
+  .tk-ver { gap: 1px; }
+  /* the day columns are ~9 px here: keep 1, 7, 14 and 27 Sep so no two labels meet */
+  .tk-x .near-end { display: none; }
+  .tk-points .minibar { display: none; }
+  .tk-points { white-space: nowrap; }
+  .tk-notes { grid-template-columns: minmax(0, 1fr); }
+  .tk-months { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tk-month.is-recorded { grid-column: span 2; }
+  .tk-month { min-height: 64px; }
+  .tk-flag { grid-template-columns: minmax(0, 1fr) auto; }
+  .tk-flag-day { grid-column: 1 / -1; }
+  .tk-flag-what { grid-column: 1; }
+  .tk-flag-amt { grid-column: 2; grid-row: 2 / span 2; text-align: right; }
+  .tk-flag-amt small { min-width: 0; }
+  .tk-flag-state { grid-column: 1; }
+  .tk-open { grid-column: 1 / -1; }
+}
+@media (pointer: coarse) {
+  .tk-open { min-height: 44px; margin-block: -10px; }
+  .tk-share .btn { min-height: 44px; }
+}
