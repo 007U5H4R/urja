@@ -3,7 +3,9 @@
  * product line (§1, exact), and the few claims each page shell states. Every claim cites
  * content/bet/sources.ts or is labelled an assumption with its basis. English only (EXE39).
  */
+import { LENDING_CLAIMS } from "./costs";
 import type { Claim } from "./sources";
+import { FUEL_SENSOR_TODAY, PRICE_ANCHORS, SPEND_LISTINGS, tierById } from "./tiers";
 
 /** bet-spec §1, word for word. */
 export const BET_PRODUCT_LINE =
@@ -39,10 +41,13 @@ export const BET_OVERVIEW: BetPageCopy = {
   thesis: BET_PRODUCT_LINE,
   claims: [
     { text: "About 75% of India's roughly 3.5 million truck operators own fewer than five trucks.", sourceIds: ["zinka-prospectus"] },
-    { text: "The telemetry is already on the truck: mandated AIS-140 tracking devices and factory OEM telematics.", sourceIds: ["ais140-rule-125h", "tata-fleet-edge"] },
-    { text: "FASTag collects more than 98% of national-highway tolls.", sourceIds: ["fastag-98"] },
-    { text: "About 140 million e-way bills are generated every month.", sourceIds: ["eway-bills"] },
-    { text: "Consented lending runs at scale: ₹1.67 lakh crore went out through Account Aggregators in FY25.", sourceIds: ["aa-fy25"] },
+    {
+      text: "Many trucks already send telemetry: AIS-140 tracking devices are mandated on national-permit goods carriers registered from 1 January 2019, and Tata Motors has connected 5 lakh commercial vehicles to Fleet Edge.",
+      sourceIds: ["ais140-rule-125h", "tata-fleet-edge"],
+    },
+    { text: "More than 98% of national-highway toll fees are collected electronically, through FASTag.", sourceIds: ["fastag-98"] },
+    { text: "E-way bills hit a record of about 140 million in March 2026.", sourceIds: ["eway-bills"] },
+    { text: "₹1.67 lakh crore of loans were disbursed via Account Aggregators in FY25.", sourceIds: ["aa-fy25"] },
     { text: "WhatsApp has more than 500 million users in India, and a utility message costs ₹0.145.", sourceIds: ["whatsapp-users", "whatsapp-pricing"] },
     {
       text: "Large language models make a Hindi munshi cheap to run.",
@@ -57,23 +62,18 @@ export const BET_TIERS: BetPageCopy = {
   path: "/bet/tiers",
   title: "Tiers and who pays · Urja",
   description:
-    "Free, Munshi, Pro and Autopilot: what each tier does for a truck, what it costs to serve, and why lending partners pay for the free tier. Prices are assumptions anchored on what small owners spend today.",
+    "Free, Munshi, Pro and Autopilot: what each tier does for a truck, what it costs to serve, and why lending partners pay for the free tier. Prices are assumptions anchored on what we estimate small owners spend today.",
   eyebrow: "The bet · tiers",
   h1: "Four tiers, and who pays for each",
   thesis: "Owners pay for actions, not dashboards; lending partners pay for the free tier.",
+  // The same Claim objects the tier view renders, so the copy and the page can't drift apart.
   claims: [
-    {
-      text: "A small owner already spends about ₹150–300 per truck a month on a GPS plan and a khata app.",
-      sourceIds: ["gps-loconav", "gps-wheelseye", "transportbook-pricing"],
-    },
-    { text: "Mid-market fleet software starts at ₹300–600 per vehicle a month.", sourceIds: ["fleetx-pricing"] },
-    { text: "Measuring fuel today means a ₹8,000–12,500 sensor plus ₹400–750 a month in software.", sourceIds: ["fuel-sensor-prices"] },
-    { text: "A referral or lending-service partner is a regulated role under the RBI's Digital Lending Directions, 2025.", sourceIds: ["rbi-digital-lending"] },
-    {
-      text: "Referral fees on consented loans pay for the free tier.",
-      assumption: true,
-      basis: "A fee of 0.5–1.5% of each funded loan; payout ranges vary and are unverified (bet-spec §7).",
-    },
+    PRICE_ANCHORS.currentSpend.claim,
+    SPEND_LISTINGS,
+    PRICE_ANCHORS.fleetxEntry.claim,
+    FUEL_SENSOR_TODAY,
+    LENDING_CLAIMS.role,
+    tierById("free").priceClaim,
   ],
 };
 
@@ -84,13 +84,24 @@ export const BET_TRUCK = {
   thesis: "A verified per-truck ledger is the record a lender can finance against, shared only with the owner's consent.",
   claims: [
     {
-      text: "Commercial-vehicle lenders carry Stage 3 (bad-loan) rates of 3.3–4.8%.",
-      sourceIds: ["chola-q2fy26", "mahindra-finance-q4fy25", "shriram-rating"],
+      text: "Cholamandalam reports Stage 3 (90+ days overdue) at 3.35% (Sep 2025), and Mahindra Finance at 3.7% (Mar 2025).",
+      sourceIds: ["chola-q2fy26", "mahindra-finance-q4fy25"],
     },
-    { text: "Used-vehicle loans grew 15% a year from FY20 to FY25, against 11% for new ones.", sourceIds: ["used-cv-cagr"] },
     {
-      text: "BlackBuck lends on its own operators' data in-house rather than buying it, so the credit step here is a consented lending partnership, not a data sale.",
+      text: "We take Stage 3 (bad-loan) rates at large vehicle financiers to run about 3.3–4.8%.",
+      assumption: true,
+      basis:
+        "Cholamandalam's 3.35% and Mahindra Finance's 3.7%, plus Shriram Finance's commercial-vehicle Stage 3 of 4.79%, which the research report records from its rating rationale (§7.4) but our snippet of that source does not quote; to confirm in the verification pass.",
+    },
+    { text: "Used-vehicle loan books grew 15% a year from FY20 to FY25, against 11% for new-vehicle loans.", sourceIds: ["used-cv-cagr"] },
+    {
+      text: "BlackBuck's lending arm says real-time behavioural and transactional data enables faster underwriting and loan disbursals.",
       sourceIds: ["blackbuck-lending"],
+    },
+    {
+      text: "SuprFleet's credit step is a consented lending partnership, not a data sale.",
+      assumption: true,
+      basis: "Our design choice: the research found no lender paying a third party for telematics data (research report §7.4, H4).",
     },
   ] satisfies readonly Claim[],
 } as const;

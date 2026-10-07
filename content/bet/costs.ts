@@ -11,6 +11,8 @@ export interface CostInput {
   /** ₹ per truck per month. */
   inrPerTruckMonth: number;
   claim: Claim;
+  /** A labelled assumption the line also rests on (WhatsApp: the message volume), when the claim alone cites a price. */
+  volume?: Claim;
 }
 
 /** The WhatsApp line: about 30 utility messages a month at ₹0.145 each (₹4.35, counted as ₹4). */
@@ -22,8 +24,14 @@ export const COST_INPUTS: readonly CostInput[] = [
     label: "WhatsApp utility messages (~30 a month)",
     inrPerTruckMonth: 4,
     claim: {
-      text: "A WhatsApp utility message costs ₹0.145 outside the service window; about 30 a month come to ₹4 per truck.",
+      text: "A WhatsApp utility message costs ₹0.145 per message delivered.",
       sourceIds: ["whatsapp-pricing"],
+    },
+    volume: {
+      text: "About 30 utility messages per truck a month, so about ₹4 per truck.",
+      assumption: true,
+      basis:
+        "One morning brief a day per truck (bet-spec §7). Messages inside a 24-hour window the owner opens may be free, so this may be lower (research report §11).",
     },
   },
   {
@@ -89,15 +97,21 @@ export const REFERRAL_FEE: { lowPct: number; highPct: number; claim: Claim } = {
   },
 };
 
-/** The referral role, and the consent the owner gives before anything is shared. */
+/**
+ * The referral role, and the consent the owner gives before anything is shared. The role is our
+ * reading of the Directions, so it is an assumption; the cited fact (the Directions replaced the
+ * 2022 guidelines) sits in `consent`.
+ */
 export const LENDING_CLAIMS: { role: Claim; consent: readonly Claim[] } = {
   role: {
-    text: "A referral or lending-service partner is a regulated role under the RBI's Digital Lending Directions, 2025.",
-    sourceIds: ["rbi-digital-lending"],
+    text: "SuprFleet would act as a referral or lending-service partner, a role we expect the RBI's Digital Lending Directions, 2025 to regulate.",
+    assumption: true,
+    basis:
+      "Our reading of secondary summaries (research report §7.4). The snippet we hold records only that the Directions, dated 8 May 2025, replaced the 2022 guidelines; their text has not been read or reviewed by counsel.",
   },
   consent: [
     {
-      text: "Account Aggregator consent works at scale: 28.9 crore consents fulfilled by 31 July 2025, and ₹1.67 lakh crore lent through AA in FY25.",
+      text: "Account Aggregators had fulfilled 28.9 crore consents by 31 July 2025, and ₹1.67 lakh crore was disbursed via AA in FY25.",
       sourceIds: ["aa-consents-sahamati", "aa-fy25"],
     },
     {
@@ -109,7 +123,7 @@ export const LENDING_CLAIMS: { role: Claim; consent: readonly Claim[] } = {
       sourceIds: ["dpdp-rules-2025"],
     },
     {
-      text: "Under the draft DPDP Rules, Account Aggregators may act as 'white-label' consent managers.",
+      text: "Cyril Amarchand Mangaldas reads the draft DPDP Rules as giving Account Aggregators an opportunity to act as 'white-label' consent managers.",
       sourceIds: ["aa-consent-manager"],
     },
     {

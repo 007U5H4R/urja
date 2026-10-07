@@ -1,31 +1,29 @@
 import { ClaimList } from "@/components/bet/ClaimList";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { PROTOTYPE_NOTE } from "@/content/bet/copy";
-import { isCited, type Claim } from "@/content/bet/sources";
+import type { Claim } from "@/content/bet/sources";
 import { TRUCK_COPY } from "@/content/bet/truck-copy";
 import type { TruckView } from "@/lib/bet/views/truck";
 import { ShareAction } from "./ShareAction";
 
 export interface LoanReadinessProps {
   loan: TruckView["loan"];
-  /** BET_TRUCK's claims: the cited ones go under "Why a lender would care", any assumption under
-   *  "Consent and partnership" with its label. */
+  /** BET_TRUCK's claims, all under "Why a lender would care"; ClaimList labels its assumptions. */
   betClaims: readonly Claim[];
   order: readonly string[];
 }
 
 /**
  * Loan readiness (bet-spec §8), illustrative throughout: the lines from the verified days and what
- * they assume, then the consent step, the partnership and BET_TRUCK's own assumptions (ClaimList
- * labels each one), the share action, the rails the sources describe, and BET_TRUCK's cited claims
- * on why a lender would care. The view's consent line is shown once, with its label, under Consent
+ * they assume, then the consent step and the partnership (ClaimList labels each one), the share
+ * action, the rails the sources describe, and BET_TRUCK's claims on why a lender would care (its
+ * assumptions labelled, next to the facts they rest on). The view's consent line is shown once, with its label, under Consent
  * and partnership. components/truck/claims.ts lists these claims in the same order.
  */
 export function LoanReadiness({ loan, betClaims, order }: LoanReadinessProps) {
   const c = TRUCK_COPY.loan;
   const lines = loan.lines.filter((l) => l !== loan.consent.text);
-  const market = betClaims.filter(isCited);
-  const betAssumptions = betClaims.filter((x) => !isCited(x));
+  const market = betClaims;
   return (
     <section className="panel bet-sec tk-loan" aria-labelledby="tk-loan-h">
       <div className="sec-head">
@@ -54,7 +52,7 @@ export function LoanReadiness({ loan, betClaims, order }: LoanReadinessProps) {
           <h3 className="tk-h3" id="tk-consent-h">
             {c.consentLabel}
           </h3>
-          <ClaimListLabelled labelledBy="tk-consent-h" claims={[loan.consent, loan.partnership, ...betAssumptions]} order={order} />
+          <ClaimListLabelled labelledBy="tk-consent-h" claims={[loan.consent, loan.partnership]} order={order} />
           <ShareAction button={c.share.button} stepHead={c.share.stepHead} steps={c.share.steps} note={PROTOTYPE_NOTE} sent={c.share.sent} />
           <h3 className="tk-h3" id="tk-context-h">
             {c.contextLabel}

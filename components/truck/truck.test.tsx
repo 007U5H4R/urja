@@ -219,16 +219,17 @@ describe("LoanReadiness", () => {
 
   it("labels consent, partnership and the page's other assumptions, and cites the context and the market", () => {
     renderLoan(GB);
-    const uncitedBet = BET_TRUCK.claims.filter((c) => !isCited(c));
-    const citedBet = BET_TRUCK.claims.filter((c) => isCited(c));
     const consent = within(screen.getByRole("group", { name: TRUCK_COPY.loan.consentLabel })).getAllByRole("listitem");
-    expect(consent).toHaveLength(2 + uncitedBet.length);
+    expect(consent).toHaveLength(2);
     for (const li of consent) expect(within(li).getByText("Assumption")).toBeTruthy();
     expect(consent[0].textContent).toContain(GB.loan.consent.text);
     expect(consent[1].textContent).toContain(GB.loan.partnership.text);
     const market = within(screen.getByRole("group", { name: TRUCK_COPY.loan.marketLabel })).getAllByRole("listitem");
-    expect(market).toHaveLength(citedBet.length);
-    for (const li of market) expect(li.querySelector("a.cite-n")).not.toBeNull();
+    // Every BET_TRUCK claim sits here: the cited ones carry a [n], the assumptions their label.
+    expect(market).toHaveLength(BET_TRUCK.claims.length);
+    BET_TRUCK.claims.forEach((c, i) =>
+      isCited(c) ? expect(market[i].querySelector("a.cite-n")).not.toBeNull() : expect(within(market[i]).getByText("Assumption")).toBeTruthy(),
+    );
     const context = within(screen.getByRole("group", { name: TRUCK_COPY.loan.contextLabel })).getAllByRole("listitem");
     expect(context.map((li) => li.querySelector("a.cite-n")?.getAttribute("href"))).toEqual(["#src-aa-fy25", "#src-rbi-digital-lending"]);
     const assumptions = within(screen.getByRole("group", { name: TRUCK_COPY.loan.assumptionsLabel })).getAllByRole("listitem");

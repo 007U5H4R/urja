@@ -1,0 +1,117 @@
+/* /bet/tiers (TASK-27): the tier table, the price chart, cost to serve and who pays. Lamplight
+   tokens and lamp.css classes only (.panel, .tbl, .tbl-scroll, .sec-head, .chip); this file adds
+   the page's own pieces. */
+
+.bet-tiers h3 { font-size: var(--t-body); font-weight: 520; letter-spacing: -0.005em; color: var(--fg); }
+
+/* ---------- the tier table ---------- */
+.bet-tiers-sec { padding-bottom: 16px; }
+.bet-tier-scroll { margin-inline: calc(-1 * clamp(16px, 2vw, 24px)); border-block: 1px solid var(--line-soft); }
+/* 700 px fits the 768 tablet without a sideways scroll; narrower screens scroll inside the region. */
+.bet-tier-table { min-width: 700px; table-layout: fixed; }
+.bet-tier-table th, .bet-tier-table td { white-space: normal; vertical-align: top; line-height: 1.45; }
+.bet-tier-table tbody tr:hover td { background: transparent; }
+.bet-tier-table thead th { width: 21%; }
+.bet-tier-table .tt-corner { width: 16%; }
+.bet-tier-table .tt-name { font-size: var(--t-body); font-weight: 560; color: var(--fg); letter-spacing: -0.005em; padding-top: 14px; }
+.bet-tier-table tbody th { color: var(--fg-subtle); font-size: var(--t-xs); font-weight: 450; }
+.bet-tier-table tbody th .bet-sim { margin-top: 6px; }
+.tt-rowlabel { display: block; }
+/* The attribute column stays in view while the tiers scroll past it on a phone. */
+.bet-tier-table tbody th, .bet-tier-table .tt-corner { position: sticky; left: 0; z-index: 1; background: var(--surface-1); }
+.tt-price { display: block; font-size: var(--t-num-lg); font-weight: 520; letter-spacing: -0.02em; line-height: 1.1; color: var(--fg); }
+.tt-unit { display: block; margin-top: 2px; font-size: var(--t-xs); color: var(--fg-subtle); }
+.tt-adds { display: block; color: var(--fg); font-weight: 500; }
+.tt-features { display: grid; gap: 4px; margin-top: 6px; padding-left: 1em; color: var(--fg-muted); }
+.tt-features li::marker { color: var(--lamp); }
+.tt-level { display: inline-flex; align-items: center; min-height: 24px; padding: 0 8px; border-radius: var(--r-sm);
+  background: var(--surface-2); color: var(--cream); font-size: var(--t-xs); box-shadow: inset 2px 0 0 var(--lamp); }
+.tt-margin { font-weight: 520; color: var(--fg); }
+.tt-neg { color: var(--fg-muted); }
+.bet-tier-hw { margin-top: 16px; }
+.bet-tier-hw .bet-claims { font-size: var(--t-sm); }
+
+/* ---------- the price chart ---------- */
+.bet-chart { margin: 0; }
+.pc-legend { display: flex; flex-wrap: wrap; gap: 6px 18px; padding: 0; margin: 0 0 12px; list-style: none; font-size: var(--t-xs); color: var(--fg-muted); }
+.pc-legend li { display: inline-flex; align-items: center; gap: 7px; }
+.pc-key { display: inline-block; flex: none; width: 18px; height: 12px; border-radius: 3px; }
+.pc-key-wtp { background: var(--glow-soft); box-shadow: inset 0 0 0 1px var(--lamp-line); }
+.pc-key-fleetx { background: repeating-linear-gradient(45deg, oklch(0.625 0.010 70 / .55) 0 1px, transparent 1px 4px); box-shadow: inset 0 0 0 1px var(--line); }
+.pc-key-cost { height: 0; border-radius: 0; border-top: 2px dashed var(--cream); }
+.pc-key-recovered { height: 0; border-radius: 0; border-top: 2px solid var(--gain); }
+.pc-key-price { width: 12px; height: 12px; border-radius: 50%; background: var(--lamp); }
+.pc-svg { display: block; overflow: visible; font-family: inherit; }
+.pc-svg text { font-size: var(--t-xs); fill: var(--fg-muted); }
+.pc-band-wtp rect { fill: var(--glow-soft); stroke: var(--lamp-line); stroke-width: 1; }
+.pc-band-fleetx rect { fill: url(#pc-hatch); stroke: var(--line); stroke-width: 1; }
+.pc-hatch-line { stroke: oklch(0.625 0.010 70 / .45); stroke-width: 1; }
+.pc-tick line { stroke: var(--line-soft); stroke-width: 1; }
+.pc-tick text { fill: var(--fg-subtle); font-variant-numeric: tabular-nums; }
+.pc-axis { stroke: var(--line); stroke-width: 1; }
+.pc-mark-cost line { stroke: var(--cream); stroke-width: 1.5; stroke-dasharray: 4 4; }
+.pc-mark-recovered line { stroke: var(--gain); stroke-width: 2; }
+.pc-mark text { fill: var(--fg); font-weight: 500; }
+/* A halo in the panel's colour keeps the names readable where a line or band passes behind them. */
+.pc-name, .pc-mark text { paint-order: stroke; stroke: var(--surface-1); stroke-width: 4px; stroke-linejoin: round; }
+.pc-name { fill: var(--fg) !important; font-weight: 520; }
+.pc-price { fill: var(--fg-muted); font-weight: 450; font-variant-numeric: tabular-nums; }
+.pc-track { stroke: var(--line-soft); stroke-width: 1; }
+.pc-stem { stroke: var(--lamp-line); stroke-width: 2; stroke-linecap: round; }
+.pc-dot { fill: var(--lamp); stroke: var(--surface-1); stroke-width: 2; }
+/* Free: a hollow dot at ₹0, paid for by someone else. */
+.pc-dot-free { fill: var(--surface-1); stroke: var(--lamp); }
+.pc-summary { margin-top: 12px; max-width: 78ch; color: var(--fg); line-height: 1.55; text-wrap: pretty; }
+.pc-note { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 8px; font-size: var(--t-sm); color: var(--fg-subtle); }
+.bet-logic-claims { display: grid; gap: 10px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line-soft); }
+.bet-logic-claims h3:not(:first-child) { margin-top: 8px; }
+
+/* ---------- cost to serve ---------- */
+/* A fixed three-column table from 561 px up; at 560 and below each row stacks (see the media query). */
+.bet-cost-table { table-layout: fixed; }
+.bet-cost-table th, .bet-cost-table td { white-space: normal; vertical-align: top; }
+.bet-cost-table tbody th { color: var(--fg); font-size: var(--t-sm); font-weight: 450; }
+.bet-cost-table thead th:first-child { width: 28%; }
+.bet-cost-table tbody tr:hover td { background: transparent; }
+.ct-amount { font-weight: 520; color: var(--fg); }
+.bet-cost-table thead th:nth-child(2) { width: 92px; }
+.ct-claims { gap: 6px; padding-left: 1em; font-size: var(--t-sm); line-height: 1.5; }
+.ct-total th, .ct-total td { border-top: 1px solid var(--line); }
+.ct-total th { font-weight: 560 !important; border-bottom: 0; }
+
+/* ---------- who pays ---------- */
+.wp-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.wp-card { display: grid; align-content: start; gap: 8px; padding: 16px; border: 1px solid var(--line-soft); border-radius: var(--r-lg); background: var(--surface-1); }
+.wp-pays { color: var(--fg); line-height: 1.5; }
+.wp-funds { font-size: var(--t-sm); color: var(--fg-subtle); }
+.wp-funds strong { color: var(--cream); font-weight: 520; }
+.wp-claims { gap: 8px; font-size: var(--t-sm); line-height: 1.5; }
+.wp-subsidy { display: grid; gap: 12px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line-soft); }
+.wp-steps { display: flex; flex-wrap: wrap; gap: 10px; padding: 0; list-style: none; }
+.wp-steps li { position: relative; display: grid; gap: 2px; flex: 1 1 180px; padding: 12px 14px; border-radius: var(--r-md); background: var(--surface-2); }
+.wp-steps li:not(:last-child)::after { content: "→" / ""; position: absolute; right: -10px; top: 50%; translate: 50% -50%; color: var(--lamp); font-size: var(--t-sm); z-index: 1; }
+.ws-value { font-size: var(--t-num-lg); font-weight: 520; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: var(--fg); line-height: 1.15; }
+.ws-label { font-size: var(--t-sm); color: var(--fg-muted); }
+.wp-sentence { max-width: 78ch; color: var(--fg-muted); font-size: var(--t-sm); }
+.bet-nowrap { white-space: nowrap; }
+
+@media (max-width: 900px) {
+  .wp-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 560px) {
+  /* Each row stacks: the line and its amount on one line, the basis full width below. The
+     header row is visually hidden but still read; CostTable's explicit roles keep the semantics. */
+  .bet-cost-table, .bet-cost-table tbody { display: block; }
+  .bet-cost-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .bet-cost-table tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line-soft); }
+  .bet-cost-table tbody th, .bet-cost-table td { display: block; padding: 0; border: 0; }
+  .bet-cost-table .ct-basis { grid-column: 1 / -1; margin-top: 6px; }
+  .bet-cost-table .ct-total { border-bottom: 0; }
+  .bet-cost-table .ct-total th, .bet-cost-table .ct-total td { border: 0; }
+  .bet-cost-table .ct-total .ct-basis { display: none; }
+  /* Every other ₹ tick label, so the labels never touch on a phone. */
+  .pc-tick-odd text { display: none; }
+  .wp-steps { flex-direction: column; gap: 14px; }
+  .wp-steps li { flex: none; }
+  .wp-steps li:not(:last-child)::after { content: "↓" / ""; right: 50%; top: auto; bottom: -10px; translate: 50% 50%; }
+}
