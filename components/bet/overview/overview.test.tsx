@@ -182,6 +182,33 @@ describe("Roadmap and Metrics", () => {
     expect(container.querySelectorAll(".ov-guardrails li")).toHaveLength(GUARDRAILS.length);
     expect(container.textContent).toContain("Under 10%");
   });
+
+  it("EXE46: the roadmap says who funds Free until a lender signs, labelled an assumption", () => {
+    const { container } = render(<Roadmap phases={ROADMAP} notBuilding={NOT_BUILDING} copy={ROADMAP_COPY} order={order} />);
+    const items = [...container.querySelectorAll(".bet-claims > li")];
+    expect(items.map((li) => li.textContent?.split(" Assumption")[0])).toEqual([ROADMAP_COPY.claim.text, ROADMAP_COPY.funding.text]);
+    for (const li of items) expect(li.querySelector(".bet-assume-tag")?.textContent).toBe("Assumption");
+  });
+
+  it("EXE47: each target shows its line with the Assumption tag and basis; driver retention alone has no line", () => {
+    const { container } = render(
+      <Metrics northStar={NORTH_STAR} primary={PRIMARY_METRICS} guardrails={GUARDRAILS} copy={METRICS_COPY} order={order} />,
+    );
+    const rows = [...container.querySelectorAll(".ov-metric-list > li")];
+    expect(rows).toHaveLength(PRIMARY_METRICS.length + GUARDRAILS.length);
+    const withTarget = rows.filter((li) => li.querySelector(".ov-target"));
+    expect(withTarget).toHaveLength(5);
+    for (const li of withTarget) {
+      expect(li.querySelector(".ov-target .ov-line")?.textContent).not.toBe("");
+      expect(li.querySelector(".ov-target .bet-assume-tag")?.textContent).toBe("Assumption");
+      expect(li.querySelector(".ov-target .bet-assume")?.textContent).toContain("Our target; to calibrate in the pilot (EXE47)");
+    }
+    const churn = rows.find((li) => li.textContent?.startsWith("Owner churn"))!;
+    expect(churn.querySelector(".ov-line")?.textContent).toBe("Under 3% a month");
+    expect([...container.querySelectorAll(".ov-line-none")].map((s) => s.closest("li")?.firstElementChild?.textContent)).toEqual([
+      "Driver 90-day retention",
+    ]);
+  });
 });
 
 describe("Hypotheses", () => {

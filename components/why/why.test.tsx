@@ -123,7 +123,7 @@ describe("WhyEssay (chapters 01–08)", () => {
     expect(chaps.map((c) => c.getAttribute("aria-labelledby"))).toEqual(["c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8"]);
     expect(chaps.map((c) => c.querySelector(".kicker b")!.textContent)).toEqual(["01", "02", "03", "04", "05", "06", "07", "08"]);
     expect(chaps.map((c) => norm(c.querySelector(".kicker")!.textContent))).toEqual([
-      "01 · What I heard",
+      "01 · The owner’s day",
       "02 · The owner",
       "03 · Why not another dashboard",
       "04 · Built on Bytebeam",
@@ -225,19 +225,24 @@ describe("WhyEssay (chapters 01–08)", () => {
     expect(container.querySelector(".tile .d b")).toBeNull();
   });
 
-  it("shows the metric tile (lit) and the guardrail tile", () => {
+  it("shows the North Star tile (lit), with ₹ recovered per truck as a primary metric, and the guardrail tile", () => {
     const { container } = renderEssay();
     const tiles = [...container.querySelectorAll(".tiles > article.panel.tile")];
     expect(tiles.map((t) => t.getAttribute("aria-label"))).toEqual([
-      "Success metric: rupees recovered per truck per month",
+      "North Star: verified truck-months",
       "Guardrail: under 10 percent wrong flags",
     ]);
     expect(tiles[0].classList.contains("lit")).toBe(true);
     expect(tiles[1].classList.contains("lit")).toBe(false);
+    expect(tiles.map((t) => t.querySelector(".k")!.textContent)).toEqual(["North Star", "Guardrail"]);
     expect(tiles.map((t) => [...t.querySelectorAll(".big > span")].map((s) => `${s.className}:${s.textContent}`))).toEqual([
-      ["n lit:₹ recovered", "u:/ truck / month"],
+      ["n lit:Verified", "u:truck-months"],
       ["n:< 10%", "u:wrong flags"],
     ]);
+    expect(tiles[0].querySelector(".d > b")!.textContent).toBe("Primary metric: ₹ recovered per truck per month.");
+    expect(norm(tiles[0].querySelector(".d")!.textContent)).toBe(
+      "Primary metric: ₹ recovered per truck per month. Leading signals: share of mornings the owner opens the brief; share of flags acted on within 24 hours.",
+    );
     expect(norm(tiles[1].querySelector(".d")!.textContent)).toBe(
       "False-accusation rate under 10%: flags the driver disputes and the owner accepts as innocent. If Urja works too well, owners blame drivers for sensor glitches and good drivers leave. Watch driver 90-day retention too.",
     );
@@ -251,13 +256,33 @@ describe("WhyEssay (chapters 01–08)", () => {
       "Days 31–60",
       "Days 61–90",
     ]);
+    const texts = [...container.querySelectorAll("ol.plan > li > p:not(.ph)")].map((p) => norm(p.textContent));
+    expect(texts[1]).toBe(
+      "Pilot the five rules in shadow mode on 3 fleets’ real CAN data. Measure the false-flag rate before any owner sees a flag.",
+    );
+    expect(texts[2]).toBe(
+      "Ship the WhatsApp brief to the pilot owners, and start referral-pilot talks with one NBFC. Go or no-go on ₹ recovered per truck and the guardrail.",
+    );
+  });
+
+  it("chapters 01–02: honest about no field calls, the research figures, and the 1–20 truck owner", () => {
+    const { container } = renderEssay();
+    const h2 = (n: number) => norm(container.querySelector(`h2#c${n}`)!.textContent);
+    expect(h2(1)).toBe("I’m new to trucking. Here’s what owners commonly describe.");
+    expect(h2(2)).toBe("1 to 20 trucks, run from a phone.");
+    const c1 = container.querySelector("section[aria-labelledby='c1'] .body")!;
+    expect(norm(c1.querySelector(":scope > p:not(.assume)")!.textContent)).toBe(
+      "What published research says, to be tested against the field: fuel is about 45–55% of a truck’s operating cost, and diesel leakage is often cited at about 8% of fuel filled (a soft figure; vendor blogs claim more). Those numbers are directional, not proven.",
+    );
+    const essay = norm(container.querySelector("main.essay")!.textContent);
+    for (const stale of ["went and asked", "10 to 100", "35–45%", "15–20%", "bill fraud"]) expect(essay).not.toContain(stale);
   });
 
   it("says what is simulated, with the fleet numbers from the data, and that it isn't a Bytebeam product", () => {
     const { container } = renderEssay();
     const about = container.querySelector("section[aria-labelledby='c7'] .body > p")!;
     expect(norm(about.textContent)).toBe(
-      `${view.fleetName} is fictional, and its ${view.truckCount} trucks and ${view.tripDays} days of trips are simulated. The leakage rules really run on that data, every rupee on screen is computed, and Ask Urja is a live model answering only from it. Nothing here is a Bytebeam product.`,
+      `${view.fleetName} is fictional, and its ${view.truckCount} trucks and ${view.tripDays} days of trips are simulated. That’s a little above the 1-to-20-truck owner in chapter 02; the rules check each trip the same way at any fleet size. The leakage rules really run on that data, every rupee on screen is computed, and Ask Urja is a live model answering only from it. Nothing here is a Bytebeam product.`,
     );
     const other = render(<WhyEssay view={{ ...view, truckCount: 7, tripDays: 12 }} quotes={[]} />);
     expect(other.container.querySelector("section[aria-labelledby='c7'] .body > p")!.textContent).toContain(

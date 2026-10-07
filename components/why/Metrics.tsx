@@ -1,6 +1,6 @@
 import type { MetricTile } from "@/content/why";
 
-/** Chapter 05's two tiles (final/why.html lines 224–235): the success metric, lit, and the guardrail. */
+/** Chapter 05's two tiles (final/why.html lines 224–235): the North Star, lit, and the guardrail. */
 export function Metrics({ tiles }: { tiles: readonly MetricTile[] }) {
   return (
     <div className="tiles">

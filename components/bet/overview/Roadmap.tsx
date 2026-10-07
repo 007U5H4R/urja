@@ -35,7 +35,7 @@ export function Roadmap({ phases, notBuilding, copy, order }: RoadmapProps) {
           ))}
         </ul>
       </div>
-      <ClaimList claims={[copy.claim]} order={order} className="ov-small" />
+      <ClaimList claims={[copy.claim, copy.funding]} order={order} className="ov-small" />
     </OvSection>
   );
 }

@@ -88,7 +88,7 @@ export const TIERS: readonly Tier[] = [
     paidBy: "lending-partner",
     subsidisedBy: "lending-partner",
     priceClaim: {
-      text: "Free costs the owner nothing; referral fees on consented loans pay for it.",
+      text: "Free costs the owner nothing; referral fees on consented loans pay for it once a lender signs, and the paid tiers and pilot budget until then.",
       assumption: true,
       basis: "The referral fee below, whose payout ranges are unverified (bet-spec §7).",
     },

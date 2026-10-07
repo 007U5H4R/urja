@@ -1,5 +1,7 @@
 # Bet spec: SuprFleet "Munshi → credit" (draft for user review)
 
+> **Label corrections (2026-10-07, after the research honesty pass; numbers unchanged):** §3's CV Stage 3 3.3–4.8% is our assumption (only 3.35% and 3.7% are cited); §5 H3's ₹150–300 is our estimate from listed prices; §7's referral role under the RBI 2025 Directions is our reading; §6's family column is a stream kind (families are source systems, EXE43); §11's launch gate is '≥ 1 NBFC in referral-pilot talks' (EXE46); confidence vs autonomy wording per EXE45; metric targets per EXE47; §2 moat 4 and §7 'Who pays for Free' hold once a lender signs, and until then the paid tiers and the pilot budget fund Free (EXE46).
+
 **Status:** draft, 2026-10-07. This file freezes the numbers and copy that the prototype (TASK-21..29), the strategy doc, the deck and the PRD use.
 
 **Labels:**
@@ -69,7 +71,7 @@ Columns are the jobs: Leakage and books · Uptime and maintenance · Compliance 
 | H7 | Insurers would price on telemetry (India) | Weak now. Phase 3 |
 
 ## 6. Streams and confidence (the panel's lens)
-Confidence rises only as independent stream families agree:
+Confidence rises as each stream rules out an innocent cause; autonomy needs independent families to agree (the L4 auto-hold needs High and ≥ 2 families):
 
 | Stream | Family | Exists today? |
 |---|---|---|
@@ -83,7 +85,7 @@ Confidence rises only as independent stream families agree:
 | **Camera** | visual | Optional, simulated in the prototype |
 
 **Showcases** (deterministic, from the dataset):
-- **0926-04:** Check → Likely → High. Adding Camera adds a 2nd family, which unlocks L4.
+- **0926-04:** Check → Likely → Likely → High → High (the camera adds the 2nd family), which unlocks L4.
 - **0927-02:** Likely → High once bill OCR replaces the hand-typed bill.
 - **0926-11:** stays at Check. No stream lifts a heavy-load cap. That is the honest counter-example.
 
