@@ -1,5 +1,5 @@
 import { axeBuilder } from "./axe";
-import { expect, test, type Page } from "./fixtures";
+import { expect, sentByAnAction, test, type Page } from "./fixtures";
 
 // TASK-25: the flag lab on a flagged trip's evidence page (#flag-lab), at 375 / 768 / 1440.
 // More streams, more confidence; more confidence and a higher tier, more autonomy.
@@ -114,7 +114,9 @@ test("0926-04: an action shows the prototype note inline and sends no request", 
   await page.goto("/trips/0926-04#flag-lab");
   await page.waitForLoadState("networkidle");
   const requests: string[] = [];
-  page.on("request", (r) => requests.push(`${r.method()} ${r.url()}`));
+  page.on("request", (r) => {
+    if (sentByAnAction(r)) requests.push(`${r.method()} ${r.url()}`);
+  });
 
   const note = level(page, "L2").locator("[data-testid='fl-note']");
   await expect(note).toHaveText("");
@@ -125,7 +127,7 @@ test("0926-04: an action shows the prototype note inline and sends no request", 
   await expect(level(page, "L3").locator("[data-testid='fl-note']")).toHaveText(/^Prototype, simulated data\./);
   await setStep(page, 1);
   // Any request the clicks set off would start at once; give it a moment to show up, event-driven.
-  const late = await page.waitForEvent("request", { timeout: 750 }).then((r) => r.url(), () => null);
+  const late = await page.waitForEvent("request", { predicate: sentByAnAction, timeout: 750 }).then((r) => r.url(), () => null);
   expect(late).toBeNull();
   expect(requests).toEqual([]);
 });

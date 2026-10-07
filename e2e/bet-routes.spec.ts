@@ -72,11 +72,14 @@ test("the other truck pages are prerendered too", async ({ request }) => {
   }
 });
 
-test("nothing on Today or Why Urja links to the bet pages yet", async ({ page }) => {
-  for (const path of ["/", "/why"]) {
+// TASK-29 (EXE37): the bet is reached from Why Urja (and the trip pages), never from Today, the brief or the message.
+test("Today, the brief and the message don't link to the bet pages; Why Urja does", async ({ page }) => {
+  for (const path of ["/", "/brief", "/message"]) {
     await page.goto(path);
-    await expect(page.locator('a[href^="/bet"], a[href^="/trucks/"]'), path).toHaveCount(0);
+    await expect(page.locator('a[href^="/bet"], a[href^="/trucks"]'), path).toHaveCount(0);
   }
+  await page.goto("/why");
+  expect(await page.locator('a[href="/bet"]').count()).toBeGreaterThan(0);
 });
 
 test("on the phone, the menu on /bet still lists exactly the 6 destinations", async ({ page }, info) => {

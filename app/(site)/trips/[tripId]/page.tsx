@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BetBanner } from "@/components/bet/BetBanner";
 import { ClaimList } from "@/components/bet/ClaimList";
 import { Sources } from "@/components/bet/Sources";
 import { FlagCard } from "@/components/trip/FlagCard";
@@ -45,6 +46,9 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
  * the plain view, and its footer renders here on the server: the cited claims of the streams it
  * shows (a step note can quote a sourced figure) and its labelled assumptions, then the lab's own
  * numbered Sources list, which every [n] in the footer points at.
+ *
+ * The slim bet banner (TASK-29, EXE37) sits under the breadcrumbs, inside the working view, so a
+ * ?state= specimen replaces it along with the rest of the page.
  */
 export default async function TripPage({ params }: Params) {
   const v = getTripView((await params).tripId);
@@ -73,6 +77,7 @@ export default async function TripPage({ params }: Params) {
           )}
           <span aria-current="page">{v.crumbs.current}</span>
         </nav>
+        <BetBanner />
 
         <TripHead head={v.head} />
 

@@ -3,7 +3,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { quotes, type Quote } from "@/content/field-notes";
-import { BYLINE, getWhyView, METRICS, PIPELINE, WHY_TITLE } from "@/content/why";
+import { BET_CHAPTER, BYLINE, getWhyView, METRICS, PIPELINE, WHY_TITLE } from "@/content/why";
 import { getDataset } from "@/lib/data";
 import { dayKey } from "@/lib/clock";
 import { FLEET } from "@/lib/data/fleet";
@@ -13,6 +13,7 @@ import { Pipeline } from "./Pipeline";
 import { WhyEssay } from "./WhyEssay";
 
 // TKT-08 (TSK-08.1): final/why.html chapters 01–07, fleet numbers from lib/data.
+// TASK-29 (EXE37): chapter 08, the bet, and the slim banner below the hero.
 
 afterEach(cleanup);
 
@@ -103,12 +104,12 @@ describe("FieldNotes (chapter 01)", () => {
   });
 });
 
-describe("WhyEssay (chapters 01–07)", () => {
+describe("WhyEssay (chapters 01–08)", () => {
   function renderEssay() {
     return render(<WhyEssay view={view} quotes={quotes} />);
   }
 
-  it("is one main.essay with exactly one h1 and seven numbered chapters", () => {
+  it("is one main.essay with exactly one h1 and eight numbered chapters", () => {
     const { container } = renderEssay();
     const main = container.querySelector("main.essay")!;
     expect(main).not.toBeNull();
@@ -119,8 +120,8 @@ describe("WhyEssay (chapters 01–07)", () => {
     );
     expect(h1.querySelector("em.lit")!.textContent).toBe("Urja tells them the next morning.");
     const chaps = [...main.querySelectorAll("section.chap")];
-    expect(chaps.map((c) => c.getAttribute("aria-labelledby"))).toEqual(["c1", "c2", "c3", "c4", "c5", "c6", "c7"]);
-    expect(chaps.map((c) => c.querySelector(".kicker b")!.textContent)).toEqual(["01", "02", "03", "04", "05", "06", "07"]);
+    expect(chaps.map((c) => c.getAttribute("aria-labelledby"))).toEqual(["c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8"]);
+    expect(chaps.map((c) => c.querySelector(".kicker b")!.textContent)).toEqual(["01", "02", "03", "04", "05", "06", "07", "08"]);
     expect(chaps.map((c) => norm(c.querySelector(".kicker")!.textContent))).toEqual([
       "01 · What I heard",
       "02 · The owner",
@@ -129,6 +130,7 @@ describe("WhyEssay (chapters 01–07)", () => {
       "05 · How we’ll know",
       "06 · First 90 days",
       "07 · About this prototype",
+      "08 · The bet",
     ]);
     for (const c of chaps) expect(c.querySelector(`h2#${c.getAttribute("aria-labelledby")}`)).not.toBeNull();
   });
@@ -276,5 +278,71 @@ describe("WhyEssay (chapters 01–07)", () => {
     const c1 = container.querySelector("section[aria-labelledby='c1']")!;
     expect(c1.querySelector("figure.quote .chip.wait")!.textContent).toBe("Placeholder");
     expect(norm(c1.querySelector("p.assume")!.textContent)).toBe(ASSUMPTION);
+  });
+
+  it("puts the bet banner right below the hero, before chapter 01, and leaves the hero untouched", () => {
+    const { container } = renderEssay();
+    const main = container.querySelector("main.essay")!;
+    const hero = main.querySelector("section.w-hero")!;
+    expect(main.firstElementChild).toBe(hero);
+    const banner = hero.nextElementSibling!;
+    expect(banner.matches("p.bet-banner")).toBe(true);
+    expect(banner.nextElementSibling!.getAttribute("aria-labelledby")).toBe("c1");
+    expect(banner.querySelector("a")!.getAttribute("href")).toBe("/bet");
+    expect(hero.querySelector(".bet-banner")).toBeNull();
+    // The h1 is still the first heading on the page.
+    expect(main.querySelector("h1, h2")!.id).toBe("w-h1");
+  });
+
+  it("ends with chapter 08, the bet: a short honest body, /bet as the one primary link, then the three deep links", () => {
+    const { container } = renderEssay();
+    const chaps = container.querySelectorAll("section.chap");
+    const c8 = chaps[chaps.length - 1];
+    expect(c8.getAttribute("aria-labelledby")).toBe("c8");
+    expect(c8.querySelector("h2#c8")!.textContent).toBe(BET_CHAPTER.title);
+    const paras = [...c8.querySelectorAll(".body > p")].map((p) => norm(p.textContent));
+    expect(paras).toEqual([...BET_CHAPTER.body]);
+    const primary = [...c8.querySelectorAll("a.btn")];
+    expect(primary.map((a) => [a.className, norm(a.textContent), a.getAttribute("href")])).toEqual([
+      ["btn btn-lamp", "See the bet", "/bet"],
+    ]);
+    const more = [...c8.querySelectorAll("ul.bet-more a")].map((a) => [norm(a.textContent), a.getAttribute("href")]);
+    expect(more).toEqual([
+      [BET_CHAPTER.more[0].label, "/trips/0926-04#flag-lab"],
+      [BET_CHAPTER.more[1].label, "/bet/tiers"],
+      [BET_CHAPTER.more[2].label, "/trucks/rj14-gb-4521"],
+    ]);
+    const list = c8.querySelector("ul.bet-more")!;
+    expect(c8.querySelector(`#${list.getAttribute("aria-labelledby")}`)!.textContent).toBe(BET_CHAPTER.moreLabel);
+  });
+});
+
+describe("chapter 08 content (the bet)", () => {
+  const text = [BET_CHAPTER.title, ...BET_CHAPTER.body, BET_CHAPTER.cta, ...BET_CHAPTER.more.map((m) => m.label)].join(" ");
+
+  it("is short: three to five sentences of body", () => {
+    expect(BET_CHAPTER.n).toBe("08");
+    expect(BET_CHAPTER.label).toBe("The bet");
+    const sentences = BET_CHAPTER.body.join(" ").split(/(?<=[.!?])\s+/);
+    expect(sentences.length).toBeGreaterThanOrEqual(3);
+    expect(sentences.length).toBeLessThanOrEqual(5);
+  });
+
+  it("tells the arc: the munshi core, closed books, verified truck-months, a consented lending partnership", () => {
+    for (const phrase of ["munshi", "closed books", "verified truck-months", "consent", "lend"]) {
+      expect(text.toLowerCase()).toContain(phrase);
+    }
+    expect(text).toContain("SuprFleet");
+  });
+
+  it("is honest: a prototype, simulated data, research unverified", () => {
+    const body = BET_CHAPTER.body.join(" ").toLowerCase();
+    for (const phrase of ["prototype", "simulated", "unverified"]) expect(body).toContain(phrase);
+  });
+
+  it("is English only, with no rupee amount and none of the banned words", () => {
+    expect(text).not.toMatch(/[ऀ-ॿ]/);
+    expect(text).not.toMatch(/₹\s*\d/);
+    expect(text).not.toMatch(/theft|stolen|steal|thief/i);
   });
 });

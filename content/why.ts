@@ -119,3 +119,25 @@ export const FIRST_90_DAYS: readonly PlanPhase[] = [
     text: "Ship the WhatsApp brief to the pilot owners. Go or no-go on ₹ recovered per truck and the guardrail.",
   },
 ];
+
+/**
+ * Chapter 08: the bet (TASK-29, EXE37). Urja's arc into the SuprFleet bet, then links into the bet
+ * section: /bet as the one primary action, and three deep links. English only (EXE39).
+ */
+export const BET_CHAPTER = {
+  n: "08",
+  label: "The bet",
+  title: "From closed books to credit, with the owner’s consent.",
+  body: [
+    "Urja is the munshi core: it closes a fleet owner’s books every morning. The SuprFleet bet, my answer to the SuprFleet 2030 brief, builds on it in steps: from closed books to verified truck-months a lender can finance against, and then to loans through a lending partner, made only with the owner’s consent.",
+    "This is a prototype on simulated data, and the research behind the bet is unverified until each source is opened and quoted.",
+  ],
+  cta: "See the bet",
+  href: "/bet",
+  moreLabel: "Or go straight to a piece of the bet",
+  more: [
+    { label: "Watch a flag earn its confidence on trip 0926-04", href: "/trips/0926-04#flag-lab" },
+    { label: "Tiers, and who pays for each", href: "/bet/tiers" },
+    { label: "One truck, as a lender sees it", href: "/trucks/rj14-gb-4521" },
+  ],
+} as const;

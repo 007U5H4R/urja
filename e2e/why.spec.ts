@@ -22,9 +22,9 @@ test("the page loads with its title, one h1, the landmarks and no console errors
   );
   await expect(page.getByRole("banner")).toHaveCount(1);
   await expect(page.getByRole("main")).toHaveCount(1);
-  await expect(page.getByRole("heading", { level: 2 })).toHaveCount(7);
+  await expect(page.getByRole("heading", { level: 2 })).toHaveCount(8);
   // Scroll to the end so every section has rendered, then settle.
-  await page.locator("section[aria-labelledby='c7']").scrollIntoViewIfNeeded();
+  await page.locator("section[aria-labelledby='c8']").scrollIntoViewIfNeeded();
   await page.waitForLoadState("networkidle");
   expect(errors).toEqual([]);
 });

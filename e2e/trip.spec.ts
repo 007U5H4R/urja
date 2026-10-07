@@ -1,5 +1,5 @@
 import { axeBuilder } from "./axe";
-import { expect, test, type Page } from "./fixtures";
+import { expect, sentByAnAction, test, type Page } from "./fixtures";
 
 // TKT-05 (TASK-9): the Trip evidence page. TC-003 (UI), TC-004/005 render, the
 // 404 deep links (review focus #3), the /trips redirect, honest driver actions,
@@ -166,7 +166,9 @@ test("driver actions change local state, say nothing was sent, and make no reque
   await page.goto("/trips/0926-04");
   await page.waitForLoadState("networkidle");
   const requests: string[] = [];
-  page.on("request", (r) => requests.push(`${r.method()} ${r.url()}`));
+  page.on("request", (r) => {
+    if (sentByAnAction(r)) requests.push(`${r.method()} ${r.url()}`);
+  });
 
   const note = page.getByRole("status");
   await expect(note).toHaveText("");
@@ -179,7 +181,7 @@ test("driver actions change local state, say nothing was sent, and make no reque
   await page.getByRole("button", { name: "Call Ramesh" }).click();
   await page.getByRole("button", { name: "Message Ramesh" }).click();
   // Any request the clicks set off would start at once; give it a moment to show up, event-driven.
-  const late = await page.waitForEvent("request", { timeout: 750 }).then((r) => r.url(), () => null);
+  const late = await page.waitForEvent("request", { predicate: sentByAnAction, timeout: 750 }).then((r) => r.url(), () => null);
   expect(late).toBeNull();
   expect(requests).toEqual([]);
 });
