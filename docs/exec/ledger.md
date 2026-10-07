@@ -240,10 +240,17 @@ Vercel: each row records the pushed SHA. Since 2026-09-29 the VM reaches the pre
 | TASK-25 | Flag lab UI | done | d1d47b0 (007U5H4R/urja#7) | 1397 unit; e2e flag-lab 42 + trip/bet-routes/metadata/shell/states on 3 viewports, axe 0 across step/tier states | production: /trips/0926-04 has #flag-lab | Review FAIL (a sourced 10–40 L figure uncited; no Sources) → round 1; re-review PASS; orchestrator applied the re-review notes (softer 10–40 L wording, panel ::before, comments). Known flake: "sends no request" ~1/12 on desktop (late nav/map prefetches), being fixed with TASK-29. |
 | TASK-26 | Lender view UI | done | d639fe3 (007U5H4R/urja#8) | 1425 unit; e2e truck 7×3 + bet-routes/metadata/trip/shell, axe 0 | production 200; "27 of 180 verified days", "driver since 2019" | Review FAIL (headline summed wrong flags; score shown as "Measured"; unlabelled assumptions; no caption) → round 1; re-review PASS. Adds `.bet .cite` to bet.css. |
 | TASK-27 | Tiers UI + honesty pass | done | b322772 (007U5H4R/urja#9) | 1471 unit; e2e bet-tiers + truck + bet-routes on 3 viewports, axe 0 | production 200 | Review FAIL (3 overclaims) → round 1 → re-review FAIL (11.5 px chart text; source order) → round 2 → final re-review: one truck.spec count stale after rebase onto TASK-26, fixed by the orchestrator as integration (BET_TRUCK claims grouped under "Why a lender would care"). |
-| TASK-28 | /bet overview | doing | — | — | — | Wave 3. |
-| TASK-29 | Entry points (/why chapter 08, banner) | doing | — | — | — | Wave 3; in review. |
+| TASK-28 | /bet overview | done | 20051b2 (007U5H4R/urja#11) | 1537 unit; e2e bet + bet-routes/metadata/trip/shell/perf/bet-tiers/truck/flag-lab, axe 0 with details closed and open | production 200; "Chosen", "verified truck-months" | Review PASS; polish round (memo refs, AIS-140 scope, visible board scroll hint, tokens, a test name). 3 new unverified sources (S84, S48, S35 in the report). |
+| TASK-29 | Entry points (/why chapter 08, banner) | done | 8fab4cf (007U5H4R/urja#10) | 1481 unit; e2e bet-entry/why/today/phone/perf/html-lang/trip/flag-lab, axe 0; LCP element unchanged on /why | production: /why has #c8 and the banner; Today has no /bet link | Review PASS; orchestrator applied notes (chapter wording, phone-en coverage) and the shared `sentByAnAction` fix for the "sends no request" flake (28/120 → 0/120). |
 
 ## Gates
+
+### SuprFleet bet gate (2026-10-07, all of TASK-21..29 on main at 20051b2)
+- **Full e2e on main, 3 viewports:** 678 passed, 131 project-skipped, 7 failed. All 7 are `scene.spec` debug-build tests, which need `NEXT_PUBLIC_DEBUG_GL=1`. Rebuilt with the flag: scene.spec 15 passed, 18 skipped. **Net: 0 failures.**
+- **Production smoke:** /, /why, /bet, /bet/tiers, /trucks/rj14-gb-4521, /trips/0926-04, /brief and /message all return 200. `/` still shows ₹1,86,400 and ₹11,430. Today has no /bet links, and the nav is unchanged (TC-023).
+- **Docs:** PRD and strategy doc link the live routes; numbers checked against bet-spec. Deck: 2 screenshot slides added after the demo.
+- **Open:** source verification is BLOCKED by the network policy (all research stays "Unverified"); final independent QA in progress.
+
 
 ### Preview checks log (2026-09-29, second cloud session)
 Preview access works now: the environment's API credential adds the Vercel bypass header for `*.vercel.app`. `https://urja-git-build-stage7-tushar-49a6.vercel.app/` returns **200**, not a 302 to Vercel login. It serves the latest code: `/brief` sends `<html lang="hi">` (36df2ca), and after eb097af it sends the new `x-ask-outcome` header.
