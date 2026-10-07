@@ -19,7 +19,8 @@ test("the top bar renders with Today current and no console errors", async ({ pa
   await expect(bar).toBeVisible();
   await expect(bar.getByRole("link", { name: "Urja, Today" })).toBeVisible();
   const pills = page.locator('nav[aria-label="Main"] a.pill');
-  await expect(pills).toHaveCount(4);
+  // EXE48: The bet is the fifth pill.
+  await expect(pills).toHaveCount(5);
   await expect(page.locator('nav[aria-label="Main"] a[aria-current="page"]')).toHaveAttribute("aria-label", "Today");
   await expect(page.locator('nav[aria-label="Main"] a[aria-current="page"]')).toHaveCount(1);
   await page.waitForLoadState("networkidle");
@@ -54,7 +55,8 @@ test.describe("phone", () => {
     test.skip(info.project.name !== "phone", "phone-only");
   });
 
-  test("the menu opens and lists all 6 destinations", async ({ page }) => {
+  // EXE48: The bet makes 7.
+  test("the menu opens and lists all 7 destinations", async ({ page }) => {
     const errors = collectErrors(page);
     await page.goto("/");
     await expect(page.locator(".navpills")).toBeHidden();
@@ -65,7 +67,7 @@ test.describe("phone", () => {
     const menu = page.getByRole("navigation", { name: "Main (mobile)" });
     await expect(menu).toBeVisible();
     const items = menu.getByRole("link");
-    await expect(items).toHaveText(["Morning brief", "Today", "Trucks", "Trips", "Why Urja", "Ask Urja"]);
+    await expect(items).toHaveText(["Morning brief", "Today", "Trucks", "Trips", "Why Urja", "The bet", "Ask Urja"]);
     for (const item of await items.all()) {
       const box = (await item.boundingBox())!;
       expect(box.height).toBeGreaterThanOrEqual(44);
@@ -234,4 +236,33 @@ test("DES-28: at 100% text the boxes keep their fixed sizes; flex and grid paren
     await expect(page.getByRole("dialog", { name: "Ask Urja" })).toBeVisible({ timeout: 500 });
   }).toPass();
   expect(await page.locator("#ask-drawer form.composer button[type=submit]").evaluate((b) => b.getBoundingClientRect().height)).toBe(40);
+});
+
+// EXE48: with The bet's pill, the bar still fits on one 64 px row at 100% text, its items in order with no overlap.
+test("EXE48: the top bar fits in one row from 1440 down to the tablet, with no item overlapping the next", async ({ page }, info) => {
+  test.skip(info.project.name !== "desktop", "one run covers the widths");
+  for (const path of ["/", "/why", "/bet"]) {
+    for (const width of [1440, 1280, 1261, 1260, 1200, 1181, 1180, 1024, 768, 761]) {
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto(path);
+      const at = `${path} @${width}`;
+      const { boxes, barHeight, sw, cw } = await page.evaluate(() => {
+        const wrap = document.querySelector("header.topbar .wrap")!;
+        return {
+          boxes: [...wrap.children]
+            .map((el) => ({ el: el.className, r: el.getBoundingClientRect() }))
+            .filter(({ r }) => r.width > 0)
+            .map(({ el, r }) => ({ el, left: r.left, right: r.right, height: r.height })),
+          barHeight: document.querySelector("header.topbar")!.getBoundingClientRect().height,
+          sw: document.documentElement.scrollWidth,
+          cw: document.documentElement.clientWidth,
+        };
+      });
+      expect(sw, at).toBeLessThanOrEqual(cw);
+      expect(barHeight, at).toBe(65);
+      for (let i = 1; i < boxes.length; i++) expect(boxes[i].left, `${at}: ${boxes[i - 1].el} / ${boxes[i].el}`).toBeGreaterThanOrEqual(boxes[i - 1].right);
+      for (const b of boxes) expect(b.height, `${at}: ${b.el}`).toBeLessThanOrEqual(40);
+      await expect(page.locator('nav[aria-label="Main"] a.pill'), at).toHaveCount(5);
+    }
+  }
 });

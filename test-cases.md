@@ -283,7 +283,7 @@ Playwright runs at three widths: desktop 1440, tablet 768, phone 375.
 
 ### TC-023 · Mobile navigation [TC-UI-MOBILE-NAV]
 **Expected.**
-- At 375, the menu disclosure opens and reaches Morning brief, Today, Trucks, Trips, Why Urja and Ask.
+- At 375, the menu disclosure opens and reaches Morning brief, Today, Trucks, Trips, Why Urja, The bet and Ask (The bet added by EXE48, 2026-10-07).
 - The ⌘K hint is hidden on coarse pointers.
 - Primary phone actions have targets of at least 44 px.
 

@@ -8,7 +8,7 @@ AI pre-review 2026-09-29 applied H1–H10; native review pending.
   `UPDATE_HINDI_REVIEW=1 pnpm exec vitest run lib/brief/hindi-review.test.ts`.
 - **How to review:** write OK, or a better wording, in the Reviewer column. Keep numbers, `₹`, `L` and plates as they are.
 - **Wording rules:** say हिसाब नहीं मिल रहा (doesn't add up); never an accusation. Confidence words are पक्का / शायद / जाँचें.
-- **Strings:** 311.
+- **Strings:** 312.
 
 ## 1. Morning brief (/brief), 27 Sep
 
@@ -319,9 +319,10 @@ components/shell/nav.ts `menuLinks`, `MENU_COPY`: the menu on the Hindi /brief a
 | 3 | item · /#trucks | ट्रक | Trucks | |
 | 4 | item · /trips | ट्रिप | Trips | |
 | 5 | item · /why | Urja क्यों | Why Urja | |
-| 6 | item · Ask | Urja से पूछें | Ask Urja | |
-| 7 | menu button aria-label | मेनू | Menu | |
-| 8 | menu list aria-label | मुख्य मेनू | Main (mobile) | |
+| 6 | item · /bet | दाँव | The bet | |
+| 7 | item · Ask | Urja से पूछें | Ask Urja | |
+| 8 | menu button aria-label | मेनू | Menu | |
+| 9 | menu list aria-label | मुख्य मेनू | Main (mobile) | |
 
 ## 9. Ask drawer
 

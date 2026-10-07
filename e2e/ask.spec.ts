@@ -441,18 +441,19 @@ test.describe("phone at 375: the dock and the chat view", () => {
     });
   }
 
+  // EXE48: the menu carries The bet (दाँव) after Why Urja.
   test("EXE23: toggling हिं → EN on the brief switches the menu and the drawer to English, and back", async ({ page }) => {
     const errors = collectErrors(page);
     await page.goto("/brief");
     await page.waitForLoadState("networkidle");
     const menu = page.locator(".m-top details.m-menu");
     const items = menu.locator("nav a");
-    await expect(items).toHaveText(["सुबह का हिसाब", "आज", "ट्रक", "ट्रिप", "Urja क्यों", "Urja से पूछें"]);
+    await expect(items).toHaveText(["सुबह का हिसाब", "आज", "ट्रक", "ट्रिप", "Urja क्यों", "दाँव", "Urja से पूछें"]);
     await expect(async () => {
       await page.getByRole("button", { name: "EN", exact: true }).click();
       await expect(page).toHaveURL(/\/brief\?lang=en$/, { timeout: 500 });
     }).toPass();
-    await expect(items).toHaveText(["Morning brief", "Today", "Trucks", "Trips", "Why Urja", "Ask Urja"]);
+    await expect(items).toHaveText(["Morning brief", "Today", "Trucks", "Trips", "Why Urja", "The bet", "Ask Urja"]);
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
     await menu.locator("summary").click();
     await menu.getByRole("link", { name: "Ask Urja" }).click();
@@ -462,7 +463,7 @@ test.describe("phone at 375: the dock and the chat view", () => {
     await expect(drawer(page, "en")).toBeHidden();
 
     await page.getByRole("button", { name: "हिं", exact: true }).click();
-    await expect(items).toHaveText(["सुबह का हिसाब", "आज", "ट्रक", "ट्रिप", "Urja क्यों", "Urja से पूछें"]);
+    await expect(items).toHaveText(["सुबह का हिसाब", "आज", "ट्रक", "ट्रिप", "Urja क्यों", "दाँव", "Urja से पूछें"]);
     await menu.locator("summary").click();
     await menu.getByRole("link", { name: "Urja से पूछें" }).click();
     await expectDrawerIn(page, "hi");

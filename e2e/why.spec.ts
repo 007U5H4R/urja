@@ -199,7 +199,8 @@ test.describe("top bar on /why", () => {
     await expect(page.locator("header.topbar .btn")).toHaveCount(0);
   });
 
-  test("phone: the menu toggle, Start the demo and the hero CTAs are 44 px targets; the menu lists five destinations", async ({ page }, info) => {
+  // EXE48: The bet makes the menu six destinations here (no Ask on /why).
+  test("phone: the menu toggle, Start the demo and the hero CTAs are 44 px targets; the menu lists six destinations", async ({ page }, info) => {
     test.skip(info.project.name !== "phone", "phone-only");
     await page.goto("/why");
     const toggle = page.locator('details.m-menu > summary[aria-label="Menu"]');
@@ -211,7 +212,7 @@ test.describe("top bar on /why", () => {
     }
     await toggle.click();
     const menu = page.getByRole("navigation", { name: "Main (mobile)" });
-    await expect(menu.getByRole("link")).toHaveText(["Morning brief", "Today", "Trucks", "Trips", "Why Urja"]);
+    await expect(menu.getByRole("link")).toHaveText(["Morning brief", "Today", "Trucks", "Trips", "Why Urja", "The bet"]);
     await expect(menu.getByRole("link", { name: "Why Urja" })).toHaveAttribute("aria-current", "page");
   });
 });

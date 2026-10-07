@@ -651,6 +651,14 @@
      grid parent still can't stretch them; `min-height: fit-content` lets a box grow only when its
      content is taller than that height. The wrapping ones are narrower than their room at 100%. */
   .topbar .wrap, .askbar, .pill, .btn, .plate, .flagcard .chip, .eye .chip { min-height: fit-content; }
+  /* EXE48: five labelled pills at 200% text are wider than the bar's room up to about 1300 px;
+     there the pills wrap onto a second row. At 100% they always fit, so they never wrap. */
+  .navpills { flex-wrap: wrap; min-width: 0; }
+  /* EXE48: with The bet's pill the default bar's labelled pills need about 1232 px, so just above
+     the 1180 breakpoint the fleet chip keeps its avatar and drops the name (as on the phone). */
+  @media (min-width: 1181px) and (max-width: 1260px) {
+    .fleet .name { display: none; }
+  }
   .fleet { min-width: 0; }
   .fleet .name { min-width: 0; white-space: normal; text-align: right; }
   .evidence .src { white-space: normal; }

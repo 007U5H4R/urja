@@ -2,7 +2,7 @@ import type { IconName } from "@/components/ui/Icon";
 import type { Lang } from "@/lib/data/types";
 
 /** Every menu destination, as a literal union: a label table keyed by it must cover each one. */
-export const MENU_HREFS = ["/brief", "/", "/#trucks", "/trips", "/why"] as const;
+export const MENU_HREFS = ["/brief", "/", "/#trucks", "/trips", "/why", "/bet"] as const;
 export type MenuHref = (typeof MENU_HREFS)[number];
 export type PillHref = Exclude<MenuHref, "/brief">;
 
@@ -24,12 +24,19 @@ export type MenuItem = { href: MenuHref | typeof BRIEF_EN_HREF; label: string };
 /** Why Urja has its own top bar (final/why.html): no Ask trigger or fleet chip, a "Start the demo" button. */
 export const WHY_HREF = "/why" satisfies MenuHref;
 
+/**
+ * EXE48: The bet (/bet) is a nav destination, after Why Urja. Its pill is current on the bet's
+ * pages: /bet, /bet/tiers and each truck's lender view, /trucks/[plate].
+ */
+export const BET_HREF = "/bet" satisfies MenuHref;
+
 /** Top-bar pills (technical-plan §3; final/index.html lines 20–23). */
 export const NAV_PILLS: readonly NavPill[] = [
   { href: "/", label: "Today", icon: "today" },
   { href: "/#trucks", label: "Trucks", icon: "truck" },
   { href: "/trips", label: "Trips", icon: "route" },
   { href: WHY_HREF, label: "Why Urja", icon: "book" },
+  { href: BET_HREF, label: "The bet", icon: "rupee" },
 ];
 
 /** The ≤760px menu adds Morning brief; Ask Urja is appended by MobileMenu. */
@@ -49,6 +56,7 @@ const MENU_LABEL_HI: Record<MenuHref, string> = {
   "/#trucks": "ट्रक",
   "/trips": "ट्रिप",
   "/why": "Urja क्यों",
+  "/bet": "दाँव",
 };
 
 const MENU_LINKS_HI: readonly MenuLink[] = MENU_LINKS.map(({ href }) => ({ href, label: MENU_LABEL_HI[href] }));
@@ -69,12 +77,26 @@ export const MENU_COPY: Record<Lang, { toggle: string; nav: string; ask: string 
   hi: { toggle: "मेनू", nav: "मुख्य मेनू", ask: "Urja से पूछें" },
 };
 
-/** Whether `href` is the page at `pathname`. In-page anchors are never current; a query is ignored. */
+/**
+ * Whether `href` is the page at `pathname`. In-page anchors are never current; a query is ignored.
+ * The bet's pill covers all of the bet's pages (EXE48).
+ */
 export function isCurrent(href: string, pathname: string): boolean {
   if (href.includes("#")) return false;
   href = href.split("?")[0];
   if (href === "/") return pathname === "/";
+  if (href === BET_HREF) return isBetRoute(pathname);
+  return isUnder(href, pathname);
+}
+
+/** Whether `pathname` is `href` or a page below it. */
+function isUnder(href: string, pathname: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+/** Whether `pathname` is one of the bet's pages (EXE48): /bet, /bet/tiers, or a truck's /trucks/[plate]. */
+export function isBetRoute(pathname: string): boolean {
+  return isUnder(BET_HREF, pathname) || /^\/trucks\/[^/]+/.test(pathname);
 }
 
 /** Whether `pathname` is the Why Urja page. */
