@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { COST_INPUTS, EXAMPLE_LOAN, LENDING_CLAIMS, REFERRAL_FEE, WHATSAPP_DERIVATION } from "@/content/bet/costs";
 import { isCited, sourceById, type Claim } from "@/content/bet/sources";
-import { NO_NEW_HARDWARE, PRICE_ANCHORS, PRICING_CLAIMS, TIERS, tierById } from "@/content/bet/tiers";
+import { FUEL_SENSOR_TODAY, NO_NEW_HARDWARE, NO_NEW_HARDWARE_DESIGN, PRICE_ANCHORS, PRICING_CLAIMS, SPEND_LISTINGS, TIERS, tierById } from "@/content/bet/tiers";
 import { FLEET } from "@/lib/data/fleet";
 import { september } from "@/lib/data/aggregates";
 import { costToServe, freeSubsidy, priceTier, recoveredPerTruck, wtpBand } from "./pricing";
@@ -57,21 +57,35 @@ describe("TASK-24 · tiers (bet-spec §7)", () => {
     for (const t of TIERS) expect(t.features.length).toBeGreaterThan(0);
   });
 
-  it("says no new hardware, citing the rails", () => {
-    expect(NO_NEW_HARDWARE.text).toBe(
-      "No new hardware: uses the mandated AIS-140 device or OEM telematics, FASTag, e-way bills and bill OCR.",
-    );
+  it("says no new hardware: our design, labelled, then the rails that already exist, cited", () => {
+    // TASK-27 fix round 1: the claim said more than its snippets; it now states the feeds, and the
+    // no-new-hardware design is a separate, labelled assumption.
+    expect(NO_NEW_HARDWARE.text).toMatch(/^The rails already exist: /);
     expectHonest(NO_NEW_HARDWARE);
     expect(isCited(NO_NEW_HARDWARE)).toBe(true);
+    expectHonest(NO_NEW_HARDWARE_DESIGN);
+    expect(isCited(NO_NEW_HARDWARE_DESIGN)).toBe(false);
+    expect(NO_NEW_HARDWARE_DESIGN.text).toMatch(/^No new hardware: /);
+    expect(PRICING_CLAIMS).toContain(NO_NEW_HARDWARE_DESIGN);
+    expect(PRICING_CLAIMS).toContain(NO_NEW_HARDWARE);
   });
 
-  it("anchors prices on research: ₹150–300 today, Fleetx entry ₹300–600, both cited", () => {
+  it("anchors prices: ₹150–300 today (our estimate from cited listings), the ₹300–600 software entry tier (cited)", () => {
     expect([PRICE_ANCHORS.currentSpend.lowInr, PRICE_ANCHORS.currentSpend.highInr]).toEqual([150, 300]);
     expect([PRICE_ANCHORS.fleetxEntry.lowInr, PRICE_ANCHORS.fleetxEntry.highInr]).toEqual([300, 600]);
     const spend = PRICE_ANCHORS.currentSpend.claim;
     const fleetx = PRICE_ANCHORS.fleetxEntry.claim;
-    expect(isCited(spend) && spend.sourceIds).toEqual(["gps-loconav", "gps-wheelseye", "transportbook-pricing"]);
+    // TASK-27: the band is derived from listed prices, so it is an assumption; the listings are cited.
+    expectHonest(spend);
+    expect(isCited(spend)).toBe(false);
+    expect(isCited(SPEND_LISTINGS) && SPEND_LISTINGS.sourceIds).toEqual(["gps-loconav", "gps-wheelseye", "transportbook-pricing"]);
+    expect(PRICING_CLAIMS).toContain(SPEND_LISTINGS);
     expect(isCited(fleetx) && fleetx.sourceIds).toEqual(["fleetx-pricing"]);
+  });
+
+  it("says what measuring fuel costs today, cited", () => {
+    expect(isCited(FUEL_SENSOR_TODAY) && FUEL_SENSOR_TODAY.sourceIds).toEqual(["fuel-sensor-prices"]);
+    expect(PRICING_CLAIMS).toContain(FUEL_SENSOR_TODAY);
   });
 
   it("labels each tier's price an assumption", () => {
@@ -94,6 +108,15 @@ describe("TASK-24 · cost to serve", () => {
     for (const c of COST_INPUTS) expectHonest(c.claim);
   });
 
+  it("cites only WhatsApp's unit price and labels the message volume an assumption", () => {
+    const w = COST_INPUTS[0];
+    expect(isCited(w.claim) && w.claim.sourceIds).toEqual(["whatsapp-pricing"]);
+    expect(w.volume).toBeDefined();
+    expectHonest(w.volume!);
+    expect(isCited(w.volume!)).toBe(false);
+    expect(COST_INPUTS.slice(1).every((c) => c.volume === undefined)).toBe(true);
+  });
+
   it("derives the WhatsApp line from ~30 messages × ₹0.145", () => {
     expect(WHATSAPP_DERIVATION).toEqual({ messages: 30, unitInr: 0.145 });
     expect(Math.round(WHATSAPP_DERIVATION.messages * WHATSAPP_DERIVATION.unitInr)).toBe(COST_INPUTS[0].inrPerTruckMonth);
@@ -111,6 +134,13 @@ describe("TASK-24 · cost to serve", () => {
       expect(isCited(c)).toBe(false);
       expectHonest(c);
     }
+  });
+});
+
+describe("TASK-24 · the referral role", () => {
+  it("is our reading of the Directions, labelled an assumption (TASK-27)", () => {
+    expectHonest(LENDING_CLAIMS.role);
+    expect(isCited(LENDING_CLAIMS.role)).toBe(false);
   });
 });
 
