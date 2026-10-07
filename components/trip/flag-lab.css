@@ -1,0 +1,131 @@
+/* The flag lab on a trip page (TASK-25). Lamplight tokens and lamp.css classes only (.panel,
+   .sec-head, .chip, .conf, .seg, .btn); this file lays out the two columns: the stream steps
+   (more streams, more confidence) and the action ladder (more confidence and a higher tier,
+   more autonomy). State is always a word as well as a colour; nothing animates. */
+
+.flaglab { padding: 20px; margin-top: 16px; }
+.fl-head { margin-bottom: 8px; }
+.fl-head h2 { text-wrap: balance; }
+.fl-pick { font-size: var(--t-sm); color: var(--fg-muted); }
+.fl-pick select { min-height: 32px; max-width: 100%; padding: 0 8px; border-radius: var(--r-md); background: var(--surface-1);
+  border: 1px solid var(--line); color: var(--fg); font: inherit; }
+.fl-intro { max-width: 82ch; margin-bottom: 18px; color: var(--fg-muted); font-size: var(--t-sm); line-height: 1.55; text-wrap: pretty; }
+/* WCAG 2.5.8: the inline link is a 24 px target. */
+.fl-intro a { display: inline-block; padding-block: 3px; color: var(--lamp); text-decoration: underline; text-decoration-color: var(--lamp-line);
+  text-underline-offset: 3px; font-weight: 520; }
+.fl-intro a:hover { text-decoration-color: var(--lamp); }
+
+.fl-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.fl-col { min-width: 0; padding: 16px; border: 1px solid var(--line-soft); border-radius: var(--r-lg); background: oklch(0.130 0.003 60 / .45); }
+.fl-h3 { margin-bottom: 12px; font-size: var(--t-body); font-weight: 520; letter-spacing: -0.005em; text-wrap: balance; }
+.fl-now-k, .fl-ctl-l, .fl-stepper label { font-size: var(--t-xs); color: var(--fg-subtle); }
+
+/* ---------- stream steps ---------- */
+.fl-now { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.fl-now .conf { font-size: 1.15rem; font-weight: 520; color: var(--fg); }
+.fl-now .conf i b:nth-child(1) { height: 9px; } .fl-now .conf i b:nth-child(2) { height: 13px; } .fl-now .conf i b:nth-child(3) { height: 17px; }
+.fl-now .conf i b { width: 5px; }
+.fl-now-fam { font-size: var(--t-sm); color: var(--fg-muted); }
+.fl-stepper { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; margin: 12px 0 6px; }
+.fl-stepper input[type="range"] { width: 100%; min-height: 24px; margin: 0; accent-color: var(--lamp); cursor: pointer; }
+.fl-stepcount { font-size: var(--t-xs); color: var(--fg-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.fl-steplist { list-style: none; padding: 0; display: grid; }
+.fl-steplist > li { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 12px; padding: 12px 0; border-top: 1px solid var(--line-soft); }
+.fl-n { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 560;
+  background: var(--surface-2); color: var(--fg-muted); font-variant-numeric: tabular-nums; }
+.fl-steplist > li[data-state="current"] .fl-n { color: var(--lamp-ink); background-color: var(--lamp);
+  background-image: linear-gradient(150deg, var(--cream), var(--lamp)); box-shadow: 0 0 14px var(--glow); }
+.fl-steplist > li[data-state="later"] .fl-n { background: none; border: 1px dashed var(--line); color: var(--fg-subtle); }
+.fl-step-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-height: 24px; }
+.fl-step-label { font-weight: 520; }
+.fl-step-state { margin-left: auto; font-size: var(--t-xs); color: var(--fg-subtle); }
+.fl-step-state .conf { font-size: var(--t-sm); color: var(--fg); }
+.fl-step-meta { margin-top: 2px; font-size: var(--t-xs); color: var(--fg-subtle); }
+.fl-step-note { margin-top: 6px; font-size: var(--t-sm); color: var(--fg-muted); line-height: 1.5; text-wrap: pretty; }
+.fl-countnote { margin-top: 6px; padding-left: 8px; font-size: var(--t-xs); color: var(--cream); box-shadow: inset 2px 0 0 var(--lamp); }
+.fl-ev { list-style: none; padding: 0; margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.fl-ev li { max-width: 100%; padding: 2px 8px; border-radius: 5px; background: var(--surface-2); font-size: var(--t-xs); color: var(--fg); }
+/* Not added yet: dimmed in tone (still AA), with a dashed number and the words. */
+.fl-steplist > li[data-state="later"] .fl-step-label,
+.fl-steplist > li[data-state="later"] .fl-step-note { color: var(--fg-subtle); font-weight: 450; }
+.fl-families { margin-top: 4px; padding-top: 12px; border-top: 1px solid var(--line-soft); font-size: var(--t-xs); color: var(--fg-subtle); line-height: 1.55; }
+.fl-families b { color: var(--fg-muted); font-weight: 520; }
+
+/* ---------- action ladder ---------- */
+.fl-tier { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 14px; }
+.fl-tier .seg { flex-wrap: wrap; max-width: 100%; }
+.fl-tier .seg button { min-width: 44px; }
+.fl-levels { list-style: none; padding: 0; display: grid; gap: 8px; }
+.fl-levels > li { padding: 12px 14px; border: 1px solid var(--line-soft); border-radius: var(--r-lg); background: var(--surface-1); }
+.fl-levels > li[data-unlocked="true"] { box-shadow: inset 2px 0 0 var(--lamp); }
+.fl-levels > li[data-future] { background: none; border-style: dashed; }
+.fl-levels > li[data-future] h4 { color: var(--fg-muted); }
+.fl-level-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.fl-level-head h4 { font-size: var(--t-body); font-weight: 520; }
+.fl-tierlabel { font-size: var(--t-xs); color: var(--fg-subtle); }
+.fl-lock { margin-left: auto; }
+.fl-level-note { margin-top: 6px; font-size: var(--t-sm); color: var(--fg-muted); }
+.fl-acts { list-style: none; padding: 0; margin-top: 10px; display: grid; gap: 10px; }
+.fl-act { display: grid; gap: 4px; justify-items: start; }
+.fl-btn { height: auto; min-height: 32px; max-width: 100%; padding: 6px 12px; justify-content: flex-start; text-align: left; white-space: normal; }
+/* Locked: a quieter outline and the reason in words (axe skips disabled controls). */
+.fl-btn:disabled { background: none; border: 1px dashed var(--line); color: var(--fg-subtle); cursor: not-allowed; }
+.fl-reason { font-size: var(--t-xs); color: var(--fg-subtle); line-height: 1.5; }
+.fl-astate { margin-right: 6px; color: var(--fg-muted); font-weight: 560; }
+.fl-act[data-state="available"] .fl-astate { color: var(--cream); }
+.fl-note:not(:empty) { margin-top: 10px; padding: 6px 10px; border-radius: var(--r-sm); background: var(--surface-2); font-size: var(--t-xs);
+  color: var(--cream); box-shadow: inset 2px 0 0 var(--cream); }
+
+/* ---------- the lab's footer: cited claims, assumptions and its own Sources list ----------
+   bet.css is not imported on trip pages: its unscoped .cite would restyle the Ask answer's trip
+   chips. These are its rules for ClaimList, Cite, Sources and SimulatedTag, scoped to the lab. */
+.fl-claims { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line-soft); }
+.fl-claims > h3 { margin-bottom: 8px; font-size: var(--t-body); font-weight: 520; }
+#flag-lab .bet-sim { color: var(--fg); }
+#flag-lab .bet-claims { display: grid; gap: 8px; max-width: 78ch; padding-left: 1.1em; font-size: var(--t-sm); color: var(--fg-muted); line-height: 1.6; }
+#flag-lab .bet-claims li::marker { color: var(--lamp); }
+#flag-lab .cite { display: inline-flex; align-items: center; gap: 2px; vertical-align: baseline; white-space: nowrap; }
+/* WCAG 2.5.8: each [n] is at least 24 × 24 px. */
+#flag-lab .cite-n { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; min-height: 24px; padding: 0 2px;
+  border-radius: var(--r-sm); color: var(--lamp); font-size: var(--t-sm); font-weight: 560; font-variant-numeric: tabular-nums; }
+#flag-lab .cite-n:hover { background: var(--surface-2); color: var(--cream); }
+#flag-lab .cite-badge { margin-left: 4px; padding: 1px 6px; border-radius: 5px; background: var(--surface-2); color: var(--fg-muted);
+  font-size: var(--t-xs); letter-spacing: .01em; box-shadow: inset 2px 0 0 var(--cream); }
+#flag-lab .bet-assume { color: var(--fg-muted); font-size: var(--t-sm); }
+#flag-lab .bet-assume-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 6px; margin-right: 2px; border-radius: 5px;
+  background: var(--surface-2); color: var(--cream); font-size: var(--t-xs); box-shadow: inset 2px 0 0 var(--lamp); }
+/* The Sources list sits inside the lab's panel, so it drops its own panel chrome. */
+#flag-lab .bet-sources { margin-top: 16px; padding: 14px 0 0; background: none; border: 0; border-top: 1px solid var(--line-soft); border-radius: 0; }
+#flag-lab .bet-sources::before { content: none; }
+#flag-lab .bet-sources .sec-head { margin-bottom: 6px; }
+#flag-lab .bet-sources h2 { font-size: var(--t-body); }
+#flag-lab .bet-sources-note { margin-bottom: 12px; max-width: 78ch; font-size: var(--t-sm); color: var(--fg-subtle); }
+#flag-lab .bet-sources ol { display: grid; gap: 12px; padding-left: 1.6em; font-size: var(--t-sm); }
+#flag-lab .bet-sources li { scroll-margin-top: 84px; color: var(--fg-muted); }
+#flag-lab .bet-sources li::marker { color: var(--fg-subtle); font-variant-numeric: tabular-nums; }
+#flag-lab .bet-sources li:target { color: var(--fg); }
+#flag-lab .bet-src-meta { display: block; color: var(--fg-subtle); }
+#flag-lab .bet-src-meta .chip { margin-left: 8px; vertical-align: middle; }
+/* WCAG 2.5.8: a one-line title is still a 24 px target. */
+#flag-lab .bet-src-title { display: inline-block; vertical-align: top; padding-block: 2.25px; color: var(--fg); text-decoration: underline; text-decoration-color: var(--lamp-line);
+  text-underline-offset: 3px; overflow-wrap: anywhere; }
+#flag-lab .bet-src-title:hover { text-decoration-color: var(--lamp); }
+
+@media (max-width: 1020px) {
+  .fl-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  .flaglab { padding: 16px; }
+  .fl-col { padding: 12px; }
+  .fl-levels > li { padding: 12px; }
+  .fl-stepper { grid-template-columns: minmax(0, 1fr) auto; }
+  .fl-stepper label { grid-column: 1 / -1; }
+}
+@media (pointer: coarse) {
+  .fl-btn, .fl-pick select { min-height: 44px; }
+  .fl-stepper input[type="range"] { min-height: 44px; }
+}
+
+/* globals.css's Ask-drawer .cite (@layer components) boxes every citation; unlayered, this wins (same rule as .bet .cite). */
+#flag-lab .cite { height: auto; padding: 0; margin-left: 2px; border: 0; border-radius: 0; background: none; color: inherit; font-size: inherit; }

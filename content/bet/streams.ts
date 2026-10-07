@@ -98,7 +98,7 @@ export const STREAMS: Readonly<Record<StreamId, StreamDef>> = {
     corroborates: true,
     today: "Yes on BS-VI, coarse",
     claims: [
-      { text: "Factory fuel-level sensors read in coarse steps of about 10–40 L.", sourceIds: ["can-fuel-steps"] },
+      { text: "A patent design for factory float-type fuel-level sensors describes readings in coarse steps of about 10–40 L.", sourceIds: ["can-fuel-steps"] },
       {
         text: "BS-VI trucks report the fuel level over the CAN bus.",
         assumption: true,
@@ -259,7 +259,7 @@ export const STREAM_LADDERS: Readonly<Record<StreamRule, RuleLadderDef>> = {
       {
         stream: "can-fuel",
         reaches: "likely",
-        note: "The fuel level fell while the truck stood still. Factory sensors read in coarse 10–40 L steps, so a drop alone is Likely, not certain.",
+        note: "The fuel level fell while the truck stood still. Factory float sensors can read in coarse steps (about 10–40 L in one patent design), so a drop alone is Likely, not certain.",
       },
       {
         stream: "geofence",
