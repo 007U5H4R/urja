@@ -101,6 +101,22 @@ export const SOURCES: readonly Source[] = [
     status: "unverified",
   },
   {
+    id: "ais140-device-price", // C8: AIS-140 hardware ₹2,800–5,500 per vehicle
+    title: "AIS 140 GPS device price in India (2026)",
+    publisher: "Fleetx blog",
+    date: "2026",
+    url: "https://blog.fleetx.ai/blog-ais-140-gps-device-price-in-india-2026/",
+    status: "unverified",
+  },
+  {
+    id: "ais140-rto-plea", // S13: a plea alleges RTOs register vehicles without a physical tracker
+    title: "Plea in Bombay High Court alleges RTOs registering public vehicles without GPS trackers, panic buttons",
+    publisher: "Bar & Bench",
+    date: "2025",
+    url: "https://www.barandbench.com/news/plea-in-bombay-high-court-alleges-rtos-registering-public-vehicles-without-gps-trackers-panic-buttons",
+    status: "unverified",
+  },
+  {
     id: "tata-fleet-edge", // S14: 5 lakh CVs connected on Fleet Edge
     title: "Tata Motors connects 5,00,000 commercial vehicles with Fleet Edge",
     publisher: "Mobility Outlook",
@@ -349,6 +365,15 @@ export const SOURCES: readonly Source[] = [
     status: "unverified",
   },
 
+  {
+    id: "pm-edrive-etrucks", // G35: PM E-DRIVE supports 5,643 e-trucks with ₹500 crore
+    title: "Government launches e-truck incentive scheme under PM E-DRIVE",
+    publisher: "Energetica India",
+    date: "Jul 2025",
+    url: "https://www.energetica-india.net/news/government-launches-inr-96-lakh-incentive-scheme-for-e-trucks-under-pm-e-drive",
+    status: "unverified",
+  },
+
   // ── Insurance ──
   {
     id: "irdai-payd-2022", // S30: the 5 Jul 2022 circular allowed pay-as-you-drive and pay-how-you-drive add-ons
@@ -375,6 +400,13 @@ export function sourceById(id: string): Source {
   const s = BY_ID.get(id);
   if (!s) throw new Error(`Unknown source id: ${id}`);
   return s;
+}
+
+/** The one claim in `claims` whose text matches `re`; throws when none does, so a reworded claim fails the build. */
+export function claimMatching<C extends Claim>(claims: readonly C[], re: RegExp): C {
+  const hit = claims.find((c) => re.test(c.text));
+  if (!hit) throw new Error(`No claim matches ${re}`);
+  return hit;
 }
 
 /** The ids `claims` cite, each once, in order of first citation: a page's numbered source list. */
