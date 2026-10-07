@@ -1,18 +1,23 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BetHead } from "@/components/bet/BetHead";
-import { ClaimList } from "@/components/bet/ClaimList";
-import { SimulatedTag } from "@/components/bet/SimulatedTag";
 import { Sources } from "@/components/bet/Sources";
-import { Money } from "@/components/ui/Money";
+import { truckClaims } from "@/components/truck/claims";
+import { DailyLedger } from "@/components/truck/DailyLedger";
+import { LoanReadiness } from "@/components/truck/LoanReadiness";
+import { TruckFigures } from "@/components/truck/TruckFigures";
+import { TruckFlags } from "@/components/truck/TruckFlags";
+import { TrustScore } from "@/components/truck/TrustScore";
+import { VerifiedDays } from "@/components/truck/VerifiedDays";
 import { Plate } from "@/components/ui/Plate";
 import { BET_TRUCK } from "@/content/bet/copy";
 import { citedSourceIds } from "@/content/bet/sources";
+import { TRUCK_COPY } from "@/content/bet/truck-copy";
 import { getTruckSlugs, slugToPlate } from "@/lib/bet/slug";
-import { trucks } from "@/lib/data/aggregates";
-import { formatKm } from "@/lib/format";
+import { getTruckView } from "@/lib/bet/views/truck";
 import { truckMetadata } from "@/lib/metadata";
 import "@/components/bet/bet.css";
+import "@/components/truck/truck.css";
 
 type Params = { params: Promise<{ plate: string }> };
 
@@ -29,57 +34,34 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 }
 
 /**
- * TASK-21: the shell of the lender view of one truck (bet-spec §8). TASK-26 adds the trust
- * score, the daily ledger and the verified-days slots. The figures are the truck's trucks() row.
+ * The lender view of one truck (bet-spec §8; TASK-21 shell, TASK-26 content): how a verified
+ * per-truck ledger becomes something a lender could use. Every figure, note and claim comes from
+ * getTruckView(); the sections run head → trust score → daily ledger → verified days → loan
+ * readiness → flags, and the page ends with the Sources its claims cite.
  */
 export default async function TruckPage({ params }: Params) {
-  const plate = slugToPlate((await params).plate);
-  const row = plate ? trucks().find((t) => t.plate === plate) : undefined;
+  const view = getTruckView((await params).plate);
   // A guard only: with dynamicParams = false, Next answers any other slug with the 404 first.
-  if (!row) notFound();
+  if (!view) notFound();
   const c = BET_TRUCK;
-  const order = citedSourceIds(c.claims);
+  const order = citedSourceIds(truckClaims(view));
   return (
-    <main className="wrap bet" id="main">
+    <main className="wrap bet tk" id="main">
       <BetHead
-        eyebrow={`${c.eyebrowPrefix} · ${row.driver.en}, driver since ${row.since}`}
+        eyebrow={`${c.eyebrowPrefix} · ${view.headline.driver}, ${TRUCK_COPY.driverSince} ${view.headline.since}`}
         h1={
           <>
-            <Plate plate={row.plate} size="lg" /> {c.h1Suffix}
+            <Plate plate={view.plate} size="lg" /> {c.h1Suffix}
           </>
         }
         thesis={c.thesis}
       />
-      <section className="panel bet-sec" aria-labelledby="bet-september">
-        <div className="sec-head">
-          <h2 id="bet-september">September</h2>
-          <span className="right">
-            <SimulatedTag />
-          </span>
-        </div>
-        <dl className="bet-figures">
-          <div>
-            <dt>Profit</dt>
-            <dd>
-              <Money inr={row.profitInr} />
-            </dd>
-          </div>
-          <div>
-            <dt>Trips</dt>
-            <dd>{row.trips}</dd>
-          </div>
-          <div>
-            <dt>Distance</dt>
-            <dd>{formatKm(row.km)}</dd>
-          </div>
-        </dl>
-      </section>
-      <section className="panel bet-sec" aria-labelledby="bet-lenders">
-        <div className="sec-head">
-          <h2 id="bet-lenders">Why a lender would care</h2>
-        </div>
-        <ClaimList claims={c.claims} order={order} />
-      </section>
+      <TruckFigures headline={view.headline} resolution={view.resolution} />
+      <TrustScore trust={view.trust} order={order} />
+      <DailyLedger daily={view.daily} verified={view.verified} completeness={view.completeness} resolution={view.resolution} />
+      <VerifiedDays verified={view.verified} months={view.months} order={order} />
+      <LoanReadiness loan={view.loan} betClaims={c.claims} order={order} />
+      <TruckFlags flags={view.flagList} />
       <Sources ids={order} />
     </main>
   );

@@ -20,6 +20,8 @@
 /* ---------- claims and citations ---------- */
 .bet-claims { display: grid; gap: 10px; padding-left: 1.1em; max-width: 78ch; color: var(--fg); line-height: 1.6; }
 .bet-claims li::marker { color: var(--lamp); }
+/* globals.css's Ask-drawer .cite (@layer components) boxes every citation; unlayered, this wins. */
+.bet .cite { height: auto; padding: 0; margin-left: 2px; border: 0; border-radius: 0; background: none; color: inherit; font-size: inherit; }
 .cite { display: inline-flex; align-items: center; gap: 2px; vertical-align: baseline; white-space: nowrap; }
 /* WCAG 2.5.8: each [n] is at least 24 × 24 px. */
 .cite-n { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; min-height: 24px; padding: 0 2px;

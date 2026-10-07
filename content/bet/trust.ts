@@ -92,7 +92,7 @@ export const STABILITY_ZERO_AT_CV = {
     text: "Weekly profit per day that varies by 1.5 times its mean or more scores zero on stability.",
     assumption: true,
     basis:
-      "Our threshold: a trip's profit lands on the day it ends, so a small truck's weeks are lumpy (in the simulated September the 24 trucks run from 0.1 to 1.2). At 1.5 a weekly instalment would often go unmet.",
+      "Our threshold: a trip's profit lands on the day it ends, so a small truck's weeks are lumpy (in the simulated September the 24 trucks run from 0.1 to 1.2). At 1.5 a weekly instalment could go unmet.",
   } satisfies Claim,
 };
 

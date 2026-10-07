@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { september, trucks } from "@/lib/data/aggregates";
 import { citedSourceIds, isCited } from "@/content/bet/sources";
-import { LOAN_ASSUMPTIONS, VERIFIED_DAY, VERIFIED_DAYS_TARGET } from "@/content/bet/trust";
+import {
+  LEAKAGE_ZERO_AT_SHARE,
+  LOAN_ASSUMPTIONS,
+  STABILITY_ZERO_AT_CV,
+  VERIFIED_DAY,
+  VERIFIED_DAYS_TARGET,
+  VERIFIED_MONTH,
+} from "@/content/bet/trust";
 import { trustFor } from "../trust";
 import { plateToSlug } from "../slug";
 import { getTruckView, type TruckView } from "./truck";
@@ -190,6 +197,49 @@ describe("getTruckView (TASK-23)", () => {
 
   it("is deterministic", () => {
     for (const r of ROWS) expect(view(r.plate)).toEqual(view(r.plate));
+  });
+
+  it("hedges what the prototype can't show (TASK-26 review)", () => {
+    for (const v of VIEWS) {
+      if (v.completeness.share === 1) expect(v.completeness.note).toContain("a real feed likely would");
+      expect(v.completeness.note).not.toMatch(/a real feed would\./);
+    }
+    expect(STABILITY_ZERO_AT_CV.claim.basis).toContain("could go unmet");
+    expect(STABILITY_ZERO_AT_CV.claim.basis).not.toContain("would often go unmet");
+  });
+
+  it("each headline carries the driver's since year from its trucks() row (TASK-26)", () => {
+    ROWS.forEach((row, i) => expect(VIEWS[i].headline.since).toBe(row.since));
+    expect(view("RJ14 GB 4521").headline.since).toBe(ROWS.find((r) => r.plate === "RJ14 GB 4521")!.since);
+  });
+
+  it("states each factor's measure in its own units, not the 0–1 score (TASK-26)", () => {
+    const gb = view("RJ14 GB 4521");
+    const by = (v: TruckView, id: string) => v.trust.factors.find((f) => f.id === id)!;
+    // 9,630 unaccounted of 1,73,160 diesel ₹ = 5.56%; the factor (44%) is a score, not this share.
+    expect(by(gb, "leakage").measureText).toBe("5.6% of diesel ₹");
+    expect(by(gb, "utilisation").measureText).toBe("14 of 27 days");
+    expect(by(gb, "completeness").measureText).toBe("100% of trip-minutes");
+    expect(by(gb, "resolution").measureText).toBe("2 of 2 flags not waiting over 48 h");
+    expect(by(view("RJ14 GC 3309"), "resolution").measureText).toBe("2 of 3 flags not waiting over 48 h");
+    expect(by(gb, "stability").measureText).toMatch(/^Weekly CV 0\.7\d$/);
+    for (const v of VIEWS) {
+      const m = trustFor(v.plate).measures;
+      // The stated CV is the one behind the stability score.
+      const cvText = by(v, "stability").measureText.match(/CV (\d+\.\d+)/);
+      const f = trustFor(v.plate).factors.stability;
+      if (cvText && f > 0) expect(Math.abs(1 - Number(cvText[1]) / STABILITY_ZERO_AT_CV.cv - f)).toBeLessThan(0.01);
+      expect(by(v, "utilisation").measureText).toBe(`${m.activeDays} of ${m.totalDays} days`);
+      for (const r of v.trust.factors) expect(r.measureText).not.toBe(r.valueText);
+    }
+  });
+
+  it("exposes the trust thresholds and the verified-day definitions as claims (TASK-26)", () => {
+    for (const v of VIEWS) {
+      expect(v.trust.assumptions).toEqual([LEAKAGE_ZERO_AT_SHARE.claim, LEAKAGE_ZERO_AT_SHARE.benchmark, STABILITY_ZERO_AT_CV.claim]);
+      expect(v.verified.claims).toEqual([VERIFIED_DAY.claim, VERIFIED_MONTH.claim, VERIFIED_DAYS_TARGET.claim]);
+    }
+    expect(citedSourceIds(VIEWS[0].trust.assumptions)).toEqual(["fuel-leakage-8pct"]);
   });
 
   it("uses only accepted wording", () => {
