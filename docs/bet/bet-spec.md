@@ -33,7 +33,7 @@ Each multiple is worked out and defended separately.
 | Dimension | Status quo | SuprFleet Munshi | Multiple |
 |---|---|---|---|
 | Time to know a leak | Month-end munshi register (~30 days) | Next morning (1 day) | **~30x faster** [A: month-end reconciliation is typical] |
-| Hardware to measure fuel | Sensor ₹8,000–12,500 + ₹400–950 per month [R competitors #29] | ₹0 new hardware (stream fusion on existing feeds) | Removes the main barrier for the long tail |
+| Hardware to measure fuel | Sensor ₹8,000–12,500 + ₹400–750 per month [R competitors #29] | ₹0 new hardware (stream fusion on existing feeds) | Removes the main barrier for the long tail |
 | What the owner gets | A dot on a map, or a manual khata | A ₹ answer, evidence, the driver's side, and a next action | Changes the job, not the speed |
 | Credit access | Used-truck loan priced blind (CV Stage 3 3.3–4.8%) [R india-structure #20–22] | Lender sees verified cash flow | Lower-risk loans [A] |
 
