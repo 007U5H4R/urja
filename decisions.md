@@ -427,3 +427,17 @@
 ## EXE41 · Research status: every figure is verified or labelled — accepted 2026-10-07 (user decision)
 - Page fetches were blocked when the research ran, so every source in `content/bet/sources.ts` is `"unverified"` (search snippets only), and the pages show that status next to each citation and in the source list.
 - The verification pass opens each page, records `accessed` and a verbatim `quote`, then marks it verified; a source that fails is dropped and its claim becomes a labelled assumption. `tests/bet-guards.test.ts` keeps every cited id resolvable.
+
+## EXE42 · Tier prices are bet-spec's fixed prices; the clamp becomes a check — judgement call 2026-10-07 (user delegated: "take decisions on my behalf")
+- EXE38's "clamp(cost × margin, floor, WTP)" predates the approved bet spec, which fixes Free ₹0, Munshi ₹299, Pro ₹499 and Autopilot ₹799. A clamp would move Pro and Autopilot into the ₹150–300 band and contradict the frozen spec.
+- So `lib/bet/pricing.ts` reports, for each fixed price: its margin over the ₹78 cost to serve, where it sits against today's ₹150–300 spend and Fleetx's ₹300–600 entry tier, and its share of the ₹ recovered per truck (computed from `september()`). Pro and Autopilot are labelled "above today's spend: priced on actions".
+
+## EXE43 · "Independent stream families" means independent source systems — judgement call 2026-10-07 (TASK-22; user delegated)
+- Under bet-spec §6's family column (position, fuel, place, baseline…), trip 0926-04's real streams already span four families, so the frozen showcase "adding Camera adds a 2nd family, which unlocks L4" could not be true.
+- The fusion model therefore counts independent source *systems*: the truck's own telematics (GPS·ignition, CAN fuel, geofence, fleet history) is one; FASTag, the e-way bill, bill OCR and the camera are each another. The hand-typed fuel bill is the claim under test, so it does not count.
+- Consequence: confirmed R4 (e-way bill beside GPS) and R5 (FASTag beside GPS) flags can reach the L4 gate on real data. The pages and the PRD state the definition so they don't contradict §6's column.
+
+## EXE44 · Lender-view simplifications and trust-score scaling — judgement call 2026-10-07 (TASK-23; user delegated)
+- The scenario stores no flag-resolution times, so a confirmed or wrong flag counts as resolved within 48 h, and only waiting flags can be overdue (aged from the flag's time). The simulated feed has no GPS gaps, so completeness reads 100% for every truck. Both are disclosed on the page.
+- Labelled assumptions, not fixed numbers or gates: leakage of 10% or more of diesel ₹ scores 0 on that factor; a weekly-profit CV of 1.5 or more scores 0 on stability; indicative EMI headroom is 40% of verified surplus, over an illustrative 48-month tenor.
+- Every truck has 27 verified days, matching bet-spec's "27 of 180".
