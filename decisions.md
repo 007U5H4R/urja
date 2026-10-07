@@ -461,3 +461,8 @@
   - owner churn < 3% a month;
   - consent revocations < 2% a month.
 - The guardrails that already have lines keep them: wrong-flag rate < 10%; Ask eval ≥ 9/10 by the model; cost to serve < ₹100 per truck per month.
+
+## EXE48 · "The bet" joins the top navigation — user decision 2026-10-07
+- The user asked for the bet in the top nav bar, on desktop, tablet and the phone menu, which changes the IA under the Design Freeze. This supersedes EXE37's "not linked from the nav" for the bet pages; the /why banner and chapter 08 stay.
+- The pill sits after Why Urja and links to /bet. It is current on /bet, /bet/tiers and /trucks/[plate], the bet's pages.
+- TC-023's destination count goes up by one; its other checks are unchanged. Today's hero, its CTA hierarchy and the phone screens' content are unchanged.
