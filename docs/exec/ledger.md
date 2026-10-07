@@ -233,6 +233,15 @@ Vercel: each row records the pushed SHA. Since 2026-09-29 the VM reaches the pre
 | TASK-19 | TSK-15.2 (Stage 9) | doing | 8bcb303, 3ab14d4, 8376c5d, f2a7753, e2db435, 7ced739, dc18e9c | CR-1 fixed; TC matrix 35/4/1; eval baseline-v1 FAIL 3/10; final-v1 attempt 1 BLOCKED (Gemini 429) | docs/exec/qa/tc-matrix.md, evals/reports/eval-report-v1.md | EXE30 (ask-v2). Retry 18:45 UTC. |
 | TASK-19 | TSK-15.3 (Stage 10) | done | (this commit) | /security-review main...build/stage7: 0 findings ≥ 8 confidence | QA-report.md | QA-report: GO for Stage 11, conditional on the 18:45 UTC final-v1 retry (or BLOCKED-upstream recorded). User gate: merge to main needs approval. |
 | TASK-20 | TSK-16.1–16.2 | done (TC-051 BLOCKED for the user) | cfcd9c0 + this commit | TC-050 PASS, TC-020 PASS on production, TC-051 BLOCKED | docs/exec/production.md | Production https://urja-three.vercel.app |
+| TASK-21 | SuprFleet foundation | done | 62afdfa, 2f15199, 0b8750e (007U5H4R/urja#3) | bet guards (no lib/data imports in content/bet, no clock/random, every claim resolves to a source or a labelled assumption); e2e bet-routes, metadata, html-lang on 3 viewports | production 200 on /bet, /bet/tiers, /trucks/* | Research report (S1–S110, all **unverified**: page fetches blocked), bet-spec (approved by the user as drafted), page shells. Straight to main per EXE33. |
+| TASK-22 | Stream fusion + action ladder data | done | 2e00425 (007U5H4R/urja#6) | 1303 pass in the worktree; invariant: last real step = flag confidence on all 23 flags; L4 = High + 2 families; contradicting stream not counted | CI green; production smoke 200 | Spec+quality review FAIL (families undisclosed; e-way bill counted against a load cap) → round 1; re-review PASS; round 2 (orchestrator): R2 cap copy matched to the dataset, "stream families" → "families". EXE43. |
+| TASK-23 | Truck / lender-view data | done | 129c758 (007U5H4R/urja#5) | 1301 pass; 24 trucks reconcile to 58,240 / 21,600; golden RJ14 GC 3309 = 63.9; 27 of 180 verified days, no projected months | CI green; production smoke 200 | Review FAIL (EMI read as a projection) → round 1; re-review FAIL (consent/partnership cited beyond sources) → round 2; final re-review PASS. EXE44. |
+| TASK-24 | Pricing data | done | 6f97c53 (007U5H4R/urja#4) | 1300 pass; tiers ₹0/299/499/799, cost ₹78, margins 74/84/90%, share of recovered 30/50/80% | CI green; production smoke 200 | Review FAIL → round 1 (labels, ranges, guards) → round 2 (consent claims overstated: 3 new unverified sources, design labelled an assumption); final re-review PASS. EXE42. |
+| TASK-25 | Flag lab UI | doing | — | — | — | Wave 2. |
+| TASK-26 | Lender view UI | doing | — | — | — | Wave 2. |
+| TASK-27 | Tiers UI + honesty pass | doing | — | — | — | Wave 2; also fixes copy.ts claims that outrun their snippets. |
+| TASK-28 | /bet overview | todo | — | — | — | Wave 3. |
+| TASK-29 | Entry points (/why chapter 08, banner) | todo | — | — | — | Wave 3. |
 
 ## Gates
 
