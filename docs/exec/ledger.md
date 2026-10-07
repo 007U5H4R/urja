@@ -242,6 +242,8 @@ Vercel: each row records the pushed SHA. Since 2026-09-29 the VM reaches the pre
 | TASK-27 | Tiers UI + honesty pass | done | b322772 (007U5H4R/urja#9) | 1471 unit; e2e bet-tiers + truck + bet-routes on 3 viewports, axe 0 | production 200 | Review FAIL (3 overclaims) → round 1 → re-review FAIL (11.5 px chart text; source order) → round 2 → final re-review: one truck.spec count stale after rebase onto TASK-26, fixed by the orchestrator as integration (BET_TRUCK claims grouped under "Why a lender would care"). |
 | TASK-28 | /bet overview | done | 20051b2 (007U5H4R/urja#11) | 1537 unit; e2e bet + bet-routes/metadata/trip/shell/perf/bet-tiers/truck/flag-lab, axe 0 with details closed and open | production 200; "Chosen", "verified truck-months" | Review PASS; polish round (memo refs, AIS-140 scope, visible board scroll hint, tokens, a test name). 3 new unverified sources (S84, S48, S35 in the report). |
 | TASK-29 | Entry points (/why chapter 08, banner) | done | 8fab4cf (007U5H4R/urja#10) | 1481 unit; e2e bet-entry/why/today/phone/perf/html-lang/trip/flag-lab, axe 0; LCP element unchanged on /why | production: /why has #c8 and the banner; Today has no /bet link | Review PASS; orchestrator applied notes (chapter wording, phone-en coverage) and the shared `sentByAnAction` fix for the "sends no request" flake (28/120 → 0/120). |
+| TASK-30 | Honesty and consistency pass after final QA | done | d8260e2 (007U5H4R/urja#12) | 1544 unit; e2e why/bet/bet-tiers/bet-routes/perf 139 + review run, axe 0 | production: /why "1 to 20 trucks", /bet "families unlock autonomy" | EXE45–47. Review FAIL (ch07 vs the 1–20 band; a verbatim banned word in a source quote; bet-spec §6 line) → fixed by the orchestrator. No number changed. |
+| TASK-31 | "The bet" in the top navigation | done | 43ffca9 (007U5H4R/urja#13) | 1568 unit; e2e shell/why/bet-routes/bet-entry/phone/bet/perf/ask 319 on the rebased build; review 520 across 15 specs, axe 0 | production: pill on every page, current on /bet | User decision EXE48 (IA change under the Design Freeze). TC-023 counts +1; Today hero pixel-identical to the baseline; no bar overlap from 761 to 1440 px. |
 
 ## Gates
 
@@ -249,7 +251,8 @@ Vercel: each row records the pushed SHA. Since 2026-09-29 the VM reaches the pre
 - **Full e2e on main, 3 viewports:** 678 passed, 131 project-skipped, 7 failed. All 7 are `scene.spec` debug-build tests, which need `NEXT_PUBLIC_DEBUG_GL=1`. Rebuilt with the flag: scene.spec 15 passed, 18 skipped. **Net: 0 failures.**
 - **Production smoke:** /, /why, /bet, /bet/tiers, /trucks/rj14-gb-4521, /trips/0926-04, /brief and /message all return 200. `/` still shows ₹1,86,400 and ₹11,430. Today has no /bet links, and the nav is unchanged (TC-023).
 - **Docs:** PRD and strategy doc link the live routes; numbers checked against bet-spec. Deck: 2 screenshot slides added after the demo.
-- **Open:** source verification is BLOCKED by the network policy (all research stays "Unverified"); final independent QA in progress.
+- **Final QA:** done; its findings were fixed in the deck, the docs (strategy doc, PRD) and the repo (TASK-30). TASK-31 added The bet to the nav at the user's request.
+- **Open:** source verification is BLOCKED by the network policy (all research stays "Unverified").
 
 
 ### Preview checks log (2026-09-29, second cloud session)
