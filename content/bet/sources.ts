@@ -151,6 +151,30 @@ export const SOURCES: readonly Source[] = [
     status: "unverified",
   },
   {
+    id: "aa-consents-sahamati", // S25: 28.9 cr AA consents fulfilled cumulatively to 31 Jul 2025
+    title: "Strategies to boost AA success rates",
+    publisher: "Sahamati",
+    date: "Sep 2025",
+    url: "https://sahamati.org.in/wp-content/uploads/2025/10/Pragati-Session-__-Strategies-to-boost-AA-success-rates-__-10th-Sept-2025-__-Website-Update-1.pdf",
+    status: "unverified",
+  },
+  {
+    id: "dpdp-rules-2025", // S33: DPDP Rules notified; consent-manager registration after 1 year, most rules after 18 months
+    title: "Digital Personal Data Protection Rules, 2025 notified",
+    publisher: "Mondaq",
+    date: "Nov 2025",
+    url: "https://www.mondaq.com/india/data-protection/1708164/digital-personal-data-protection-rules-2025-notified",
+    status: "unverified",
+  },
+  {
+    id: "aa-consent-manager", // S34: under the draft DPDP Rules, account aggregators may become "white-label" consent managers
+    title: "FIG Paper No. 40: draft DPDP Rules, implications for financial services",
+    publisher: "Cyril Amarchand Mangaldas",
+    date: "Jan 2025",
+    url: "https://corporate.cyrilamarchandblogs.com/2025/01/fig-paper-no-40-data-law-series-6-draft-digital-personal-data-protection-rules-2025-key-implications-for-financial-services-sector/",
+    status: "unverified",
+  },
+  {
     id: "shriram-rating", // S20: CV 45% of AUM; CV GS3 4.79%
     title: "Credit rating rationale: Shriram Finance",
     publisher: "India Ratings, via IndiaBonds",
