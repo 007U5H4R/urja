@@ -441,3 +441,23 @@
 - The scenario stores no flag-resolution times, so a confirmed or wrong flag counts as resolved within 48 h, and only waiting flags can be overdue (aged from the flag's time). The simulated feed has no GPS gaps, so completeness reads 100% for every truck. Both are disclosed on the page.
 - Labelled assumptions, not fixed numbers or gates: leakage of 10% or more of diesel ₹ scores 0 on that factor; a weekly-profit CV of 1.5 or more scores 0 on stability; indicative EMI headroom is 40% of verified surplus, over an illustrative 48-month tenor.
 - Every truck has 27 verified days, matching bet-spec's "27 of 180".
+
+## EXE45 · Confidence vs autonomy wording — judgement call 2026-10-07 (final QA; user delegated)
+- Confidence rises as each stream rules out an innocent cause. The truck's own tracker (GPS·ignition, CAN fuel, geofence, fleet history) can reach High, but it counts as one family.
+- Autonomy is what needs agreement: the L4 auto-hold needs High **and** at least 2 independent families (EXE43).
+- Every "confidence rises only when independent families agree" line in /bet, the strategy doc, the PRD and the deck is reworded to this. No rule, threshold or golden value changes: the lab already behaves this way.
+
+## EXE46 · Launch gate vs lender timing — judgement call 2026-10-07 (final QA; user delegated)
+- Launch criteria (bet-spec §11) said "≥ 1 lending partner signed", but the roadmap brings the first NBFC in Phase 2 (months 6–12).
+- **Decision:** the launch gate becomes "≥ 1 NBFC in referral-pilot talks". "≥ 1 lending partner signed" moves to the Phase 2 gate.
+- Until a lender signs, Free is funded from the paid tiers and the pilot budget. The referral fee is a hypothesis to test, not a launch dependency.
+- The other launch criteria are unchanged: wrong-flag rate under 10% across 3 pilots; brief opened on ≥ 60% of mornings [A].
+
+## EXE47 · One set of metric targets — judgement call 2026-10-07 (final QA; user delegated)
+- The strategy doc, the PRD and /bet disagreed on targets. The strategy doc's targets become the single set, each labelled an assumption to calibrate in the pilot:
+  - flags acted on within 24 h ≥ 50%;
+  - daily close on ≥ 25 days a month;
+  - Free → Munshi 10% within 90 days;
+  - owner churn < 3% a month;
+  - consent revocations < 2% a month.
+- The guardrails that already have lines keep them: wrong-flag rate < 10%; Ask eval ≥ 9/10 by the model; cost to serve < ₹100 per truck per month.
