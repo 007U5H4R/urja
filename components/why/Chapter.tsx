@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 export interface ChapterProps {
-  /** "01" … "07"; also names the heading id (c1 … c7). */
+  /** "01" … "08"; also names the heading id (c1 … c8). */
   n: string;
   label: string;
   title: ReactNode;

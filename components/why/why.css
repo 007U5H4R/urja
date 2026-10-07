@@ -105,6 +105,15 @@
   .essay .plan .ph { font-size: var(--t-sm); font-weight: 560; color: var(--lamp); font-variant-numeric: tabular-nums; }
   .essay .plan .ph + p { margin-top: 8px; color: var(--fg-muted); line-height: 1.6; }
 
+  /* 08 · the bet (TASK-29): one primary action, then three quiet deep links */
+  .essay .bet-go { margin-top: 28px; }
+  .essay .bet-more-lead { margin-top: 22px; font-size: var(--t-sm); color: var(--fg-subtle); }
+  .essay .bet-more { list-style: none; padding: 0; margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px 22px; }
+  .essay .bet-more a { display: inline-flex; align-items: center; min-height: 24px; padding-block: 2px; color: var(--fg);
+    text-decoration: underline; text-decoration-color: var(--lamp-line); text-underline-offset: 3px; }
+  .essay .bet-more a:hover { text-decoration-color: var(--lamp); }
+  @media (pointer: coarse) { .essay .bet-go .btn { height: 44px; } }
+
   @media (max-width: 900px) {
     .essay .pipe { grid-template-columns: minmax(0, 1fr); gap: 16px; }
     .essay .node { grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; }

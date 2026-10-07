@@ -1,4 +1,4 @@
-import { test as base, expect, type Page, type Route } from "@playwright/test";
+import { test as base, expect, type Page, type Request, type Route } from "@playwright/test";
 
 /**
  * The shared Playwright `test` for every spec. An auto-fixture serves an offline map style in
@@ -32,5 +32,18 @@ export const test = base.extend<{ offlineMaps: void }>({
     { auto: true },
   ],
 });
+
+/**
+ * For "sends no request" checks. `networkidle` can settle before hydration ends, so late page work
+ * (chunks, images, fonts, Link prefetches, the lazy map's style) may start after a listener is
+ * attached; none of it is an action. Any non-GET, document load or other fetch/XHR is.
+ */
+export function sentByAnAction(r: Request): boolean {
+  if (r.method() !== "GET") return true;
+  if (["script", "stylesheet", "image", "font"].includes(r.resourceType())) return false;
+  if (r.headers()["next-router-prefetch"] === "1") return false;
+  if (new URL(r.url()).hostname.endsWith("basemaps.cartocdn.com")) return false;
+  return true;
+}
 
 export { expect, type Page, type Route };

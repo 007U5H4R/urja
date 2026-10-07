@@ -1,5 +1,8 @@
+import Link from "next/link";
+import { BetBanner } from "@/components/bet/BetBanner";
+import { Icon } from "@/components/ui/Icon";
 import type { Quote } from "@/content/field-notes";
-import { COMPETITORS, FIRST_90_DAYS, METRICS, PIPELINE, type WhyView } from "@/content/why";
+import { BET_CHAPTER, COMPETITORS, FIRST_90_DAYS, METRICS, PIPELINE, type WhyView } from "@/content/why";
 import { Chapter } from "./Chapter";
 import { FieldNotes } from "./FieldNotes";
 import { Market } from "./Market";
@@ -15,12 +18,14 @@ export interface WhyEssayProps {
 
 /**
  * Why Urja (final/why.html, main.essay): heard → owner → market gap → built on
- * Bytebeam → metric and guardrail → first 90 days → what's real (Design.md §25).
+ * Bytebeam → metric and guardrail → first 90 days → what's real (Design.md §25) → the bet (TASK-29).
+ * The slim bet banner sits below the hero, never above it, so the hero keeps the LCP element (EXE37).
  */
 export function WhyEssay({ view, quotes }: WhyEssayProps) {
   return (
     <main className="essay" id="main">
       <WhyHero byline={view.byline} />
+      <BetBanner className="mt-8 md:mt-10" />
 
       <Chapter n="01" label="What I heard" title="I’m new to trucking, so I went and asked.">
         <div className="body">
@@ -80,6 +85,30 @@ export function WhyEssay({ view, quotes }: WhyEssayProps) {
             simulated. The leakage rules really run on that data, every rupee on screen is computed, and Ask Urja is a
             live model answering only from it. Nothing here is a Bytebeam product.
           </p>
+        </div>
+      </Chapter>
+
+      <Chapter n={BET_CHAPTER.n} label={BET_CHAPTER.label} title={BET_CHAPTER.title}>
+        <div className="body">
+          {BET_CHAPTER.body.map((p) => (
+            <p key={p}>{p}</p>
+          ))}
+        </div>
+        <div className="bet-go">
+          <Link className="btn btn-lamp" href={BET_CHAPTER.href}>
+            {BET_CHAPTER.cta}
+            <Icon name="right" />
+          </Link>
+          <p className="bet-more-lead" id="c8-more">
+            {BET_CHAPTER.moreLabel}
+          </p>
+          <ul className="bet-more" aria-labelledby="c8-more">
+            {BET_CHAPTER.more.map((m) => (
+              <li key={m.href}>
+                <Link href={m.href}>{m.label}</Link>
+              </li>
+            ))}
+          </ul>
         </div>
       </Chapter>
     </main>
