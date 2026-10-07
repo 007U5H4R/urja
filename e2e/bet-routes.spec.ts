@@ -2,7 +2,7 @@ import { axeBuilder } from "./axe";
 import { expect, test, type Page } from "./fixtures";
 
 // TASK-21: the bet section's page shells (/bet, /bet/tiers, /trucks/[plate]) at 375 / 768 / 1440.
-// They sit in the site layout with the normal top bar, and nothing in the nav links to them yet.
+// They sit in the site layout with the normal top bar; since EXE48 its The bet pill leads to them.
 
 function collectErrors(page: Page): string[] {
   const errors: string[] = [];
@@ -39,8 +39,11 @@ for (const { path, h1 } of PAGES) {
     expect(hrefs.length).toBeGreaterThan(0);
     for (const href of hrefs) expect(ids).toContain(href!.slice(1));
 
-    // No top-bar pill is current: the bet pages are not nav destinations.
-    await expect(page.locator('nav[aria-label="Main"] a[aria-current="page"]')).toHaveCount(0);
+    // EXE48: The bet pill is current, and no other.
+    const current = page.locator('nav[aria-label="Main"] a[aria-current="page"]');
+    await expect(current).toHaveCount(1);
+    await expect(current).toHaveAttribute("aria-label", "The bet");
+    await expect(current).toHaveAttribute("href", "/bet");
 
     const { scrollWidth, innerWidth } = await page.evaluate(() => ({
       scrollWidth: document.documentElement.scrollWidth,
@@ -72,17 +75,27 @@ test("the other truck pages are prerendered too", async ({ request }) => {
   }
 });
 
-// TASK-29 (EXE37): the bet is reached from Why Urja (and the trip pages), never from Today, the brief or the message.
-test("Today, the brief and the message don't link to the bet pages; Why Urja does", async ({ page }) => {
+// TASK-29 (EXE37): the bet is reached from Why Urja (and the trip pages), never from the content of Today,
+// the brief or the message. EXE48 adds the nav's The bet item (the top bar's pill, the phone screens' menu),
+// so the check covers each page's main content, outside its menu.
+test("Today, the brief and the message don't link to the bet pages outside the nav; Why Urja does", async ({ page }) => {
   for (const path of ["/", "/brief", "/message"]) {
     await page.goto(path);
-    await expect(page.locator('a[href^="/bet"], a[href^="/trucks"]'), path).toHaveCount(0);
+    await expect(page.locator("main"), path).toHaveCount(1);
+    await expect(page.locator('main a[href^="/bet"]:not(.m-menu a), main a[href^="/trucks"]:not(.m-menu a)'), path).toHaveCount(0);
+    // Nowhere on the page outside the nav either; the nav's only bet link is The bet itself.
+    const nav = "header.topbar nav a, .m-menu nav a";
+    await expect(page.locator(`a[href^="/bet"]:not(${nav}), a[href^="/trucks"]`), path).toHaveCount(0);
+    const navBet = await page.locator(nav).evaluateAll((as) => as.map((a) => a.getAttribute("href")!).filter((h) => h.startsWith("/bet")));
+    // On Today: the pill and the menu item; on the phone screens: their menu's item.
+    expect(navBet, path).toEqual(path === "/" ? ["/bet", "/bet"] : ["/bet"]);
   }
   await page.goto("/why");
   expect(await page.locator('a[href="/bet"]').count()).toBeGreaterThan(0);
 });
 
-test("on the phone, the menu on /bet still lists exactly the 6 destinations", async ({ page }, info) => {
+// EXE48: 7 destinations, The bet among them and current.
+test("on the phone, the menu on /bet lists the 7 destinations, with The bet current", async ({ page }, info) => {
   test.skip(info.project.name !== "phone", "phone-only");
   const errors = collectErrors(page);
   await page.goto("/bet");
@@ -91,7 +104,7 @@ test("on the phone, the menu on /bet still lists exactly the 6 destinations", as
   await toggle.click();
   const menu = page.getByRole("navigation", { name: "Main (mobile)" });
   await expect(menu).toBeVisible();
-  await expect(menu.getByRole("link")).toHaveText(["Morning brief", "Today", "Trucks", "Trips", "Why Urja", "Ask Urja"]);
-  await expect(menu.locator('a[aria-current="page"]')).toHaveCount(0);
+  await expect(menu.getByRole("link")).toHaveText(["Morning brief", "Today", "Trucks", "Trips", "Why Urja", "The bet", "Ask Urja"]);
+  await expect(menu.locator('a[aria-current="page"]')).toHaveText(["The bet"]);
   expect(errors).toEqual([]);
 });

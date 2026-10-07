@@ -1168,7 +1168,7 @@ Conventions for every task:
   - `AskTrigger` is a button with `aria-haspopup="dialog"` that emits `onOpen`. TKT-12 wires it up.
   - The active pill comes from `usePathname()`.
 - [ ] E2E:
-  - at 375, the menu opens and lists all 6 destinations;
+  - at 375, the menu opens and lists all 7 destinations (EXE48 added The bet);
   - at 375, 768 and 1440, `document.documentElement.scrollWidth <= innerWidth`;
   - `.kbd` is hidden in the `phone` project.
 - [ ] Commit: `Add the top bar, pill navigation and mobile menu (TASK-7)`.

@@ -155,8 +155,9 @@ describe("Brief", () => {
 });
 
 describe("the phone screens' own menu (EXE12), in the screen's language (EXE23)", () => {
-  const en = ["Morning brief", "Today", "Trucks", "Trips", "Why Urja", "Ask Urja"];
-  const hi = ["सुबह का हिसाब", "आज", "ट्रक", "ट्रिप", "Urja क्यों", "Urja से पूछें"];
+  // EXE48: The bet follows Why Urja.
+  const en = ["Morning brief", "Today", "Trucks", "Trips", "Why Urja", "The bet", "Ask Urja"];
+  const hi = ["सुबह का हिसाब", "आज", "ट्रक", "ट्रिप", "Urja क्यों", "दाँव", "Urja से पूछें"];
   const items = (menu: Element) =>
     within(menu.querySelector("nav") as HTMLElement).getAllByRole("link", { hidden: true }).map((a) => a.textContent);
   it.each([

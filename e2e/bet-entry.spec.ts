@@ -3,7 +3,7 @@ import { expect, test, type Page } from "./fixtures";
 
 // TASK-29 (EXE37): the ways into the bet at 375 / 768 / 1440. Why Urja gets chapter 08 and a slim
 // banner below the hero; the trip pages get the banner under the breadcrumbs. Today, the brief and
-// the message get nothing, and the nav keeps its 6 destinations (TC-023).
+// the message get no banner. EXE48 then made The bet a nav destination: 7 of them (TC-023).
 
 function collectErrors(page: Page): string[] {
   const errors: string[] = [];
@@ -101,20 +101,24 @@ test("Today, the brief and the message show no banner", async ({ page }) => {
     await page.goto(path);
     await expect(page.locator("body"), path).toBeVisible();
     await expect(banner(page), path).toHaveCount(0);
-    await expect(page.locator('a[href^="/bet"]'), path).toHaveCount(0);
+    // EXE48: the nav's The bet item (pill or menu) is the only bet link; the content has none.
+    await expect(page.locator('a[href^="/bet"]:not(header.topbar nav a, .m-menu nav a)'), path).toHaveCount(0);
   }
 });
 
-test("the nav still has exactly its 6 destinations, and none is the bet", async ({ page }, info) => {
+// EXE48: The bet joined the nav, so its destinations went from 6 to 7.
+test("the nav has exactly its 7 destinations, The bet last, linking to /bet", async ({ page }, info) => {
   await page.goto("/trips/0926-04");
   if (info.project.name === "phone") {
     await page.locator('details.m-menu > summary[aria-label="Menu"]').click();
     const menu = page.getByRole("navigation", { name: "Main (mobile)" });
-    await expect(menu.getByRole("link")).toHaveText(["Morning brief", "Today", "Trucks", "Trips", "Why Urja", "Ask Urja"]);
+    await expect(menu.getByRole("link")).toHaveText(["Morning brief", "Today", "Trucks", "Trips", "Why Urja", "The bet", "Ask Urja"]);
   } else {
-    await expect(page.locator('nav[aria-label="Main"] a.pill')).toHaveText(["Today", "Trucks", "Trips", "Why Urja"]);
+    await expect(page.locator('nav[aria-label="Main"] a.pill')).toHaveText(["Today", "Trucks", "Trips", "Why Urja", "The bet"]);
   }
-  await expect(page.locator('header.topbar a[href^="/bet"]')).toHaveCount(0);
+  // The pill and the menu item; nothing else in the top bar links to a bet page.
+  await expect(page.locator('header.topbar a[href^="/bet"]')).toHaveCount(2);
+  await expect(page.locator('header.topbar nav a[href="/bet"]')).toHaveCount(2);
 });
 
 for (const path of ["/why", "/trips/0926-04"]) {

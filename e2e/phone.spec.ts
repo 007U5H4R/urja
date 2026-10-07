@@ -266,9 +266,10 @@ test.describe("the 7 AM message", () => {
 });
 
 test.describe("EXE12 · the phone screens keep their own top bar (its menu in the screen's language, EXE23)", () => {
+  // EXE48: The bet (दाँव) follows Why Urja.
   const MENU = {
-    hi: { toggle: "मेनू", nav: "मुख्य मेनू", items: ["सुबह का हिसाब", "आज", "ट्रक", "ट्रिप", "Urja क्यों", "Urja से पूछें"], today: "आज" },
-    en: { toggle: "Menu", nav: "Main (mobile)", items: ["Morning brief", "Today", "Trucks", "Trips", "Why Urja", "Ask Urja"], today: "Today" },
+    hi: { toggle: "मेनू", nav: "मुख्य मेनू", items: ["सुबह का हिसाब", "आज", "ट्रक", "ट्रिप", "Urja क्यों", "दाँव", "Urja से पूछें"], today: "आज" },
+    en: { toggle: "Menu", nav: "Main (mobile)", items: ["Morning brief", "Today", "Trucks", "Trips", "Why Urja", "The bet", "Ask Urja"], today: "Today" },
   } as const;
   const cases = [
     ["/brief", ".m-top", "hi"],

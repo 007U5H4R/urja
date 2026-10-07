@@ -8,7 +8,7 @@ vi.mock("next/navigation", () => ({ usePathname: () => pathname }));
 import { ASK_OPEN_EVENT } from "@/lib/ask-events";
 import { AskTrigger } from "./AskTrigger";
 import { MobileMenu } from "./MobileMenu";
-import { MENU_COPY, MENU_HREFS, MENU_LINKS, NAV_PILLS, PHONE_ROUTES, isCurrent, isPhoneRoute, menuLinks } from "./nav";
+import { BET_HREF, MENU_COPY, MENU_HREFS, MENU_LINKS, NAV_PILLS, PHONE_ROUTES, isBetRoute, isCurrent, isPhoneRoute, menuLinks } from "./nav";
 import { TopBar } from "./TopBar";
 
 afterEach(cleanup);
@@ -17,12 +17,14 @@ beforeEach(() => {
 });
 
 describe("nav destinations (technical-plan §3)", () => {
-  it("has the four pills and the six menu destinations", () => {
+  // EXE48: The bet joins the nav after Why Urja: five pills, seven menu destinations.
+  it("has the five pills and the seven menu destinations", () => {
     expect(NAV_PILLS.map((p) => [p.label, p.href])).toEqual([
       ["Today", "/"],
       ["Trucks", "/#trucks"],
       ["Trips", "/trips"],
       ["Why Urja", "/why"],
+      ["The bet", "/bet"],
     ]);
     expect(MENU_LINKS.map((p) => [p.label, p.href])).toEqual([
       ["Morning brief", "/brief"],
@@ -30,7 +32,11 @@ describe("nav destinations (technical-plan §3)", () => {
       ["Trucks", "/#trucks"],
       ["Trips", "/trips"],
       ["Why Urja", "/why"],
+      ["The bet", "/bet"],
     ]);
+    expect(BET_HREF).toBe("/bet");
+    // Each pill its own sprite icon; The bet's isn't the gauge, which reads as the Urja mark.
+    expect(NAV_PILLS.map((p) => p.icon)).toEqual(["today", "truck", "route", "book", "rupee"]);
   });
 
   it.each([
@@ -45,8 +51,35 @@ describe("nav destinations (technical-plan §3)", () => {
     ["/brief", "/", false],
     ["/brief?lang=en", "/brief", true],
     ["/brief?lang=en", "/", false],
+    // EXE48: the bet pill is current on the bet's pages, the truck lender views among them.
+    ["/bet", "/bet", true],
+    ["/bet", "/bet/tiers", true],
+    ["/bet", "/trucks/rj14-gb-4521", true],
+    ["/bet", "/trucks/rj14-gb-4521/", true],
+    ["/bet", "/", false],
+    ["/bet", "/why", false],
+    ["/bet", "/trips/0926-04", false],
+    ["/bet", "/betx", false],
+    ["/bet", "/trucksx", false],
+    ["/bet", "/trucks", false],
+    ["/#trucks", "/trucks/rj14-gb-4521", false],
+    ["/trips", "/trucks/rj14-gb-4521", false],
+    ["/why", "/bet", false],
   ])("isCurrent(%s, %s) is %s", (href, path, expected) => {
     expect(isCurrent(href, path)).toBe(expected);
+  });
+
+  it.each([
+    ["/bet", true],
+    ["/bet/tiers", true],
+    ["/trucks/rj14-gc-7710", true],
+    ["/", false],
+    ["/why", false],
+    ["/trips", false],
+    ["/trucks", false],
+    ["/betting", false],
+  ])("isBetRoute(%s) is %s", (path, expected) => {
+    expect(isBetRoute(path)).toBe(expected);
   });
 });
 
@@ -91,8 +124,8 @@ describe("TopBar (TKT-03 AC2)", () => {
     renderBar();
     const nav = screen.getByRole("navigation", { name: "Main" });
     const pills = within(nav).getAllByRole("link");
-    expect(pills.map((a) => a.getAttribute("aria-label"))).toEqual(["Today", "Trucks", "Trips", "Why Urja"]);
-    expect(pills.map((a) => a.getAttribute("aria-current"))).toEqual(["page", null, null, null]);
+    expect(pills.map((a) => a.getAttribute("aria-label"))).toEqual(["Today", "Trucks", "Trips", "Why Urja", "The bet"]);
+    expect(pills.map((a) => a.getAttribute("aria-current"))).toEqual(["page", null, null, null, null]);
     for (const a of pills) {
       expect(a.className).toBe("pill");
       expect(a.querySelector("svg.i use")).not.toBeNull();
@@ -107,7 +140,17 @@ describe("TopBar (TKT-03 AC2)", () => {
     expect(within(nav).getByRole("link", { current: "page" }).getAttribute("aria-label")).toBe("Trips");
   });
 
-  it("lists the six destinations in the mobile menu, with the current one marked", () => {
+  it.each(["/bet", "/bet/tiers", "/trucks/rj14-gb-4521"])("EXE48: marks The bet, and only it, current on %s", (p) => {
+    pathname = p;
+    renderBar();
+    const pills = within(screen.getByRole("navigation", { name: "Main" })).getAllByRole("link");
+    expect(pills.map((a) => a.getAttribute("aria-current"))).toEqual([null, null, null, null, "page"]);
+    expect(pills[4].getAttribute("href")).toBe("/bet");
+    const menu = within(screen.getByRole("navigation", { name: "Main (mobile)", hidden: true })).getAllByRole("link", { hidden: true });
+    expect(menu.map((a) => a.getAttribute("aria-current"))).toEqual([null, null, null, null, null, "page", null]);
+  });
+
+  it("lists the seven destinations in the mobile menu (EXE48), with the current one marked", () => {
     // The menu as the phone screens carry it (EXE12: no top bar on /brief and /message).
     pathname = "/brief";
     const { container } = render(<MobileMenu />);
@@ -121,10 +164,11 @@ describe("TopBar (TKT-03 AC2)", () => {
       "Trucks",
       "Trips",
       "Why Urja",
+      "The bet",
       "Ask Urja",
     ]);
-    expect(links.map((a) => a.getAttribute("aria-current"))).toEqual(["page", null, null, null, null, null]);
-    expect(links[5].getAttribute("aria-haspopup")).toBe("dialog");
+    expect(links.map((a) => a.getAttribute("aria-current"))).toEqual(["page", null, null, null, null, null, null]);
+    expect(links[6].getAttribute("aria-haspopup")).toBe("dialog");
   });
 
   it("EXE23: in Hindi the menu's items, its toggle and its list are Hindi, with the same destinations", () => {
@@ -135,8 +179,8 @@ describe("TopBar (TKT-03 AC2)", () => {
     const nav = screen.getByRole("navigation", { name: MENU_COPY.hi.nav, hidden: true });
     expect(nav.getAttribute("lang")).toBe("hi");
     const links = within(nav).getAllByRole("link", { hidden: true });
-    expect(links.map((a) => a.textContent)).toEqual(["सुबह का हिसाब", "आज", "ट्रक", "ट्रिप", "Urja क्यों", "Urja से पूछें"]);
-    expect(links.map((a) => a.getAttribute("href"))).toEqual(["/brief", "/", "/#trucks", "/trips", "/why", "/?ask"]);
+    expect(links.map((a) => a.textContent)).toEqual(["सुबह का हिसाब", "आज", "ट्रक", "ट्रिप", "Urja क्यों", "दाँव", "Urja से पूछें"]);
+    expect(links.map((a) => a.getAttribute("href"))).toEqual(["/brief", "/", "/#trucks", "/trips", "/why", "/bet", "/?ask"]);
     expect(links[0].getAttribute("aria-current")).toBe("page");
     expect(menuLinks("hi").map((l) => l.href)).toEqual(MENU_LINKS.map((l) => l.href));
     expect(menuLinks("en")).toBe(MENU_LINKS);
@@ -148,7 +192,7 @@ describe("TopBar (TKT-03 AC2)", () => {
     const { container } = render(<MobileMenu lang="en" />);
     const nav = within(container).getByRole("navigation", { name: "Main (mobile)", hidden: true });
     const links = within(nav).getAllByRole("link", { hidden: true });
-    expect(links.map((a) => a.getAttribute("href"))).toEqual(["/brief?lang=en", "/", "/#trucks", "/trips", "/why", "/?ask"]);
+    expect(links.map((a) => a.getAttribute("href"))).toEqual(["/brief?lang=en", "/", "/#trucks", "/trips", "/why", "/bet", "/?ask"]);
     expect(links[0].getAttribute("aria-current")).toBe("page");
     expect(menuLinks("en", { phone: true }).map((l) => l.label)).toEqual(MENU_LINKS.map((l) => l.label));
     cleanup();
@@ -288,12 +332,12 @@ describe("TopBar on /why (final/why.html lines 125–137)", () => {
     expect(within(pills).getByRole("link", { current: "page" }).getAttribute("aria-label")).toBe("Why Urja");
     const nav = screen.getByRole("navigation", { name: "Main (mobile)", hidden: true });
     const links = within(nav).getAllByRole("link", { hidden: true });
-    expect(links.map((a) => a.textContent)).toEqual(["Morning brief", "Today", "Trucks", "Trips", "Why Urja"]);
-    expect(links.map((a) => a.getAttribute("aria-current"))).toEqual([null, null, null, null, "page"]);
+    expect(links.map((a) => a.textContent)).toEqual(["Morning brief", "Today", "Trucks", "Trips", "Why Urja", "The bet"]);
+    expect(links.map((a) => a.getAttribute("aria-current"))).toEqual([null, null, null, null, "page", null]);
   });
 
   it("keeps the default bar on every other route", () => {
-    for (const p of ["/", "/briefs", "/messages", "/trips/0926-04", "/whyx"]) {
+    for (const p of ["/", "/briefs", "/messages", "/trips/0926-04", "/whyx", "/bet", "/bet/tiers", "/trucks/rj14-gb-4521"]) {
       pathname = p;
       const { container, unmount } = renderBar();
       expect(container.querySelector(".askbar")).not.toBeNull();
