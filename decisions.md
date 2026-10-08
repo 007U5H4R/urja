@@ -466,3 +466,16 @@
 - The user asked for the bet in the top nav bar, on desktop, tablet and the phone menu, which changes the IA under the Design Freeze. This supersedes EXE37's "not linked from the nav" for the bet pages; the /why banner and chapter 08 stay.
 - The pill sits after Why Urja and links to /bet. It is current on /bet, /bet/tiers and /trucks/[plate], the bet's pages.
 - TC-023's destination count goes up by one; its other checks are unchanged. Today's hero, its CTA hierarchy and the phone screens' content are unchanged.
+
+## EXE49 · The bet in tabs, and a guided demo — user decision 2026-10-08
+- /bet was one long page. It is split into a tab bar of sub-pages:
+  - Overview (`/bet`, a short summary);
+  - Where we play (`/bet/market`: board, dropped, structural vs hype);
+  - Product (`/bet/product`: 5–10x, streams × autonomy);
+  - Tiers (`/bet/tiers`);
+  - Lender view (`/trucks/[plate]`);
+  - Plan (`/bet/plan`: roadmap, metrics, H1–H7).
+- No content is removed: assumptions collapse into a per-page details list, and each page cites its own sources.
+- "Start the demo" on the /why top bar now opens `/demo`, a six-step guided path: 7 AM message → Today → flagged trip and Flag lab → The bet → Tiers → Lender view. Before, it went straight to `/message`, which is now step 1. `/demo` is not a nav destination (TC-023 stays at the EXE48 count).
+- Why Urja chapter 08 becomes a short map of the bet's tabs.
+- Added the same day at the user's request: a seventh tab, **Artifacts** (`/bet/artifacts`). It lists the deliverables with one line each and a link: the strategy doc, PRD and deck (Claude artifacts, private until the user shares them), plus the research report and bet spec (repo docs on GitHub).
