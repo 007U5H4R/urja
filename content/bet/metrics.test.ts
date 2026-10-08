@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { GUARDRAILS, METRICS_COPY, NORTH_STAR, PRIMARY_METRICS, TARGET_BASIS } from "./metrics";
+import { GUARDRAILS, METRICS_COPY, NORTH_STAR, PRIMARY_METRICS, PRODUCT_NORTH_STAR, TARGET_BASIS } from "./metrics";
 import { isCited } from "./sources";
 import { VERIFIED_DAY, VERIFIED_MONTH } from "./trust";
 
@@ -14,6 +14,17 @@ describe("TASK-28 · metrics", () => {
       "A verified day: the books closed, every trip reconciled, and no unresolved flag older than 48 h.",
     ]);
     expect(NORTH_STAR.why).toBe("It ties owner value (closed books) to the asset a lender trusts.");
+  });
+
+  it("EXE50: the North Star in two layers: Urja's ₹ recovered per truck per month, guarded by wrong flags under 10%, under the bet's", () => {
+    expect(PRODUCT_NORTH_STAR.label).toBe("North Star · Urja, the munshi");
+    expect(PRODUCT_NORTH_STAR.name).toBe("₹ recovered per truck per month");
+    expect(PRODUCT_NORTH_STAR.guardrail).toBe("Guardrail: wrong flags under 10%.");
+    expect(PRODUCT_NORTH_STAR.why).toBe("Urja wins when owners recover money they’d otherwise lose. If it cries wolf, trust disappears.");
+    expect(NORTH_STAR.label).toBe("North Star · the SuprFleet bet, the layer above");
+    // The guardrail is the same line as the wrong-flag guardrail, and the metric one of the primary metrics.
+    expect(GUARDRAILS[0].threshold).toBe("Under 10%");
+    expect(PRIMARY_METRICS.map((m) => m.name)).toContain(PRODUCT_NORTH_STAR.name);
   });
 
   it("lists bet-spec's six primary metrics", () => {

@@ -23,6 +23,7 @@ export const ROADMAP: readonly RoadmapPhase[] = [
       "L1–L2",
       "3 pilot fleets in Jaipur, Kishangarh and Delhi",
       "Measure the wrong-flag rate before owners see flags",
+      "Start NBFC referral-pilot talks",
     ],
   },
   {

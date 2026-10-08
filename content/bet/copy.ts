@@ -87,10 +87,10 @@ export const BET_PLAN: BetTabPageCopy = {
   path: "/bet/plan",
   title: "Roadmap, metrics and hypotheses · Urja",
   description:
-    "The three phases and what we are not building, the North Star of verified truck-months with its guardrails, and the seven hypotheses inside the bet, all untested by field calls.",
+    "The three phases and what we are not building, the North Star in two layers (₹ recovered per truck per month, then verified truck-months) with its guardrails, and the seven hypotheses inside the bet, none of them field-tested yet.",
   eyebrow: "The bet · plan",
   h1: "Roadmap, metrics and what we're testing",
-  thesis: "Three phases, one North Star, and seven bets inside the bet that no field call has tested yet.",
+  thesis: "Three phases, a North Star in two layers, and seven bets inside the bet, not field-tested yet.",
 };
 
 /** /bet/artifacts: the deliverables, one line each. */
@@ -98,7 +98,7 @@ export const BET_ARTIFACTS: BetTabPageCopy = {
   path: "/bet/artifacts",
   title: "Artifacts · Urja",
   description:
-    "The written work behind this prototype: the strategy doc, the PRD, the slide deck, the research report, the bet spec and the decisions log, one line each.",
+    "The written work behind this prototype: the strategy doc, the PRD, the slide deck, the pitch script, the research report, the bet spec and the decisions log, one line each.",
   eyebrow: "The bet · artifacts",
   h1: "Artifacts",
   thesis: "The written work behind this prototype, one line each.",

@@ -1,8 +1,11 @@
 import { ClaimList } from "@/components/bet/ClaimList";
-import type { Guardrail, METRICS_COPY, NORTH_STAR, PrimaryMetric, Target } from "@/content/bet/metrics";
+import type { Guardrail, METRICS_COPY, NORTH_STAR, PRODUCT_NORTH_STAR, PrimaryMetric, Target } from "@/content/bet/metrics";
 import { OvSection } from "./OvSection";
 
 export interface MetricsProps {
+  /** EXE50: Urja's own North Star, the first layer. */
+  product: typeof PRODUCT_NORTH_STAR;
+  /** The bet's North Star, the layer above. */
   northStar: typeof NORTH_STAR;
   primary: readonly PrimaryMetric[];
   guardrails: readonly Guardrail[];
@@ -22,15 +25,26 @@ function TargetLine({ target }: { target: Target }) {
   );
 }
 
-/** bet-spec §9: the North Star and its definition, then the primary metrics and the guardrails. */
-export function Metrics({ northStar, primary, guardrails, copy, order }: MetricsProps) {
+/**
+ * bet-spec §9 with EXE50's two layers: Urja's North Star and its guardrail, then the bet's North
+ * Star and its definition; then the primary metrics and the guardrails.
+ */
+export function Metrics({ product, northStar, primary, guardrails, copy, order }: MetricsProps) {
   return (
     <OvSection id="metrics">
-      <div className="ov-nsm">
-        <p className="ov-kicker">{northStar.label}</p>
-        <p className="ov-nsm-name">{northStar.name}</p>
-        <p className="ov-nsm-why">{northStar.why}</p>
-        <ClaimList claims={northStar.definition} order={order} className="ov-nsm-def" deferBasis />
+      <div className="ov-nsm-layers">
+        <div className="ov-nsm ov-nsm-product">
+          <p className="ov-kicker">{product.label}</p>
+          <p className="ov-nsm-product-name">{product.name}</p>
+          <p className="ov-nsm-guard">{product.guardrail}</p>
+          <p className="ov-nsm-why">{product.why}</p>
+        </div>
+        <div className="ov-nsm">
+          <p className="ov-kicker">{northStar.label}</p>
+          <p className="ov-nsm-name">{northStar.name}</p>
+          <p className="ov-nsm-why">{northStar.why}</p>
+          <ClaimList claims={northStar.definition} order={order} className="ov-nsm-def" deferBasis />
+        </div>
       </div>
       <div className="ov-metric-cols">
         <div>

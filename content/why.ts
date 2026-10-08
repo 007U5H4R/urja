@@ -32,6 +32,21 @@ export function getWhyView(): WhyView {
   };
 }
 
+/**
+ * Chapter 01 (TASK-34, EXE50): the user's own story, in the first person. It was one
+ * conversation, not a study; the illustrative quotes and the research line follow it.
+ */
+export const ORIGIN = {
+  label: "How it started",
+  title: "It started with a lunch stop.",
+  body: [
+    "A few months ago I was riding my bike from Bengaluru to Mysore. Halfway, I stopped at a small dhaba for lunch and got talking to a truck owner sitting nearby. I asked how many trucks he owned. “24.”",
+    "That changed the conversation. I asked: “How much money did your fleet actually make yesterday?” He couldn’t answer straight away. He depended on his munshi, registers and phone calls, and he would often find out something was wrong at month end, when the money was already gone.",
+    "That was one conversation, not a study. But it pointed to a trust and visibility problem, not a dashboard problem.",
+    "He doesn’t want another complicated system. He wants to be told every morning what happened yesterday, how much he earned, where the money doesn’t add up, and the evidence. That’s where Urja came from.",
+  ],
+} as const;
+
 /** Chapter 03: what each product does well, and what the small-fleet owner still lacks. */
 export interface Competitor {
   name: string;
@@ -67,8 +82,8 @@ export const PIPELINE: readonly PipeNode[] = [
 ];
 
 /**
- * Chapter 05: the North Star (lit), with ₹ recovered per truck as a primary metric, and the
- * guardrail. The tiles name units, not amounts (bet-spec §8–§9: the North Star is verified truck-months).
+ * Chapter 05 (EXE50): Urja's North Star (lit), ₹ recovered per truck per month, and its guardrail,
+ * wrong flags under 10%. The tiles name units, not amounts. METRICS_LAYER names the bet's layer above.
  */
 export interface MetricTile {
   label: string;
@@ -84,26 +99,30 @@ export interface MetricTile {
 export const METRICS: readonly MetricTile[] = [
   {
     label: "North Star",
-    ariaLabel: "North Star: verified truck-months",
-    value: "Verified",
-    unit: "truck-months",
+    ariaLabel: "North Star: ₹ recovered per truck per month",
+    value: "₹ recovered",
+    unit: "per truck per month",
     lit: true,
-    lead: "Primary metric: ₹ recovered per truck per month.",
+    lead: "Urja wins when owners recover money they’d otherwise lose.",
     detail: "Leading signals: share of mornings the owner opens the brief; share of flags acted on within 24 hours.",
   },
   {
     label: "Guardrail",
-    ariaLabel: "Guardrail: under 10 percent wrong flags",
+    ariaLabel: "Guardrail: wrong flags under 10 percent",
     value: "< 10%",
     unit: "wrong flags",
     lit: false,
-    lead: "False-accusation rate under 10%:",
+    lead: "Wrong flags under 10%:",
     detail:
-      "flags the driver disputes and the owner accepts as innocent. If Urja works too well, owners blame drivers for sensor glitches and good drivers leave. Watch driver 90-day retention too.",
+      "flags the driver disputes and the owner accepts as innocent. If Urja cries wolf, trust disappears, and good drivers leave. Watch driver 90-day retention too.",
   },
 ];
 
-/** Chapter 06: what I'd do if I joined. */
+/** Chapter 05's one line under the tiles: the SuprFleet bet's North Star, the layer above (EXE50). */
+export const METRICS_LAYER =
+  "For the SuprFleet bet, the layer above is verified truck-months: the record a lender can finance against.";
+
+/** Chapter 06: what I'd do if I joined; the user's plan, in order (EXE50). */
 export interface PlanPhase {
   phase: string;
   text: string;
@@ -112,15 +131,15 @@ export interface PlanPhase {
 export const FIRST_90_DAYS: readonly PlanPhase[] = [
   {
     phase: "Days 1–30",
-    text: "Sit with 15 fleet owners and their munshis in Jaipur, Kishangarh and Delhi transport hubs. Map how a trip is reconciled today, and what they do when diesel goes missing.",
+    text: "Sit with 15 fleet owners and their munshis. Map how a trip is reconciled today, and what they do when the money doesn’t add up.",
   },
   {
     phase: "Days 31–60",
-    text: "Pilot the five rules in shadow mode on 3 fleets’ real CAN data. Measure the false-flag rate before any owner sees a flag.",
+    text: "Run the five rules on 3 fleets’ real CAN/telematics data. Measure the wrong-flag rate, and improve the rules before any owner sees a flag.",
   },
   {
     phase: "Days 61–90",
-    text: "Ship the WhatsApp brief to the pilot owners, and start referral-pilot talks with one NBFC. Go or no-go on ₹ recovered per truck and the guardrail.",
+    text: "Ship the morning brief and Ask Urja to the pilot owners. Then go or no-go, on ₹ recovered per truck and the wrong-flag guardrail.",
   },
 ];
 
@@ -145,7 +164,7 @@ export const BET_TABS: readonly BetTab[] = [
   { tab: "Tiers", href: "/bet/tiers", line: "What each tier does, and who pays for it." },
   { tab: "Lender view", href: "/trucks/rj14-gb-4521", line: "One truck’s verified record, as a lender would read it." },
   { tab: "Plan", href: "/bet/plan", line: "The roadmap, the metrics, and the hypotheses H1–H7 still to test." },
-  { tab: "Artifacts", href: "/bet/artifacts", line: "The strategy doc, the PRD, the deck and the research report." },
+  { tab: "Artifacts", href: "/bet/artifacts", line: "The strategy doc, the PRD, the deck, the pitch script and the research report." },
 ];
 
 /**
@@ -157,6 +176,8 @@ export const BET_CHAPTER = {
   n: "08",
   label: "The bet",
   title: "From closed books to credit, with the owner’s consent.",
+  /** TASK-34 (EXE50): links the story to the bet, before the body. */
+  lead: "Once the owner trusts the morning answer, the same verified record becomes credit.",
   body: [
     "Urja is the munshi core: it closes a fleet owner’s books every morning. The SuprFleet bet, my answer to the SuprFleet 2030 brief, builds on it in steps: from closed books to verified truck-months a lender can finance against, then to loans through a lending partner, made only with the owner’s consent.",
     "This is a prototype on simulated data, and the research behind the bet is unverified until each source is opened and quoted.",

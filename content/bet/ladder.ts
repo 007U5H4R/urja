@@ -58,7 +58,7 @@ export const LADDER_CLAIMS: readonly Claim[] = [
   {
     text: "Owners pay for actions, not dashboards, so each tier unlocks the next rung.",
     assumption: true,
-    basis: "The bet-spec §7 tier table; untested by field calls (bet-spec §5).",
+    basis: "The bet-spec §7 tier table; not field-tested yet (bet-spec §5).",
   },
 ];
 

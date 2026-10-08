@@ -2,11 +2,29 @@ import { describe, expect, it } from "vitest";
 import { ARTIFACTS, ARTIFACTS_ACCESS, ARTIFACTS_ALLOWED_HOSTS, ARTIFACTS_NOTE } from "./artifacts";
 
 // TASK-32 (EXE49): /bet/artifacts lists the deliverables, one line each, with a safe link.
+// TASK-34 (EXE50): a seventh card, the pitch script.
 
 describe("TASK-32 · artifacts", () => {
-  it("lists the six deliverables in order", () => {
-    expect(ARTIFACTS.map((a) => a.title)).toEqual(["Strategy doc", "PRD", "Slide deck", "Research report", "Bet spec", "Decisions log"]);
-    expect(new Set(ARTIFACTS.map((a) => a.id)).size).toBe(6);
+  it("lists the seven deliverables in order", () => {
+    expect(ARTIFACTS.map((a) => a.title)).toEqual([
+      "Strategy doc",
+      "PRD",
+      "Slide deck",
+      "Pitch script",
+      "Research report",
+      "Bet spec",
+      "Decisions log",
+    ]);
+    expect(new Set(ARTIFACTS.map((a) => a.id)).size).toBe(7);
+  });
+
+  it("TASK-34: the pitch script card links its Claude artifact and opens if shared", () => {
+    expect(ARTIFACTS.find((a) => a.id === "pitch-script")).toMatchObject({
+      title: "Pitch script",
+      description: "The 20-minute talk track, the demo click by click, and the hard questions.",
+      href: "https://claude.ai/code/artifact/d78dfca4-4bb6-4699-8c9e-94df6b5f7d70",
+      access: "shared",
+    });
   });
 
   it("every link is https on an allowed host", () => {
@@ -25,7 +43,7 @@ describe("TASK-32 · artifacts", () => {
       expect(a.access, a.id).toBe(host === "claude.ai" ? "shared" : "public");
     }
     expect(ARTIFACTS_ACCESS).toEqual({ shared: "Opens if shared with you", public: "Public" });
-    expect(ARTIFACTS.filter((a) => a.access === "shared")).toHaveLength(3);
+    expect(ARTIFACTS.filter((a) => a.access === "shared")).toHaveLength(4);
   });
 
   it("each card has a one-line description and a format", () => {

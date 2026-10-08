@@ -2,15 +2,16 @@ import { axeBuilder } from "./axe";
 import { expect, test, type Page } from "./fixtures";
 
 // TASK-33 (EXE49): /demo, the six-step guided path "Start the demo" opens on Why Urja.
+// TASK-34 (EXE50): told as the story, from the lunch stop to what a lender sees.
 // Not a nav destination (TC-023 stays at EXE48's count): no pill or menu item is current on it.
 
 const STEPS: [string, string][] = [
-  ["The 7 AM message", "/message"],
-  ["Today", "/"],
-  ["A flagged trip and the Flag lab", "/trips/0926-04#flag-lab"],
-  ["The bet", "/bet"],
-  ["Tiers and who pays", "/bet/tiers"],
-  ["The lender view", "/trucks/rj14-gb-4521"],
+  ["7 AM: one message, in Hindi", "/message"],
+  ["Rupees, not data", "/"],
+  ["Tap for the evidence", "/trips/0926-04#flag-lab"],
+  ["When the money is trusted, the record becomes credit", "/bet"],
+  ["Who pays", "/bet/tiers"],
+  ["What a lender sees", "/trucks/rj14-gb-4521"],
 ];
 
 function collectErrors(page: Page): string[] {
@@ -34,12 +35,21 @@ test("/demo answers 200 with one h1, the prototype intro and six numbered steps"
   await expect(intro).toContainText("prototype");
   await expect(intro).toContainText("simulated");
   await expect(intro).toContainText("Mon 28 Sep 2026, 7:12 AM");
+  await expect(page.locator("main .demo-story")).toContainText("It started with a lunch stop");
+  await expect(page.locator("main .demo-meet")).toHaveText("Urja is built for owners like him. Meet Mr. Sharma: 24 trucks out of Jaipur (simulated).");
   await expect(steps(page)).toHaveCount(6);
   await expect(steps(page).locator("h2")).toHaveText(STEPS.map(([t]) => t));
   // Today's figures, computed from the data (HANDOFF.md fixed numbers).
   await expect(steps(page).nth(1)).toContainText("₹1,86,400");
   await expect(steps(page).nth(1)).toContainText("₹11,430");
+  // Trip 0926-04's evidence, from the trip view.
+  for (const fact of ["RJ14 GB 4521", "near Behror", "2:14 AM", "38 L in 26 minutes", "₹3,420", "doesn’t add up"]) {
+    await expect(steps(page).nth(2)).toContainText(fact);
+  }
   await expect(steps(page).nth(5)).toContainText("27 of 180 verified days");
+  await expect(page.locator("main .demo-close")).toHaveText(
+    "One morning. One answer. In rupees. With evidence. And with the driver’s side of the story.",
+  );
   await page.waitForLoadState("networkidle");
   expect(errors).toEqual([]);
 });

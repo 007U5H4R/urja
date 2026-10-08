@@ -1,5 +1,5 @@
 /**
- * The metrics for /bet (TASK-28; docs/bet/bet-spec.md §9, frozen): the North Star, the primary
+ * The metrics for /bet (TASK-28; docs/bet/bet-spec.md §9, frozen): the North Star in two layers (EXE50), the primary
  * metrics and the guardrails, with the EXE47 targets as labelled assumptions. The North Star's
  * definition is the verified ledger's own (bet-spec §8, content/bet/trust.ts), so the overview and
  * the lender view can't drift apart.
@@ -8,8 +8,19 @@
 import type { Claim } from "./sources";
 import { VERIFIED_DAY, VERIFIED_MONTH } from "./trust";
 
+/**
+ * EXE50: the North Star in two layers. Urja's own (the munshi): ₹ recovered per truck per month,
+ * guarded by wrong flags under 10% (GUARDRAILS[0]'s line); the bet's NORTH_STAR is the layer above.
+ */
+export const PRODUCT_NORTH_STAR = {
+  label: "North Star · Urja, the munshi",
+  name: "₹ recovered per truck per month",
+  guardrail: "Guardrail: wrong flags under 10%.",
+  why: "Urja wins when owners recover money they’d otherwise lose. If it cries wolf, trust disappears.",
+} as const;
+
 export const NORTH_STAR = {
-  label: "North Star",
+  label: "North Star · the SuprFleet bet, the layer above",
   name: "Verified truck-months",
   why: "It ties owner value (closed books) to the asset a lender trusts.",
   /** The definition: a verified truck-month, then a verified day (our definitions, labelled). */

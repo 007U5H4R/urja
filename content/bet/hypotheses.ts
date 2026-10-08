@@ -1,6 +1,6 @@
 /**
  * Hypotheses H1–H7 for /bet (TASK-28; docs/bet/bet-spec.md §5, research report §10). All seven
- * are untested by field calls; each carries the research for and against it, cited no further
+ * are not field-tested yet; each carries the research for and against it, cited no further
  * than each snippet or labelled as an assumption. Claims shared with other bet pages are the
  * same objects, so the wording can't drift. Pure copy: nothing here imports lib/data.
  */
@@ -13,8 +13,8 @@ import { LEAKAGE_ZERO_AT_SHARE } from "./trust";
 
 export type HypothesisId = "H1" | "H2" | "H3" | "H4" | "H5" | "H6" | "H7";
 
-/** Every hypothesis carries this label: no owner, driver, munshi or lender was interviewed. */
-export const UNTESTED = "Untested: no field calls";
+/** Every hypothesis carries this label: not field-tested: no structured interviews yet. */
+export const UNTESTED = "Not field-tested yet";
 
 export interface Hypothesis {
   id: HypothesisId;
@@ -147,7 +147,7 @@ export const HYPOTHESES: readonly Hypothesis[] = [
 ];
 
 export const HYPOTHESES_COPY = {
-  lede: "Seven bets inside the bet. No field calls were made, so every one is untested; the research leans for or against.",
+  lede: "Seven bets inside the bet. None is field-tested yet; the research leans for or against.",
   forLabel: "Research for",
   againstLabel: "Research against",
   verdictLabel: "Verdict",

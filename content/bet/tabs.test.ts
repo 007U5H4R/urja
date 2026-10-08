@@ -25,7 +25,7 @@ describe("TASK-32 · the bet's tabs", () => {
       expect(t.summary.length, t.id).toBeLessThanOrEqual(110);
     }
     expect(BET_TABS.find((t) => t.id === "artifacts")?.summary).toBe(
-      "The strategy doc, PRD, deck, research report, bet spec and decisions log, one line each.",
+      "The strategy doc, PRD, deck, pitch script, research report, bet spec and decisions log.",
     );
   });
 
