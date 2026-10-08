@@ -38,8 +38,19 @@ test("/why ends with chapter 08, the bet, whose links all resolve", async ({ pag
   await expect(primary).toHaveAttribute("href", "/bet");
   await expect(primary).toHaveClass(/btn-lamp/);
   const hrefs = await c8.locator("a").evaluateAll((as) => as.map((a) => a.getAttribute("href")!));
-  expect(hrefs).toEqual(["/bet", "/trips/0926-04#flag-lab", "/bet/tiers", "/trucks/rj14-gb-4521"]);
-  for (const href of hrefs) expect((await page.request.get(href)).status(), href).toBe(200);
+  // TASK-33 (EXE49): a map of the bet's tabs, one link each; Product also links the Flag lab.
+  expect(hrefs).toEqual([
+    "/bet",
+    "/bet/market",
+    "/bet/product",
+    "/trips/0926-04#flag-lab",
+    "/bet/tiers",
+    "/trucks/rj14-gb-4521",
+    "/bet/plan",
+    "/bet/artifacts",
+  ]);
+  await expect(c8.locator("ul.bet-more > li > a:first-child")).toHaveText(["Where we play", "Product", "Tiers", "Lender view", "Plan", "Artifacts"]);
+  for (const href of hrefs) expect.soft((await page.request.get(href)).status(), href).toBe(200);
 
   await c8.scrollIntoViewIfNeeded();
   await page.waitForLoadState("networkidle");

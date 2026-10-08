@@ -8,6 +8,7 @@ import {
   betProductMetadata,
   betTiersMetadata,
   briefMetadata,
+  demoMetadata,
   messageMetadata,
   todayMetadata,
   tripMetadata,
@@ -109,6 +110,15 @@ describe("per-page metadata (technical-plan §9)", () => {
     );
   });
 
+  it("The demo (TASK-33): its title, and the simulated fleet and demo clock in the description", () => {
+    const m = demoMetadata();
+    expect(m.title).toEqual({ absolute: "The demo · Urja" });
+    expect(og(m)).toMatchObject({ url: "/demo", title: "The demo · Urja", images: [OG_IMAGE] });
+    expect(m.alternates).toEqual({ canonical: "/demo" });
+    expect(m.description).toMatch(/simulated/);
+    expect(m.description).toContain("Mon 28 Sep 2026, 7:12 AM");
+  });
+
   it("returns null for a plate outside the fleet", () => {
     expect(truckMetadata("XX 00 ZZ 0000")).toBeNull();
   });
@@ -127,6 +137,7 @@ describe("per-page metadata (technical-plan §9)", () => {
       betPlanMetadata(),
       betArtifactsMetadata(),
       truckMetadata("RJ14 GB 4521")!,
+      demoMetadata(),
     ];
     const text = JSON.stringify(all);
     expect(text).not.toMatch(/theft|stolen|stole|thief|चोरी|चुराया|चोर/i);

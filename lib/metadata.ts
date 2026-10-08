@@ -5,6 +5,7 @@
  */
 import type { Metadata } from "next";
 import { BET_ARTIFACTS, BET_MARKET, BET_OVERVIEW, BET_PLAN, BET_PRODUCT, BET_TIERS, type BetTabPageCopy } from "@/content/bet/copy";
+import { DEMO_COPY } from "@/content/demo";
 import { WHY_TITLE } from "@/content/why";
 import { plateToSlug } from "@/lib/bet/slug";
 import type { Lang } from "@/lib/brief/dict";
@@ -43,6 +44,12 @@ export function whyMetadata(): Metadata {
       "Fleet owners learn where their money leaked at month end. Urja tells them the next morning. What the concept is, and what in this prototype is simulated.",
     path: "/why",
   });
+}
+
+/** The guided demo (TASK-33, EXE49). */
+export function demoMetadata(): Metadata {
+  const { title, description, path } = DEMO_COPY;
+  return pageMetadata({ title: { absolute: title }, description, path });
 }
 
 /** Null for an id with no trip page. */

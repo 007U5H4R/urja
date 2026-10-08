@@ -20,7 +20,7 @@ function initials(name: string): string {
 /**
  * The top bar on every route: a port of final/index.html lines 15–30. On /why
  * it follows final/why.html lines 125–137 instead: no Ask trigger or fleet
- * chip, and a "Start the demo" button before the menu. On the phone screens
+ * chip, and a "Start the demo" button (to /demo, EXE49) before the menu. On the phone screens
  * (/brief, /message) it renders nothing: they carry their own bar and menu (EXE12).
  * Nor on /og-card, the link-preview card scripts/render-og.ts screenshots (§9).
  * A "Skip to content" link comes first in it (DES-32).
@@ -46,8 +46,9 @@ export function TopBar({ fleetName, truckCount }: TopBarProps) {
           <div className="spacer"></div>
           <RouteVariant
             why={
-              // /message has the phone screens' root layout (EXE23): a full page load, not prefetched.
-              <Link className="btn btn-line" href="/message" prefetch={false}>
+              // EXE49: it opens the guided demo (/demo), whose first step is /message. Not prefetched:
+              // the button is a deliberate start, not a likely next click.
+              <Link className="btn btn-line" href="/demo" prefetch={false}>
                 Start the demo
               </Link>
             }

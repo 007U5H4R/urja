@@ -1,0 +1,21 @@
+/* /demo (TASK-33, EXE49): the guided path. Lamplight tokens and lamp.css classes only
+   (.wrap, .pagehead, .verdict, .panel, .btn); this file lays out the numbered steps.
+   Every selector is scoped under .demo so nothing reaches other routes after client navigation. */
+@layer components {
+  .demo { padding-bottom: 64px; }
+  .demo .demo-intro { margin-top: 14px; max-width: 62ch; color: var(--fg-muted); line-height: 1.6; }
+  .demo .demo-steps { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 12px; max-width: 920px; }
+  .demo .demo-steps > li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 18px; padding: 18px 20px; }
+  .demo .demo-n { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%;
+    background: var(--surface-2); box-shadow: 0 0 0 1px var(--line); color: var(--lamp); font-size: var(--t-sm); font-weight: 560;
+    font-variant-numeric: tabular-nums; }
+  .demo .demo-steps > li:first-child .demo-n { background: var(--cream); color: var(--lamp-ink); box-shadow: 0 0 12px var(--glow); }
+  .demo .demo-body h2 { font-size: var(--t-h2); font-weight: 560; letter-spacing: -0.01em; }
+  .demo .demo-body p { margin-top: 4px; color: var(--fg-muted); font-size: var(--t-sm); line-height: 1.55; }
+  .demo .demo-steps .btn { min-height: fit-content; }
+  @media (pointer: coarse) { .demo .demo-steps .btn { height: 44px; } }
+  @media (max-width: 640px) {
+    .demo .demo-steps > li { grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 12px 14px; padding: 16px; }
+    .demo .demo-steps .btn { grid-column: 2; justify-self: start; white-space: normal; }
+  }
+}

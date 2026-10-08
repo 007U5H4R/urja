@@ -105,10 +105,13 @@
   .essay .plan .ph { font-size: var(--t-sm); font-weight: 560; color: var(--lamp); font-variant-numeric: tabular-nums; }
   .essay .plan .ph + p { margin-top: 8px; color: var(--fg-muted); line-height: 1.6; }
 
-  /* 08 · the bet (TASK-29): one primary action, then three quiet deep links */
+  /* 08 · the bet (TASK-29): one primary action, then a quiet map of the bet's tabs (TASK-33):
+     each tab's name is its link, with one muted line after it. */
   .essay .bet-go { margin-top: 28px; }
   .essay .bet-more-lead { margin-top: 22px; font-size: var(--t-sm); color: var(--fg-subtle); }
-  .essay .bet-more { list-style: none; padding: 0; margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px 22px; }
+  .essay .bet-more { list-style: none; padding: 0; margin-top: 6px; display: grid; gap: 4px; max-width: 72ch; }
+  .essay .bet-more li { color: var(--fg-muted); line-height: 1.5; }
+  .essay .bet-more .line::before { content: " · "; color: var(--fg-subtle); }
   .essay .bet-more a { display: inline-flex; align-items: center; min-height: 24px; padding-block: 2px; color: var(--fg);
     text-decoration: underline; text-decoration-color: var(--lamp-line); text-underline-offset: 3px; }
   .essay .bet-more a:hover { text-decoration-color: var(--lamp); }

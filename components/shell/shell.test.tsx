@@ -322,7 +322,7 @@ describe("TopBar on /why (final/why.html lines 125–137)", () => {
       "details.m-menu",
     ]);
     const demo = screen.getByRole("link", { name: "Start the demo" });
-    expect(demo.getAttribute("href")).toBe("/message");
+    expect(demo.getAttribute("href")).toBe("/demo");
     expect(container.querySelector(".askbar, .fleet")).toBeNull();
   });
 
@@ -337,7 +337,7 @@ describe("TopBar on /why (final/why.html lines 125–137)", () => {
   });
 
   it("keeps the default bar on every other route", () => {
-    for (const p of ["/", "/briefs", "/messages", "/trips/0926-04", "/whyx", "/bet", "/bet/tiers", "/trucks/rj14-gb-4521"]) {
+    for (const p of ["/", "/briefs", "/messages", "/trips/0926-04", "/whyx", "/bet", "/bet/tiers", "/trucks/rj14-gb-4521", "/demo"]) {
       pathname = p;
       const { container, unmount } = renderBar();
       expect(container.querySelector(".askbar")).not.toBeNull();
@@ -345,6 +345,21 @@ describe("TopBar on /why (final/why.html lines 125–137)", () => {
       expect(container.querySelector(".wrap > a.btn")).toBeNull();
       unmount();
     }
+  });
+});
+
+describe("TopBar on /demo (TASK-33, EXE49)", () => {
+  it("is the default bar, and no pill or menu item is current: /demo is not a nav destination", () => {
+    pathname = "/demo";
+    renderBar();
+    const pills = screen.getByRole("navigation", { name: "Main" });
+    expect(within(pills).queryByRole("link", { current: "page" })).toBeNull();
+    const nav = screen.getByRole("navigation", { name: "Main (mobile)", hidden: true });
+    const items = within(nav).getAllByRole("link", { hidden: true });
+    expect(items.length).toBeGreaterThanOrEqual(6);
+    expect(items.filter((a) => a.hasAttribute("aria-current"))).toEqual([]);
+    expect(NAV_PILLS.map((p) => p.href)).not.toContain("/demo");
+    expect(MENU_HREFS).not.toContain("/demo");
   });
 });
 
