@@ -4,7 +4,7 @@ import { HYPOTHESES, UNTESTED, hypothesisClaims } from "./hypotheses";
 import { isCited, sourceById, type Claim } from "./sources";
 import { PRICE_ANCHORS } from "./tiers";
 
-// TASK-28 · H1–H7 (bet-spec §5): all untested by field calls, each with the research for and against.
+// TASK-28 · H1–H7 (bet-spec §5): all not field-tested yet, each with the research for and against.
 
 function expectHonest(claim: Claim) {
   expect(claim.text.trim(), claim.text).not.toBe("");
@@ -24,8 +24,9 @@ describe("TASK-28 · hypotheses", () => {
     expect(HYPOTHESES[6].statement).toBe("Insurers would price on telemetry (India)");
   });
 
-  it("labels every one untested: no field calls", () => {
-    expect(UNTESTED).toBe("Untested: no field calls");
+  // EXE50: the wording is "not field-tested yet" (was "Untested: no field calls").
+  it("labels every one not field-tested yet", () => {
+    expect(UNTESTED).toBe("Not field-tested yet");
     for (const h of HYPOTHESES) expect(h.status, h.id).toBe(UNTESTED);
   });
 

@@ -3,8 +3,9 @@ import { Icon } from "@/components/ui/Icon";
 import { DEMO_COPY, type DemoView } from "@/content/demo";
 
 /**
- * /demo (TASK-33, EXE49): the guided path "Start the demo" opens. A page head, then six numbered
- * steps, each a panel with a title, one line on what to look at, and a link. Lamp.css classes
+ * /demo (TASK-33, EXE49): the guided path "Start the demo" opens. A page head (TASK-34, EXE50: the
+ * lunch stop, Mr. Sharma, then the prototype line), six numbered story steps, each a panel with a
+ * title, one line on what to look at (plus the Flag lab's instruction) and a link, then the closing line. Lamp.css classes
  * (.wrap, .pagehead, .verdict, .panel, .btn) plus components/demo/demo.css.
  */
 export function DemoGuide({ view }: { view: DemoView }) {
@@ -15,6 +16,12 @@ export function DemoGuide({ view }: { view: DemoView }) {
           <h1 className="verdict" id="h1">
             {DEMO_COPY.h1}
           </h1>
+          {view.story.map((t) => (
+            <p key={t} className="demo-story">
+              {t}
+            </p>
+          ))}
+          <p className="demo-meet">{view.meet}</p>
           <p className="demo-intro">{view.intro}</p>
         </div>
       </section>
@@ -29,6 +36,7 @@ export function DemoGuide({ view }: { view: DemoView }) {
               <div className="demo-body">
                 <h2 id={id}>{s.title}</h2>
                 <p>{s.look}</p>
+                {s.note ? <p className="demo-note">{s.note}</p> : null}
               </div>
               {/* The message is another root layout (EXE23): a full page load, so no prefetch. */}
               <Link className={`btn ${i === 0 ? "btn-lamp" : "btn-line"}`} href={s.href} prefetch={s.crossLayout ? false : undefined}>
@@ -39,6 +47,7 @@ export function DemoGuide({ view }: { view: DemoView }) {
           );
         })}
       </ol>
+      <p className="demo-close">{view.close}</p>
     </main>
   );
 }

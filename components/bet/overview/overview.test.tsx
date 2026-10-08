@@ -12,7 +12,7 @@ import { BOARD_COPY, BOARD_JOBS, BOARD_ROWS, DROPPED } from "@/content/bet/board
 import { BET_OVERVIEW } from "@/content/bet/copy";
 import { HYPOTHESES, HYPOTHESES_COPY, UNTESTED } from "@/content/bet/hypotheses";
 import { HYPE, HYPE_COPY, STRUCTURAL } from "@/content/bet/hype";
-import { GUARDRAILS, METRICS_COPY, NORTH_STAR, PRIMARY_METRICS } from "@/content/bet/metrics";
+import { GUARDRAILS, METRICS_COPY, NORTH_STAR, PRIMARY_METRICS, PRODUCT_NORTH_STAR } from "@/content/bet/metrics";
 import {
   AUTONOMY,
   BOARD_INTRO,
@@ -217,9 +217,23 @@ describe("Roadmap and Metrics", () => {
     expect([...container.querySelectorAll(".ov-not-list li")].map((li) => li.textContent)).toEqual([...NOT_BUILDING]);
   });
 
+  it("EXE50: leads with the North Star in two layers: Urja's, guarded, then the bet's", () => {
+    const { container } = render(
+      <Metrics product={PRODUCT_NORTH_STAR} northStar={NORTH_STAR} primary={PRIMARY_METRICS} guardrails={GUARDRAILS} copy={METRICS_COPY} order={order} />,
+    );
+    const layers = [...container.querySelectorAll(".ov-nsm-layers > .ov-nsm")];
+    expect(layers).toHaveLength(2);
+    expect(layers.map((l) => l.querySelector(".ov-kicker")?.textContent)).toEqual([PRODUCT_NORTH_STAR.label, NORTH_STAR.label]);
+    expect(layers[0].querySelector(".ov-nsm-product-name")?.textContent).toBe("₹ recovered per truck per month");
+    expect(layers[0].querySelector(".ov-nsm-guard")?.textContent).toBe(PRODUCT_NORTH_STAR.guardrail);
+    expect(layers[0].querySelector(".ov-nsm-why")?.textContent).toBe(PRODUCT_NORTH_STAR.why);
+    expect(layers[0].querySelector(".ov-nsm-name")).toBeNull();
+    expect(layers[1].querySelector(".ov-nsm-name")?.textContent).toBe("Verified truck-months");
+  });
+
   it("leads with the North Star, verified truck-months, and its definition", () => {
     const { container } = render(
-      <Metrics northStar={NORTH_STAR} primary={PRIMARY_METRICS} guardrails={GUARDRAILS} copy={METRICS_COPY} order={order} />,
+      <Metrics product={PRODUCT_NORTH_STAR} northStar={NORTH_STAR} primary={PRIMARY_METRICS} guardrails={GUARDRAILS} copy={METRICS_COPY} order={order} />,
     );
     expect(container.querySelector(".ov-nsm-name")?.textContent).toBe("Verified truck-months");
     const def = [...container.querySelectorAll(".ov-nsm-def > li")];
@@ -238,7 +252,7 @@ describe("Roadmap and Metrics", () => {
 
   it("EXE47: each target shows its line with the Assumption tag and basis; driver retention alone has no line", () => {
     const { container } = render(
-      <Metrics northStar={NORTH_STAR} primary={PRIMARY_METRICS} guardrails={GUARDRAILS} copy={METRICS_COPY} order={order} />,
+      <Metrics product={PRODUCT_NORTH_STAR} northStar={NORTH_STAR} primary={PRIMARY_METRICS} guardrails={GUARDRAILS} copy={METRICS_COPY} order={order} />,
     );
     const rows = [...container.querySelectorAll(".ov-metric-list > li")];
     expect(rows).toHaveLength(PRIMARY_METRICS.length + GUARDRAILS.length);
@@ -360,6 +374,7 @@ describe("/bet/plan", () => {
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Roadmap, metrics and what we're testing");
     expect(screen.getByRole("navigation", { name: "The bet" }).querySelector('[aria-current="page"]')?.textContent).toBe("Plan");
     expect(container.querySelector(".ov-nsm-name")?.textContent).toBe("Verified truck-months");
+    expect(container.querySelector(".ov-nsm-product-name")?.textContent).toBe("₹ recovered per truck per month");
     expect(container.querySelectorAll(".ov-hyp")).toHaveLength(7);
     expectAssumptions(container, [ROADMAP_COPY.claim, ROADMAP_COPY.funding, ...NORTH_STAR.definition, METRICS_COPY.claim]);
     expectOwnSources(container, planClaims());

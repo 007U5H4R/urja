@@ -91,7 +91,7 @@ export const TENX = {
       multiple: "~30x faster",
       today: "Month-end munshi register (~30 days)",
       munshi: "Next morning (1 day)",
-      claims: [{ text: "Month-end reconciliation is typical for a small fleet.", assumption: true, basis: "bet-spec §3; untested by field calls." }],
+      claims: [{ text: "Month-end reconciliation is typical for a small fleet.", assumption: true, basis: "bet-spec §3; not field-tested yet." }],
     },
     {
       id: "hardware",

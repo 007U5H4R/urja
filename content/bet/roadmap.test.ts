@@ -12,6 +12,8 @@ describe("TASK-28 · roadmap", () => {
 
   it("phase 1 starts with the daily close and L1–L2 on existing streams; phase 2 brings the lender and EVs", () => {
     expect(ROADMAP[0].items.join(" ")).toMatch(/daily close.*L1–L2.*Jaipur, Kishangarh and Delhi.*wrong-flag rate/);
+    // EXE50: the bridge to credit starts in phase 1; the partnership itself stays in phase 2.
+    expect(ROADMAP[0].items).toContain("Start NBFC referral-pilot talks");
     expect(ROADMAP[1].items.join(" ")).toMatch(/NBFC lending partnership.*EV 2W\/3W/);
     expect(ROADMAP[2].items.join(" ")).toMatch(/Insurance pricing.*Resale certificates.*Self-closing settlement/);
   });

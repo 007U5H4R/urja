@@ -8,7 +8,7 @@ import { Metrics } from "@/components/bet/overview/Metrics";
 import { Roadmap } from "@/components/bet/overview/Roadmap";
 import { BET_PLAN } from "@/content/bet/copy";
 import { HYPOTHESES, HYPOTHESES_COPY } from "@/content/bet/hypotheses";
-import { GUARDRAILS, METRICS_COPY, NORTH_STAR, PRIMARY_METRICS } from "@/content/bet/metrics";
+import { GUARDRAILS, METRICS_COPY, NORTH_STAR, PRIMARY_METRICS, PRODUCT_NORTH_STAR } from "@/content/bet/metrics";
 import { deferredAssumptions, planClaims } from "@/content/bet/overview";
 import { NOT_BUILDING, ROADMAP, ROADMAP_COPY } from "@/content/bet/roadmap";
 import { citedSourceIds } from "@/content/bet/sources";
@@ -31,7 +31,7 @@ export default function BetPlanPage() {
       <BetHead eyebrow={c.eyebrow} h1={c.h1} thesis={c.thesis} />
       <BetTabs path={c.path} />
       <Roadmap phases={ROADMAP} notBuilding={NOT_BUILDING} copy={ROADMAP_COPY} order={order} />
-      <Metrics northStar={NORTH_STAR} primary={PRIMARY_METRICS} guardrails={GUARDRAILS} copy={METRICS_COPY} order={order} />
+      <Metrics product={PRODUCT_NORTH_STAR} northStar={NORTH_STAR} primary={PRIMARY_METRICS} guardrails={GUARDRAILS} copy={METRICS_COPY} order={order} />
       <Hypotheses hypotheses={HYPOTHESES} copy={HYPOTHESES_COPY} order={order} />
       <Assumptions claims={deferred} order={order} />
       <Sources ids={order} />

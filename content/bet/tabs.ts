@@ -22,8 +22,8 @@ export const BET_TABS: readonly BetTab[] = [
   { id: "product", label: "Product", href: "/bet/product", summary: "The 5–10x over today, and how independent streams unlock autonomy." },
   { id: "tiers", label: "Tiers", href: "/bet/tiers", summary: "Four tiers, what each costs to serve, and who pays for Free." },
   { id: "lender", label: "Lender view", href: "/trucks/rj14-gb-4521", summary: "One truck's verified ledger, read the way a lender would." },
-  { id: "plan", label: "Plan", href: "/bet/plan", summary: "The roadmap, the North Star and its guardrails, and the seven untested hypotheses." },
-  { id: "artifacts", label: "Artifacts", href: "/bet/artifacts", summary: "The strategy doc, PRD, deck, research report, bet spec and decisions log, one line each." },
+  { id: "plan", label: "Plan", href: "/bet/plan", summary: "The roadmap, the North Star in two layers, and the seven hypotheses, not field-tested yet." },
+  { id: "artifacts", label: "Artifacts", href: "/bet/artifacts", summary: "The strategy doc, PRD, deck, pitch script, research report, bet spec and decisions log." },
 ];
 
 /** The tab a path is under: any truck page is the lender view; anything else outside the bet is none. */

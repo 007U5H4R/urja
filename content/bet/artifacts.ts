@@ -50,9 +50,17 @@ export const ARTIFACTS: readonly Artifact[] = [
   {
     id: "deck",
     title: "Slide deck",
-    description: "21 slides for the presentation, with a live-demo path.",
+    description: "27 slides for the presentation, with a live-demo path.",
     format: "Slides · Claude artifact",
     href: "https://claude.ai/artifact/HJDpH4pfSCNyjrH8GwfWuX",
+    access: "shared",
+  },
+  {
+    id: "pitch-script",
+    title: "Pitch script",
+    description: "The 20-minute talk track, the demo click by click, and the hard questions.",
+    format: "Document · Claude artifact",
+    href: "https://claude.ai/code/artifact/d78dfca4-4bb6-4699-8c9e-94df6b5f7d70",
     access: "shared",
   },
   {

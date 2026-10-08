@@ -10,7 +10,7 @@ export interface HypothesesProps {
 
 /**
  * H1–H7 (bet-spec §5), one <details> each: the row shows the hypothesis, a short verdict and
- * "Untested: no field calls"; opened, the full verdict and the research for and against.
+ * "Not field-tested yet" (EXE50); opened, the full verdict and the research for and against.
  */
 export function Hypotheses({ hypotheses, copy, order }: HypothesesProps) {
   return (

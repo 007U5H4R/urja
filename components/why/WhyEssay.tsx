@@ -2,7 +2,7 @@ import Link from "next/link";
 import { BetBanner } from "@/components/bet/BetBanner";
 import { Icon } from "@/components/ui/Icon";
 import type { Quote } from "@/content/field-notes";
-import { BET_CHAPTER, COMPETITORS, FIRST_90_DAYS, METRICS, PIPELINE, type WhyView } from "@/content/why";
+import { BET_CHAPTER, COMPETITORS, FIRST_90_DAYS, METRICS, METRICS_LAYER, ORIGIN, PIPELINE, type WhyView } from "@/content/why";
 import { Chapter } from "./Chapter";
 import { FieldNotes } from "./FieldNotes";
 import { Market } from "./Market";
@@ -17,7 +17,7 @@ export interface WhyEssayProps {
 }
 
 /**
- * Why Urja (final/why.html, main.essay): the owner’s day → owner → market gap → built on
+ * Why Urja (final/why.html, main.essay): how it started (the user's story, EXE50) → owner → market gap → built on
  * Bytebeam → metric and guardrail → first 90 days → what's real (Design.md §25) → the bet (TASK-29), a map of its tabs (TASK-33).
  * The slim bet banner sits below the hero, never above it, so the hero keeps the LCP element (EXE37).
  */
@@ -27,8 +27,11 @@ export function WhyEssay({ view, quotes }: WhyEssayProps) {
       <WhyHero byline={view.byline} />
       <BetBanner className="mt-8 md:mt-10" />
 
-      <Chapter n="01" label="The owner’s day" title="I’m new to trucking. Here’s what owners commonly describe.">
+      <Chapter n="01" label={ORIGIN.label} title={ORIGIN.title}>
         <div className="body">
+          {ORIGIN.body.map((p) => (
+            <p key={p}>{p}</p>
+          ))}
           <FieldNotes quotes={quotes} />
           <p>
             What published research says, to be tested against the field: fuel is about 45–55% of a truck’s operating
@@ -70,12 +73,15 @@ export function WhyEssay({ view, quotes }: WhyEssayProps) {
       <Chapter
         n="05"
         label="How we’ll know"
-        title="One metric that proves the promise, one guardrail for when it works too well."
+        title="One metric that proves the promise, one guardrail that keeps trust."
       >
         <Metrics tiles={METRICS} />
+        <div className="body">
+          <p>{METRICS_LAYER}</p>
+        </div>
       </Chapter>
 
-      <Chapter n="06" label="First 90 days" title="What I’d do if I joined.">
+      <Chapter n="06" label="First 90 days" title="Can we reliably find money owners didn’t know they were losing?">
         <Plan phases={FIRST_90_DAYS} />
       </Chapter>
 
@@ -92,6 +98,7 @@ export function WhyEssay({ view, quotes }: WhyEssayProps) {
 
       <Chapter n={BET_CHAPTER.n} label={BET_CHAPTER.label} title={BET_CHAPTER.title}>
         <div className="body">
+          <p>{BET_CHAPTER.lead}</p>
           {BET_CHAPTER.body.map((p) => (
             <p key={p}>{p}</p>
           ))}

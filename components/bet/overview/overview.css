@@ -174,7 +174,10 @@
 
 /* ---------- metrics ---------- */
 .ov-nsm { display: grid; gap: 6px; padding: 18px 20px; border: 1px solid var(--lamp-line); border-radius: var(--r-lg); background: var(--glow-soft); }
-.ov-nsm-name { font-size: var(--t-num-lg); font-weight: 520; letter-spacing: -0.02em; line-height: 1.1; color: var(--fg); }
+.ov-nsm-layers { display: grid; gap: 12px; }
+.ov-nsm-product { border-color: var(--line); background: var(--surface-2); }
+.ov-nsm-name, .ov-nsm-product-name { font-size: var(--t-num-lg); font-weight: 520; letter-spacing: -0.02em; line-height: 1.1; color: var(--fg); }
+.ov-nsm-guard { font-size: var(--t-sm); font-weight: 560; color: var(--fg); }
 .ov-nsm-why { max-width: 70ch; color: var(--cream); line-height: 1.55; }
 .ov-nsm .ov-nsm-def { gap: 8px; margin-top: 6px; }
 .ov-metric-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-top: 18px; }

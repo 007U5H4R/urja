@@ -200,10 +200,25 @@ test.describe("/bet/plan", () => {
     await expect(metrics.locator(".ov-nsm-def")).toContainText("at least 25 verified days");
   });
 
+  test("EXE50: the North Star in two layers, Urja's product layer first, then the bet's", async ({ page }) => {
+    const metrics = page.getByRole("region", { name: "Metrics" });
+    await expect(metrics.locator(".ov-nsm-product-name")).toHaveText("₹ recovered per truck per month");
+    await expect(metrics.locator(".ov-nsm-guard")).toHaveText("Guardrail: wrong flags under 10%.");
+    const layers = metrics.locator(".ov-nsm-layers > .ov-nsm");
+    await expect(layers).toHaveCount(2);
+    await expect(layers.nth(0).locator(".ov-kicker")).toHaveText("North Star · Urja, the munshi");
+    await expect(layers.nth(1).locator(".ov-kicker")).toHaveText("North Star · the SuprFleet bet, the layer above");
+  });
+
+  test("EXE50: phase 1 starts NBFC referral-pilot talks", async ({ page }) => {
+    await expect(page.locator("#ov-roadmap")).toContainText("Start NBFC referral-pilot talks");
+  });
+
   test("every hypothesis says untested, closed and opened", async ({ page }) => {
     const details = page.locator("#ov-hypotheses details");
     await expect(details).toHaveCount(7);
-    for (const d of await details.all()) await expect(d.locator("summary")).toContainText("Untested: no field calls");
+    // EXE50: "not field-tested yet" replaces "Untested: no field calls".
+    for (const d of await details.all()) await expect(d.locator("summary")).toContainText("Not field-tested yet");
     await details.first().locator("summary").click();
     await expect(details.first()).toHaveAttribute("open", "");
     await expect(details.first()).toContainText("Research against");
@@ -219,11 +234,13 @@ test.describe("/bet/plan", () => {
 });
 
 test.describe("/bet/artifacts", () => {
-  test("has six cards, each link https and opening safely in a new tab, and the research note", async ({ page }) => {
+  // TASK-34 (EXE50): seven cards, with the pitch script.
+  test("has seven cards, each link https and opening safely in a new tab, and the research note", async ({ page }) => {
     await page.goto("/bet/artifacts");
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Artifacts");
     const cards = page.locator(".bet-artifact");
-    await expect(cards).toHaveCount(6);
+    await expect(cards).toHaveCount(7);
+    await expect(cards.filter({ hasText: "Pitch script" })).toContainText("Opens if shared with you");
     for (const card of await cards.all()) {
       const link = card.getByRole("link");
       expect(await link.getAttribute("href")).toMatch(/^https:\/\/(claude\.ai|github\.com)\//);
