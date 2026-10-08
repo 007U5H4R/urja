@@ -479,3 +479,12 @@
 - "Start the demo" on the /why top bar now opens `/demo`, a six-step guided path: 7 AM message → Today → flagged trip and Flag lab → The bet → Tiers → Lender view. Before, it went straight to `/message`, which is now step 1. `/demo` is not a nav destination (TC-023 stays at the EXE48 count).
 - Why Urja chapter 08 becomes a short map of the bet's tabs.
 - Added the same day at the user's request: a seventh tab, **Artifacts** (`/bet/artifacts`). It lists the deliverables with one line each and a link: the strategy doc, PRD and deck (Claude artifacts, private until the user shares them), plus the research report and bet spec (repo docs on GitHub).
+
+## EXE50 · The pitch is told as a story; a North Star in two layers — user decision 2026-10-08
+- **Origin story.** The user's own story is real: on a bike ride from Bengaluru to Mysore, a lunch-stop conversation with a truck owner who runs 24 trucks and couldn't say what his fleet made yesterday. It appears in Why Urja chapter 01, the deck and the pitch script, framed as one conversation, not a study. The hypotheses stay "not field-tested". The fleet in the prototype stays labelled simulated.
+- **North Star, in two layers.**
+  - Urja (the munshi): **₹ recovered per truck per month**, with the guardrail **wrong flags under 10%**.
+  - The SuprFleet bet, on top of it: **verified truck-months**. Once the money is trusted, the record becomes credit.
+  - This supersedes EXE47's single North Star wording. EXE47's targets stand.
+- **First 90 days** (Urja): sit with 15 fleet owners and munshis → run the rules on 3 fleets' real CAN/telematics data → measure the false-positive rate → improve the rules → ship the morning brief and Ask Urja → go or no-go. The bet's Plan tab adds "start NBFC referral-pilot talks" as the bridge to credit.
+- **Wording.** UI and written materials say Urja "doesn't accuse the driver" / "this doesn't add up". They never say theft, stolen, steal or thief.
