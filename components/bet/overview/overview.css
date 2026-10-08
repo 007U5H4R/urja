@@ -1,4 +1,4 @@
-/* /bet, the overview (TASK-28). Lamplight tokens and lamp.css classes only (.panel, .tbl,
+/* The bet's tab pages: /bet, /bet/market, /bet/product, /bet/plan (TASK-28; tabs since TASK-32). Lamplight tokens and lamp.css classes only (.panel, .tbl,
    .tbl-scroll, .sec-head, .chip, .btn, .plate); this file adds the overview's own pieces, all
    prefixed .ov-. bet.css carries the head, claims, citations and the source list. */
 
@@ -11,12 +11,26 @@
 .ov-mech-label { display: inline-flex; align-items: center; height: 20px; padding: 0 6px; margin-right: 2px; border-radius: 5px;
   background: var(--surface-3); color: var(--fg); font-size: var(--t-xs); font-weight: 500; }
 
-/* ---------- in-page nav ---------- */
-.ov-nav { margin-top: 18px; }
-.ov-nav ol { display: flex; flex-wrap: wrap; gap: 8px; padding: 0; list-style: none; }
-.ov-nav a { display: inline-flex; align-items: center; min-height: 32px; padding: 0 12px; border: 1px solid var(--line-soft); border-radius: 999px;
-  background: var(--surface-1); color: var(--fg-muted); font-size: var(--t-sm); }
-.ov-nav a:hover { color: var(--fg); border-color: var(--lamp-line); }
+/* ---------- the three numbers (TASK-32) ---------- */
+.ov-heads { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; padding: 0; list-style: none; }
+.ov-head { display: grid; align-content: start; gap: 4px; padding: 14px 16px; border-left: 2px solid var(--lamp-line); }
+.ov-head-value { font-size: var(--t-num-lg); font-weight: 520; letter-spacing: -0.02em; line-height: 1.1; color: var(--cream); font-variant-numeric: tabular-nums; }
+.ov-head-label { color: var(--fg-muted); font-size: var(--t-sm); line-height: 1.5; text-wrap: pretty; }
+
+/* ---------- start here: one card per tab (TASK-32) ---------- */
+.ov-start { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; gap: 14px; padding: 0; list-style: none; }
+.ov-start-card { position: relative; display: grid; align-content: start; gap: 10px; padding: 16px; border: 1px solid var(--line-soft);
+  border-radius: var(--r-lg); background: var(--surface-1); }
+.ov-start-card:hover { border-color: var(--lamp-line); }
+.ov-start-card:has(.ov-start-link:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+.bet-overview .ov-start-card h3 { font-size: 1.06rem; }
+.ov-start-link { color: var(--fg); }
+.ov-start-link:focus-visible { outline: none; }
+/* The whole card is the link's target; the arrow is decoration. */
+.ov-start-link::before { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+.ov-start-link::after { content: " →" / ""; color: var(--lamp); }
+.ov-start-line { color: var(--fg-muted); font-size: var(--t-sm); line-height: 1.5; text-wrap: pretty; }
+.ov-start-note { font-size: var(--t-xs); color: var(--fg-subtle); }
 
 /* ---------- the loop ---------- */
 .ov-loop { margin: 0; }
@@ -81,9 +95,13 @@
 .ov-board-note { margin-top: 12px; }
 
 .ov-dropped { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line-soft); }
-.ov-dropped-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 12px; padding: 0; list-style: none; }
-.ov-dropped-item { padding: 14px 16px; border: 1px solid var(--line-soft); border-radius: var(--r-lg); background: var(--surface-1); }
-.ov-dropped-item .bet-claims { margin-top: 6px; }
+/* TASK-32: a compact list, one row each: the name, then the reason and the evidence. */
+.ov-dropped-list { display: grid; gap: 0; margin-top: 8px; padding: 0; list-style: none; }
+.ov-dropped-item { display: grid; grid-template-columns: minmax(150px, 15%) minmax(0, 1fr); gap: 4px 18px; padding: 12px 0; border-bottom: 1px solid var(--line-soft); }
+.ov-dropped-item:last-child { border-bottom: 0; padding-bottom: 0; }
+.ov-dropped-item h4 { line-height: 1.6; }
+.ov-drop-reason { color: var(--fg); line-height: 1.6; max-width: 78ch; }
+.ov-drop-ev { margin-top: 4px; }
 
 /* ---------- structural vs hype ---------- */
 .ov-shifts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
@@ -129,21 +147,16 @@
 .ov-cta .btn { height: 44px; padding: 0 20px; font-size: var(--t-body); }
 .ov-cta-line { color: var(--fg-muted); font-size: var(--t-sm); }
 
-/* ---------- teasers ---------- */
-.ov-teasers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
-.ov-teasers .ov-teaser { display: grid; align-content: start; gap: 14px; margin-top: 18px; }
-.ov-teaser .sec-head { margin-bottom: 0; }
-.ov-teaser-line { color: var(--fg-muted); line-height: 1.55; }
-.ov-prices { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 0; list-style: none; }
-.ov-prices li { display: grid; gap: 2px; padding: 10px 12px; border-radius: var(--r-md); background: var(--surface-2); }
+/* ---------- teaser figures, on the start-here cards ---------- */
+.ov-prices { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 0; list-style: none; }
+.ov-prices li { display: grid; gap: 2px; padding: 8px 10px; border-radius: var(--r-md); background: var(--surface-2); }
 .ov-price-name { font-size: var(--t-xs); color: var(--fg-subtle); }
-.ov-price { font-size: 1.35rem; font-weight: 520; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: var(--fg); }
-.ov-lender { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
-.ov-lender-fig strong { font-size: 1.35rem; font-weight: 520; letter-spacing: -0.02em; color: var(--fg); font-variant-numeric: tabular-nums; }
+.ov-price { font-size: 1.2rem; font-weight: 520; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: var(--fg); }
+.ov-lender { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.ov-lender-fig strong { font-size: 1.2rem; font-weight: 520; letter-spacing: -0.02em; color: var(--fg); font-variant-numeric: tabular-nums; }
 .ov-lender-label { font-size: var(--t-sm); color: var(--fg-subtle); }
 .ov-lender-days { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: var(--r-sm); background: var(--surface-2);
   color: var(--cream); font-size: var(--t-sm); box-shadow: inset 2px 0 0 var(--lamp); }
-.ov-teaser-link { justify-self: start; height: 44px; }
 
 /* ---------- roadmap ---------- */
 .ov-phases { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; padding: 0; list-style: none; }
@@ -164,7 +177,6 @@
 .ov-nsm-name { font-size: var(--t-num-lg); font-weight: 520; letter-spacing: -0.02em; line-height: 1.1; color: var(--fg); }
 .ov-nsm-why { max-width: 70ch; color: var(--cream); line-height: 1.55; }
 .ov-nsm .ov-nsm-def { gap: 8px; margin-top: 6px; }
-.ov-nsm-def .bet-assume { display: block; margin-top: 2px; }
 .ov-metric-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-top: 18px; }
 .ov-metric-list { display: grid; gap: 0; margin-top: 8px; padding: 0; list-style: none; font-size: var(--t-sm); }
 .ov-metric-list li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px; padding: 9px 0; border-bottom: 1px solid var(--line-soft); color: var(--fg); }
@@ -197,7 +209,7 @@
 
 /* ---------- responsive ---------- */
 @media (max-width: 1100px) {
-  .ov-tenx, .ov-dropped-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ov-tenx, .ov-start { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ov-loop-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .ov-loop-step:nth-child(3)::after { content: none; }
   /* Without the bracket, the return path is a plain line under the steps. */
@@ -207,9 +219,8 @@
   .ov-loop + .bet-claims { margin-top: 12px; }
 }
 @media (max-width: 900px) {
-  .ov-shifts, .ov-auto-grid, .ov-teasers, .ov-metric-cols { grid-template-columns: minmax(0, 1fr); }
-  .ov-teasers .ov-teaser + .ov-teaser { margin-top: 0; }
-  .ov-teasers { gap: 0; }
+  .ov-shifts, .ov-auto-grid, .ov-metric-cols { grid-template-columns: minmax(0, 1fr); }
+  .ov-heads { grid-template-columns: minmax(0, 1fr); gap: 4px; }
   .ov-phases { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 720px) {
@@ -218,7 +229,7 @@
   .ov-loop-step:nth-child(3)::after { content: "↓" / ""; }
   .ov-loop-step { grid-template-columns: 24px minmax(0, 1fr); column-gap: 10px; }
   .ov-loop-step .ov-loop-n { grid-row: span 2; }
-  .ov-tenx, .ov-dropped-list, .ov-hyp-cols { grid-template-columns: minmax(0, 1fr); }
+  .ov-tenx, .ov-start, .ov-hyp-cols, .ov-dropped-item { grid-template-columns: minmax(0, 1fr); }
   .ov-prices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ov-hyp summary { grid-template-columns: 30px minmax(0, 1fr) 20px; }
   .ov-hyp-tags { grid-column: 2 / 3; grid-row: 2; justify-content: flex-start; }

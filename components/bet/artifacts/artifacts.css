@@ -1,0 +1,18 @@
+/* /bet/artifacts (TASK-32, EXE49): the deliverables as cards. Lamplight tokens and lamp.css
+   classes only (.panel, .btn, .chip). */
+
+.bet-artifact-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 18px; padding: 0; list-style: none; }
+.bet-artifact { display: grid; grid-template-rows: auto 1fr auto auto; gap: 10px; padding: 18px clamp(16px, 2vw, 22px); }
+.bet-artifact h2 { font-size: var(--t-h2); font-weight: 520; letter-spacing: -0.01em; }
+.bet-artifact-line { color: var(--fg-muted); line-height: 1.5; text-wrap: pretty; }
+.bet-artifact-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: var(--t-sm); color: var(--fg-subtle); }
+.bet-artifact-link { justify-self: start; height: 44px; margin-top: 4px; }
+.ext-arrow { color: var(--lamp); }
+.bet-artifacts-note { margin-top: 18px; font-size: var(--t-sm); color: var(--fg-subtle); }
+/* WCAG 2.5.8: the inline link is still a 24 px target. */
+.bet-artifacts-note a { display: inline-block; min-height: 24px; color: var(--fg); text-decoration: underline;
+  text-decoration-color: var(--lamp-line); text-underline-offset: 3px; }
+.bet-artifacts-note a:hover { text-decoration-color: var(--lamp); }
+
+@media (max-width: 1000px) { .bet-artifact-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .bet-artifact-list { grid-template-columns: minmax(0, 1fr); } }

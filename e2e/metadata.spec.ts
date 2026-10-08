@@ -20,6 +20,11 @@ const ROUTES: Route[] = [
   // TASK-21: the bet section.
   { path: "/bet", title: "The bet: Munshi → credit · Urja" },
   { path: "/bet/tiers", title: "Tiers and who pays · Urja" },
+  // TASK-32 (EXE49): the bet's other tabs.
+  { path: "/bet/market", title: "Where we play · Urja" },
+  { path: "/bet/product", title: "The product · Urja" },
+  { path: "/bet/plan", title: "Roadmap, metrics and hypotheses · Urja" },
+  { path: "/bet/artifacts", title: "Artifacts · Urja" },
   { path: "/trucks/rj14-gb-4521", title: "Truck RJ14 GB 4521 · Urja — Sharma Roadlines" },
 ];
 

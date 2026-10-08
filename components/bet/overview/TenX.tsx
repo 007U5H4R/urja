@@ -26,7 +26,7 @@ export function TenX({ tenx, order }: TenXProps) {
                 <dd>{r.munshi}</dd>
               </div>
             </dl>
-            {r.claims.length > 0 && <ClaimList claims={r.claims} order={order} className="ov-small" />}
+            {r.claims.length > 0 && <ClaimList claims={r.claims} order={order} className="ov-small" deferBasis />}
           </li>
         ))}
       </ul>

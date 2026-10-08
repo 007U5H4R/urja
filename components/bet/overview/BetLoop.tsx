@@ -34,7 +34,7 @@ export function BetLoop({ loop, order }: BetLoopProps) {
           </span>
         </p>
       </figure>
-      <ClaimList claims={loop.claims} order={order} className="ov-small" />
+      <ClaimList claims={loop.claims} order={order} className="ov-small" deferBasis />
     </OvSection>
   );
 }

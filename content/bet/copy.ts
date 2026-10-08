@@ -57,6 +57,53 @@ export const BET_OVERVIEW: BetPageCopy = {
   ],
 };
 
+/** A bet tab page's head and metadata (TASK-32, EXE49); its claims live with its sections. */
+export type BetTabPageCopy = Omit<BetPageCopy, "claims">;
+
+/** /bet/market: the board, what we dropped, structural vs hype. */
+export const BET_MARKET: BetTabPageCopy = {
+  path: "/bet/market",
+  title: "Where we play · Urja",
+  description:
+    "The board of fleet segments and jobs, the one cell SuprFleet Munshi plays in first, the candidates we dropped, and which shifts are structural and which are hype. Research figures stay marked unverified.",
+  eyebrow: "The bet · where we play",
+  h1: "Where we play",
+  thesis: "Small truck owners' books first; every other cell waits, or goes to someone who already serves it.",
+};
+
+/** /bet/product: the 5–10x and streams × autonomy. */
+export const BET_PRODUCT: BetTabPageCopy = {
+  path: "/bet/product",
+  title: "The product · Urja",
+  description:
+    "Why SuprFleet Munshi is 5–10x better than a month-end register, and how each data stream raises confidence while independent ones must agree before autonomy unlocks, from a Check to an automatic hold. A prototype on simulated data.",
+  eyebrow: "The bet · product",
+  h1: "The product",
+  thesis: "A morning answer with evidence, from data the truck already sends; autonomy only where independent streams agree.",
+};
+
+/** /bet/plan: the roadmap, the metrics and H1–H7. */
+export const BET_PLAN: BetTabPageCopy = {
+  path: "/bet/plan",
+  title: "Roadmap, metrics and hypotheses · Urja",
+  description:
+    "The three phases and what we are not building, the North Star of verified truck-months with its guardrails, and the seven hypotheses inside the bet, all untested by field calls.",
+  eyebrow: "The bet · plan",
+  h1: "Roadmap, metrics and what we're testing",
+  thesis: "Three phases, one North Star, and seven bets inside the bet that no field call has tested yet.",
+};
+
+/** /bet/artifacts: the deliverables, one line each. */
+export const BET_ARTIFACTS: BetTabPageCopy = {
+  path: "/bet/artifacts",
+  title: "Artifacts · Urja",
+  description:
+    "The written work behind this prototype: the strategy doc, the PRD, the slide deck, the research report, the bet spec and the decisions log, one line each.",
+  eyebrow: "The bet · artifacts",
+  h1: "Artifacts",
+  thesis: "The written work behind this prototype, one line each.",
+};
+
 /** /bet/tiers (TASK-27 fills in the tier table and the price logic). */
 export const BET_TIERS: BetPageCopy = {
   path: "/bet/tiers",
