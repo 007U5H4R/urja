@@ -37,6 +37,8 @@ const LANGS: [string, "hi" | "en"][] = [
   ["/bet/plan", "en"],
   ["/bet/artifacts", "en"],
   ["/trucks/rj14-gb-4521", "en"],
+  // TASK-33: the guided demo is English only.
+  ["/demo", "en"],
 ];
 
 async function noJs(browser: import("@playwright/test").Browser, run: (page: Page) => Promise<void>) {
@@ -181,12 +183,26 @@ test("links that cross root layouts are not prefetched; links within one still a
   expect(rsc.filter((p) => p.startsWith("/trips")), "/message").toEqual([]);
   await expect.poll(() => rsc.filter((p) => p === "/brief").length, { message: "/message prefetches /brief" }).toBeGreaterThan(0);
 
-  // Why Urja's "Start the demo" opens /message (the phone screens' root layout).
+  // Why Urja's "Start the demo" opens /demo (EXE49); the button isn't prefetched.
   rsc.length = 0;
   await page.goto("/why");
   await page.waitForLoadState("networkidle");
   await expect(page.getByRole("link", { name: "Start the demo" })).toBeVisible();
-  expect(rsc.filter((p) => p === "/message"), "/why").toEqual([]);
+  expect(rsc.filter((p) => p === "/demo" || p === "/message"), "/why").toEqual([]);
   // Its top-bar pills stay within the site and are prefetched as before.
   await expect.poll(() => rsc.filter((p) => p === "/").length, { message: "/why prefetches /" }).toBeGreaterThan(0);
+});
+
+test("/demo's first step crosses to the phone screens' layout without a prefetch, and lands on the Hindi message", async ({ page }) => {
+  const rsc = rscRequests(page);
+  await page.goto("/demo");
+  await page.waitForLoadState("networkidle");
+  const step1 = page.locator("ol.demo-steps > li").first().getByRole("link");
+  await expect(step1).toHaveAttribute("href", "/message");
+  expect(rsc.filter((p) => p === "/message"), "/demo").toEqual([]);
+  // Its later steps stay within the site and are prefetched as usual.
+  await expect.poll(() => rsc.filter((p) => p === "/").length, { message: "/demo prefetches /" }).toBeGreaterThan(0);
+  await step1.click();
+  await expect(page).toHaveURL(/\/message$/);
+  await expect(page.locator("html")).toHaveAttribute("lang", "hi");
 });

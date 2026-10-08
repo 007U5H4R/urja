@@ -124,24 +124,45 @@ export const FIRST_90_DAYS: readonly PlanPhase[] = [
   },
 ];
 
+/** One tab of the bet in chapter 08's map: its name (the link), one line, and an optional second link. */
+export interface BetTab {
+  tab: string;
+  href: string;
+  line: string;
+  /** Product's line also opens the Flag lab: "{lead} {label}{after}", the label a link. */
+  lab?: { lead: string; label: string; href: string; after: string };
+}
+
+/** Chapter 08's map: the bet's tabs after the overview (EXE49), in tab order. */
+export const BET_TABS: readonly BetTab[] = [
+  { tab: "Where we play", href: "/bet/market", line: "The jobs we chose, the ones we dropped, and what is structural versus hype." },
+  {
+    tab: "Product",
+    href: "/bet/product",
+    line: "Where it is 5–10x better, and how far each data stream lets it act on its own.",
+    lab: { lead: "Try it in the", label: "Flag lab", href: "/trips/0926-04#flag-lab", after: " on trip 0926-04." },
+  },
+  { tab: "Tiers", href: "/bet/tiers", line: "What each tier does, and who pays for it." },
+  { tab: "Lender view", href: "/trucks/rj14-gb-4521", line: "One truck’s verified record, as a lender would read it." },
+  { tab: "Plan", href: "/bet/plan", line: "The roadmap, the metrics, and the hypotheses H1–H7 still to test." },
+  { tab: "Artifacts", href: "/bet/artifacts", line: "The strategy doc, the PRD, the deck and the research report." },
+];
+
 /**
- * Chapter 08: the bet (TASK-29, EXE37). Urja's arc into the SuprFleet bet, then links into the bet
- * section: /bet as the one primary action, and three deep links. English only (EXE39).
+ * Chapter 08: the bet (TASK-29, EXE37; TASK-33, EXE49). Urja's arc into the SuprFleet bet, /bet as
+ * the one primary action, then a short map of the bet's tabs: one line and one link each.
+ * English only (EXE39).
  */
 export const BET_CHAPTER = {
   n: "08",
   label: "The bet",
   title: "From closed books to credit, with the owner’s consent.",
   body: [
-    "Urja is the munshi core: it closes a fleet owner’s books every morning. The SuprFleet bet, my answer to the SuprFleet 2030 brief, builds on it in steps: from closed books to verified truck-months a lender can finance against, and then to loans through a lending partner, made only with the owner’s consent.",
+    "Urja is the munshi core: it closes a fleet owner’s books every morning. The SuprFleet bet, my answer to the SuprFleet 2030 brief, builds on it in steps: from closed books to verified truck-months a lender can finance against, then to loans through a lending partner, made only with the owner’s consent.",
     "This is a prototype on simulated data, and the research behind the bet is unverified until each source is opened and quoted.",
   ],
   cta: "See the bet",
   href: "/bet",
-  moreLabel: "Or go straight to a piece of the bet",
-  more: [
-    { label: "Watch a flag earn its confidence on trip 0926-04", href: "/trips/0926-04#flag-lab" },
-    { label: "Tiers, and who pays for each", href: "/bet/tiers" },
-    { label: "One truck, as a lender sees it", href: "/trucks/rj14-gb-4521" },
-  ],
+  moreLabel: "The bet, tab by tab",
+  more: BET_TABS,
 } as const;

@@ -26,6 +26,8 @@ const ROUTES: Route[] = [
   { path: "/bet/plan", title: "Roadmap, metrics and hypotheses · Urja" },
   { path: "/bet/artifacts", title: "Artifacts · Urja" },
   { path: "/trucks/rj14-gb-4521", title: "Truck RJ14 GB 4521 · Urja — Sharma Roadlines" },
+  // TASK-33: the guided demo.
+  { path: "/demo", title: "The demo · Urja" },
 ];
 
 const ALT = "Where did the diesel go? RJ14 GB 4521 lost 38 L near Behror at 2:14 AM — ₹3,420";

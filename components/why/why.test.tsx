@@ -319,7 +319,7 @@ describe("WhyEssay (chapters 01–08)", () => {
     expect(main.querySelector("h1, h2")!.id).toBe("w-h1");
   });
 
-  it("ends with chapter 08, the bet: a short honest body, /bet as the one primary link, then the three deep links", () => {
+  it("ends with chapter 08, the bet: a short honest body, /bet as the one primary link, then a map of the bet's tabs", () => {
     const { container } = renderEssay();
     const chaps = container.querySelectorAll("section.chap");
     const c8 = chaps[chaps.length - 1];
@@ -331,26 +331,37 @@ describe("WhyEssay (chapters 01–08)", () => {
     expect(primary.map((a) => [a.className, norm(a.textContent), a.getAttribute("href")])).toEqual([
       ["btn btn-lamp", "See the bet", "/bet"],
     ]);
-    const more = [...c8.querySelectorAll("ul.bet-more a")].map((a) => [norm(a.textContent), a.getAttribute("href")]);
-    expect(more).toEqual([
-      [BET_CHAPTER.more[0].label, "/trips/0926-04#flag-lab"],
-      [BET_CHAPTER.more[1].label, "/bet/tiers"],
-      [BET_CHAPTER.more[2].label, "/trucks/rj14-gb-4521"],
+    // TASK-33 (EXE49): one line and one link per tab; Product also links the Flag lab.
+    const items = [...c8.querySelectorAll("ul.bet-more > li")];
+    expect(items.map((li) => [...li.querySelectorAll("a")].map((a) => [norm(a.textContent), a.getAttribute("href")]))).toEqual([
+      [["Where we play", "/bet/market"]],
+      [["Product", "/bet/product"], ["Flag lab", "/trips/0926-04#flag-lab"]],
+      [["Tiers", "/bet/tiers"]],
+      [["Lender view", "/trucks/rj14-gb-4521"]],
+      [["Plan", "/bet/plan"]],
+      [["Artifacts", "/bet/artifacts"]],
     ]);
+    items.forEach((li, i) => expect(norm(li.textContent)).toContain(norm(BET_CHAPTER.more[i].line)));
     const list = c8.querySelector("ul.bet-more")!;
     expect(c8.querySelector(`#${list.getAttribute("aria-labelledby")}`)!.textContent).toBe(BET_CHAPTER.moreLabel);
   });
 });
 
 describe("chapter 08 content (the bet)", () => {
-  const text = [BET_CHAPTER.title, ...BET_CHAPTER.body, BET_CHAPTER.cta, ...BET_CHAPTER.more.map((m) => m.label)].join(" ");
+  const text = [
+    BET_CHAPTER.title,
+    ...BET_CHAPTER.body,
+    BET_CHAPTER.cta,
+    BET_CHAPTER.moreLabel,
+    ...BET_CHAPTER.more.flatMap((m) => [m.tab, m.line, m.lab?.lead ?? "", m.lab?.label ?? "", m.lab?.after ?? ""]),
+  ].join(" ");
 
-  it("is short: three to five sentences of body", () => {
+  it("is short: a one-or-two-sentence intro plus the honesty line (two or three sentences)", () => {
     expect(BET_CHAPTER.n).toBe("08");
     expect(BET_CHAPTER.label).toBe("The bet");
     const sentences = BET_CHAPTER.body.join(" ").split(/(?<=[.!?])\s+/);
-    expect(sentences.length).toBeGreaterThanOrEqual(3);
-    expect(sentences.length).toBeLessThanOrEqual(5);
+    expect(sentences.length).toBeGreaterThanOrEqual(2);
+    expect(sentences.length).toBeLessThanOrEqual(3);
   });
 
   it("tells the arc: the munshi core, closed books, verified truck-months, a consented lending partnership", () => {
@@ -358,6 +369,14 @@ describe("chapter 08 content (the bet)", () => {
       expect(text.toLowerCase()).toContain(phrase);
     }
     expect(text).toContain("SuprFleet");
+  });
+
+  it("maps all six tabs after the overview, each with a single line", () => {
+    expect(BET_CHAPTER.more.map((m) => m.tab)).toEqual(["Where we play", "Product", "Tiers", "Lender view", "Plan", "Artifacts"]);
+    for (const m of BET_CHAPTER.more) {
+      expect(m.line.split(/(?<=[.!?])\s+/).length, m.tab).toBe(1);
+      expect(m.line.length, m.tab).toBeLessThanOrEqual(110);
+    }
   });
 
   it("is honest: a prototype, simulated data, research unverified", () => {

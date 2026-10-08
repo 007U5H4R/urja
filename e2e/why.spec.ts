@@ -181,7 +181,8 @@ test.describe("top bar on /why", () => {
     await page.goto("/why");
     const bar = page.locator("header.topbar");
     await expect(bar.getByRole("link", { name: "Start the demo" })).toBeVisible();
-    await expect(bar.getByRole("link", { name: "Start the demo" })).toHaveAttribute("href", "/message");
+    // EXE49: it opens the guided demo, whose first step is the 7 AM message.
+    await expect(bar.getByRole("link", { name: "Start the demo" })).toHaveAttribute("href", "/demo");
     await expect(bar.locator(".askbar, .fleet")).toHaveCount(0);
     if (info.project.name !== "phone") {
       await expect(bar.locator('nav[aria-label="Main"] a[aria-current="page"]')).toHaveAttribute("aria-label", "Why Urja");

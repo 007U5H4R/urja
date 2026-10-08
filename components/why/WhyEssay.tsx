@@ -18,7 +18,7 @@ export interface WhyEssayProps {
 
 /**
  * Why Urja (final/why.html, main.essay): the owner’s day → owner → market gap → built on
- * Bytebeam → metric and guardrail → first 90 days → what's real (Design.md §25) → the bet (TASK-29).
+ * Bytebeam → metric and guardrail → first 90 days → what's real (Design.md §25) → the bet (TASK-29), a map of its tabs (TASK-33).
  * The slim bet banner sits below the hero, never above it, so the hero keeps the LCP element (EXE37).
  */
 export function WhyEssay({ view, quotes }: WhyEssayProps) {
@@ -107,7 +107,17 @@ export function WhyEssay({ view, quotes }: WhyEssayProps) {
           <ul className="bet-more" aria-labelledby="c8-more">
             {BET_CHAPTER.more.map((m) => (
               <li key={m.href}>
-                <Link href={m.href}>{m.label}</Link>
+                <Link href={m.href}>{m.tab}</Link>
+                <span className="line">
+                  {m.line}
+                  {m.lab ? (
+                    <>
+                      {" "}
+                      {m.lab.lead} <Link href={m.lab.href}>{m.lab.label}</Link>
+                      {m.lab.after}
+                    </>
+                  ) : null}
+                </span>
               </li>
             ))}
           </ul>
