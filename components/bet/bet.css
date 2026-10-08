@@ -1,4 +1,4 @@
-/* The bet section (TASK-21): /bet, /bet/tiers, /trucks/[plate]. Lamplight tokens and lamp.css
+/* The bet section (TASK-21; tabs since TASK-32): /bet and its tabs, /bet/tiers, /trucks/[plate]. Lamplight tokens and lamp.css
    classes only (.wrap, .pagehead, .verdict, .panel, .plate, .chip, .sec-head); this file adds the
    bet's own pieces: the thesis line, the prototype note, claims, citations and the source list. */
 
@@ -32,6 +32,18 @@
 .bet-assume { color: var(--fg-muted); font-size: var(--t-sm); }
 .bet-assume-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 6px; margin-right: 2px; border-radius: 5px;
   background: var(--surface-2); color: var(--cream); font-size: var(--t-xs); box-shadow: inset 2px 0 0 var(--lamp); }
+
+/* ---------- assumptions behind the page (TASK-32): closed by default ---------- */
+.bet-assumptions { margin-top: 18px; padding: 0; }
+.bet-assumptions summary { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 8px clamp(16px, 2vw, 24px); cursor: pointer;
+  list-style: none; border-radius: inherit; }
+.bet-assumptions summary::-webkit-details-marker { display: none; }
+.bet-assumptions summary::after { content: "+" / ""; margin-left: auto; color: var(--fg-subtle); font-size: 1.1rem; }
+.bet-assumptions[open] summary::after { content: "−" / ""; }
+.bet-assumptions summary:hover { background: var(--surface-2); }
+.bet-assumptions-title { font-size: var(--t-body); font-weight: 520; color: var(--fg); }
+.bet-assumptions summary .count { font-size: var(--t-sm); color: var(--fg-subtle); }
+.bet-assumptions-list { padding: 4px clamp(16px, 2vw, 24px) 20px calc(clamp(16px, 2vw, 24px) + 1.1em); font-size: var(--t-sm); }
 
 /* ---------- source list ---------- */
 .bet-sources { padding: 20px clamp(16px, 2vw, 24px); margin-top: 18px; }

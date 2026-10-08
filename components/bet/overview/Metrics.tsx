@@ -30,7 +30,7 @@ export function Metrics({ northStar, primary, guardrails, copy, order }: Metrics
         <p className="ov-kicker">{northStar.label}</p>
         <p className="ov-nsm-name">{northStar.name}</p>
         <p className="ov-nsm-why">{northStar.why}</p>
-        <ClaimList claims={northStar.definition} order={order} className="ov-nsm-def" />
+        <ClaimList claims={northStar.definition} order={order} className="ov-nsm-def" deferBasis />
       </div>
       <div className="ov-metric-cols">
         <div>
@@ -60,7 +60,7 @@ export function Metrics({ northStar, primary, guardrails, copy, order }: Metrics
               </li>
             ))}
           </ul>
-          <ClaimList claims={[copy.claim]} order={order} className="ov-small" />
+          <ClaimList claims={[copy.claim]} order={order} className="ov-small" deferBasis />
         </div>
       </div>
     </OvSection>

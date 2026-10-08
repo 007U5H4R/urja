@@ -4,7 +4,7 @@
  * /brief and /message take their (language-aware) titles from the TKT-06 templates.
  */
 import type { Metadata } from "next";
-import { BET_OVERVIEW, BET_TIERS } from "@/content/bet/copy";
+import { BET_ARTIFACTS, BET_MARKET, BET_OVERVIEW, BET_PLAN, BET_PRODUCT, BET_TIERS, type BetTabPageCopy } from "@/content/bet/copy";
 import { WHY_TITLE } from "@/content/why";
 import { plateToSlug } from "@/lib/bet/slug";
 import type { Lang } from "@/lib/brief/dict";
@@ -87,6 +87,16 @@ export function betTiersMetadata(): Metadata {
   const { title, description, path } = BET_TIERS;
   return pageMetadata({ title: { absolute: title }, description, path });
 }
+
+// TASK-32 (EXE49): the bet's other tab pages.
+function betTabMetadata({ title, description, path }: BetTabPageCopy): Metadata {
+  return pageMetadata({ title: { absolute: title }, description, path });
+}
+
+export const betMarketMetadata = (): Metadata => betTabMetadata(BET_MARKET);
+export const betProductMetadata = (): Metadata => betTabMetadata(BET_PRODUCT);
+export const betPlanMetadata = (): Metadata => betTabMetadata(BET_PLAN);
+export const betArtifactsMetadata = (): Metadata => betTabMetadata(BET_ARTIFACTS);
 
 /** The lender view of one truck; its numbers come from the truck's trucks() row. Null for a plate outside the fleet. */
 export function truckMetadata(plate: string): Metadata | null {

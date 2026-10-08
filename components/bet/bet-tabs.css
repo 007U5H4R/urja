@@ -1,0 +1,24 @@
+/* The bet's tab bar (TASK-32, EXE49): lamp.css's segmented control (.seg) as a row of links.
+   The row scrolls sideways inside its own box on a narrow screen; the page never does. */
+
+.bet-tabs { max-width: 100%; margin: 2px 0 6px; }
+/* The scroll box (TabsScroller centres the current tab in it on load). Never smooth: no motion to reduce. */
+.bet-tabs-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; scroll-behavior: auto; scrollbar-width: none; }
+.bet-tabs-scroll::-webkit-scrollbar { display: none; }
+/* On a phone the row's right edge fades, the cue that it scrolls; the fade goes at the row's end. */
+@media (max-width: 640px) {
+  .bet-tabs-scroll { -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); mask-image: linear-gradient(90deg, #000 85%, transparent); }
+  .bet-tabs-scroll[data-at-end] { -webkit-mask-image: none; mask-image: none; }
+}
+.bet-tabs-list { display: inline-flex; gap: 2px; margin: 0; padding: 3px; list-style: none; border-radius: 9px;
+  background: oklch(0.130 0.003 60 / .7); border: 1px solid var(--line-soft); }
+.bet-tabs-list li { flex: none; }
+/* WCAG 2.5.8: each tab is at least 32 px tall (44 px on a touch screen). */
+.bet-tabs a { display: inline-flex; align-items: center; min-height: 32px; padding: 0 13px; border-radius: 6px; white-space: nowrap;
+  font-size: var(--t-sm); font-weight: 500; color: var(--fg-muted); }
+.bet-tabs a:hover { color: var(--fg); background: var(--surface-2); }
+/* Inside the scroll box an outer outline would be clipped, so the ring sits inside the tab. */
+.bet-tabs a:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+/* The current tab: lifted like .seg's pressed button, and a lamp underline, so it isn't colour alone. */
+.bet-tabs a[aria-current="page"] { background: var(--surface-3); color: var(--fg); box-shadow: inset 0 -2px 0 var(--lamp); }
+@media (pointer: coarse) { .bet-tabs a { min-height: 44px; } }

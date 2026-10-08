@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BetHead } from "@/components/bet/BetHead";
+import { BetTabs } from "@/components/bet/BetTabs";
 import { Sources } from "@/components/bet/Sources";
 import { truckClaims } from "@/components/truck/claims";
 import { DailyLedger } from "@/components/truck/DailyLedger";
@@ -13,7 +14,7 @@ import { Plate } from "@/components/ui/Plate";
 import { BET_TRUCK } from "@/content/bet/copy";
 import { citedSourceIds } from "@/content/bet/sources";
 import { TRUCK_COPY } from "@/content/bet/truck-copy";
-import { getTruckSlugs, slugToPlate } from "@/lib/bet/slug";
+import { getTruckSlugs, plateToSlug, slugToPlate } from "@/lib/bet/slug";
 import { getTruckView } from "@/lib/bet/views/truck";
 import { truckMetadata } from "@/lib/metadata";
 import "@/components/bet/bet.css";
@@ -56,6 +57,7 @@ export default async function TruckPage({ params }: Params) {
         }
         thesis={c.thesis}
       />
+      <BetTabs path={`/trucks/${plateToSlug(view.plate)}`} />
       <TruckFigures headline={view.headline} resolution={view.resolution} />
       <TrustScore trust={view.trust} order={order} />
       <DailyLedger daily={view.daily} verified={view.verified} completeness={view.completeness} resolution={view.resolution} />

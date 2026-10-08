@@ -1,8 +1,9 @@
 /**
- * Copy for the /bet overview (TASK-28; docs/bet/bet-spec.md §1–§3 and §6–§7): the section
- * headings, the loop, the 5–10x, the streams × autonomy summary and the two teasers, plus
- * `overviewClaims()`, every claim the page renders in page order, from which the page numbers its
- * sources. Figures on the teasers come from lib/bet views, not from here.
+ * Copy for the bet's tab pages (TASK-28; split into tabs by TASK-32, EXE49; docs/bet/bet-spec.md
+ * §1–§3 and §6–§7): the section headings, the loop, the headline figures, the 5–10x, the streams ×
+ * autonomy summary and the teasers, plus each page's claims in page order (`overviewSummaryClaims`,
+ * `marketClaims`, `productClaims`, `planClaims`), from which each page numbers its own sources.
+ * Figures on the teasers come from lib/bet views, not from here.
  * Pure copy: nothing here imports lib/data.
  */
 import { BOARD_COPY, DROPPED } from "./board";
@@ -12,38 +13,36 @@ import { HYPE, STRUCTURAL } from "./hype";
 import { GUARDRAIL_MIN_FAMILIES, LADDER_LEVELS, TIERS, type LadderLevelId } from "./ladder";
 import { METRICS_COPY, NORTH_STAR, metricTargets } from "./metrics";
 import { ROADMAP_COPY } from "./roadmap";
-import { claimMatching, type Claim } from "./sources";
+import { claimMatching, isCited, type Claim } from "./sources";
 import { FAMILIES_NOTE, type StreamLevel } from "./streams";
 import { FUEL_SENSOR_TODAY, NO_NEW_HARDWARE_DESIGN } from "./tiers";
 import { VERIFIED_MONTH } from "./trust";
 
 export type OverviewSectionId =
   | "loop"
-  | "tenx"
+  | "headlines"
+  | "start"
   | "board"
   | "shifts"
+  | "tenx"
   | "autonomy"
-  | "tiers"
-  | "lender"
   | "roadmap"
   | "metrics"
   | "hypotheses";
 
-/** The page's sections in order: the in-page nav and each section's h2. */
-export const OVERVIEW_SECTIONS: readonly { id: OverviewSectionId; title: string; nav: string }[] = [
-  { id: "loop", title: "The bet in one loop", nav: "Loop" },
-  { id: "tenx", title: "The 5–10x", nav: "5–10x" },
-  { id: "board", title: "The board", nav: "Board" },
-  { id: "shifts", title: "Structural vs hype", nav: "Structural vs hype" },
-  { id: "autonomy", title: "Streams × autonomy", nav: "Autonomy" },
-  { id: "tiers", title: "Four tiers", nav: "Tiers" },
-  { id: "lender", title: "The lender view", nav: "Lender view" },
-  { id: "roadmap", title: "Roadmap", nav: "Roadmap" },
-  { id: "metrics", title: "Metrics", nav: "Metrics" },
-  { id: "hypotheses", title: "Hypotheses", nav: "Hypotheses" },
+/** Each section's h2, by tab page: overview, market, product, plan. */
+export const OVERVIEW_SECTIONS: readonly { id: OverviewSectionId; title: string }[] = [
+  { id: "loop", title: "The bet in one loop" },
+  { id: "headlines", title: "In three numbers" },
+  { id: "start", title: "Start here" },
+  { id: "board", title: "The board" },
+  { id: "shifts", title: "Structural vs hype" },
+  { id: "tenx", title: "The 5–10x" },
+  { id: "autonomy", title: "Streams × autonomy" },
+  { id: "roadmap", title: "Roadmap" },
+  { id: "metrics", title: "Metrics" },
+  { id: "hypotheses", title: "Hypotheses" },
 ];
-
-export const OVERVIEW_NAV_LABEL = "On this page";
 
 export function sectionTitle(id: OverviewSectionId): string {
   return OVERVIEW_SECTIONS.find((s) => s.id === id)!.title;
@@ -124,6 +123,22 @@ export const TENX = {
   ] satisfies TenXRow[],
 } as const;
 
+// ── The overview's three numbers: who we serve, the product's edge, the rails it runs on ──
+export interface Headline {
+  /** The figure, as its claim states it. */
+  value: string;
+  /** What the figure counts, after the value. */
+  label: string;
+  /** The claim the figure comes from: cited, or an assumption. */
+  claim: Claim;
+}
+
+export const HEADLINES: readonly Headline[] = [
+  { value: "~75%", label: "of India's truck operators own fewer than five trucks", claim: claimMatching(BET_OVERVIEW.claims, /^About 75%/) },
+  { value: "~30x", label: "faster to know a leak: the next morning, not month end (the speed row of the 5–10x)", claim: TENX.rows[0].claims[0] },
+  { value: ">98%", label: "of national-highway toll fees are collected electronically, through FASTag", claim: claimMatching(BET_OVERVIEW.claims, /98%/) },
+];
+
 // ── 3. The board (bet-spec §4): copy in ./board.ts ───────────────────────
 export const BOARD_INTRO = {
   lede: "The whole board before any idea: five segments, six jobs. We play in one cell first.",
@@ -182,15 +197,29 @@ export const TEASERS = {
   },
 } as const;
 
-/** Every claim the overview renders, in page order, so the [n] numbers run down the page. */
-export function overviewClaims(): Claim[] {
+/** /bet's claims, in page order: the loop, then the three numbers. */
+export function overviewSummaryClaims(): Claim[] {
+  return [...LOOP.claims, ...HEADLINES.map((h) => h.claim)];
+}
+
+/** /bet/market's claims, in page order: the board, what we dropped, structural vs hype. */
+export function marketClaims(): Claim[] {
   return [
-    ...LOOP.claims,
-    ...TENX.rows.flatMap((r) => r.claims),
     BOARD_INTRO.segment,
     ...BOARD_COPY.claims,
     ...DROPPED.flatMap((d) => d.claims),
     ...[...STRUCTURAL, ...HYPE].flatMap((i) => [i.mechanism, ...i.evidence]),
+  ];
+}
+
+/** /bet/product's claims, in page order: the 5–10x (streams × autonomy states none). */
+export function productClaims(): Claim[] {
+  return TENX.rows.flatMap((r) => r.claims);
+}
+
+/** /bet/plan's claims, in page order: the roadmap, the metrics, the hypotheses. */
+export function planClaims(): Claim[] {
+  return [
     ROADMAP_COPY.claim,
     ROADMAP_COPY.funding,
     ...NORTH_STAR.definition,
@@ -198,4 +227,12 @@ export function overviewClaims(): Claim[] {
     METRICS_COPY.claim,
     ...hypothesisClaims(),
   ];
+}
+
+/**
+ * The assumptions whose bases a page moves into its "Assumptions behind this page" list, once
+ * each, in page order. The body keeps each one's Assumption tag.
+ */
+export function deferredAssumptions(claims: readonly Claim[]): Claim[] {
+  return [...new Set(claims.filter((c) => !isCited(c)))];
 }

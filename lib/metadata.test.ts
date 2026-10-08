@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { BET_OVERVIEW, BET_TIERS } from "@/content/bet/copy";
+import { BET_ARTIFACTS, BET_MARKET, BET_OVERVIEW, BET_PLAN, BET_PRODUCT, BET_TIERS } from "@/content/bet/copy";
 import {
+  betArtifactsMetadata,
+  betMarketMetadata,
   betMetadata,
+  betPlanMetadata,
+  betProductMetadata,
   betTiersMetadata,
   briefMetadata,
   messageMetadata,
@@ -75,6 +79,20 @@ describe("per-page metadata (technical-plan §9)", () => {
     expect(m.description).toBe(BET_TIERS.description);
   });
 
+  it.each([
+    ["/bet/market", betMarketMetadata, BET_MARKET, "Where we play · Urja"],
+    ["/bet/product", betProductMetadata, BET_PRODUCT, "The product · Urja"],
+    ["/bet/plan", betPlanMetadata, BET_PLAN, "Roadmap, metrics and hypotheses · Urja"],
+    ["/bet/artifacts", betArtifactsMetadata, BET_ARTIFACTS, "Artifacts · Urja"],
+  ] as const)("TASK-32: %s has its own title, description and canonical", (path, fn, copy, title) => {
+    const m = fn();
+    expect(m.title).toEqual({ absolute: title });
+    expect(copy.path).toBe(path);
+    expect(og(m)).toMatchObject({ url: path, title, images: [OG_IMAGE] });
+    expect(m.description).toBe(copy.description);
+    expect(m.alternates).toEqual({ canonical: path });
+  });
+
   it("Truck RJ14 GB 4521 (TASK-21): September profit and ₹/km from its trucks() row", () => {
     const m = truckMetadata("RJ14 GB 4521")!;
     expect(m.title).toEqual({ absolute: "Truck RJ14 GB 4521 · Urja — Sharma Roadlines" });
@@ -104,6 +122,10 @@ describe("per-page metadata (technical-plan §9)", () => {
       messageMetadata(),
       betMetadata(),
       betTiersMetadata(),
+      betMarketMetadata(),
+      betProductMetadata(),
+      betPlanMetadata(),
+      betArtifactsMetadata(),
       truckMetadata("RJ14 GB 4521")!,
     ];
     const text = JSON.stringify(all);

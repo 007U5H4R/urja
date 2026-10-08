@@ -27,9 +27,9 @@ function Column({ kind, heading, lede, label, items, order }: {
           <li key={it.id} className="ov-shift-item">
             <h4>{it.name}</h4>
             <p className="ov-mech">
-              <span className="ov-mech-label">{label}</span> <InlineClaim claim={it.mechanism} order={order} />
+              <span className="ov-mech-label">{label}</span> <InlineClaim claim={it.mechanism} order={order} deferBasis />
             </p>
-            <ClaimList claims={it.evidence} order={order} className="ov-small" />
+            <ClaimList claims={it.evidence} order={order} className="ov-small" deferBasis />
           </li>
         ))}
       </ul>

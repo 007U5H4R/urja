@@ -8,6 +8,7 @@ import {
   type DroppedCandidate,
 } from "@/content/bet/board";
 import type { BOARD_INTRO } from "@/content/bet/overview";
+import { InlineClaim } from "./InlineClaim";
 import { OvSection } from "./OvSection";
 
 export interface BoardProps {
@@ -32,12 +33,13 @@ function Cell({ cell }: { cell: BoardCell }) {
 /**
  * bet-spec §4: segments × jobs as a real table, in a focusable region that scrolls sideways on a
  * narrow screen (WCAG 1.4.10). A marked cell names its state in words; the light only repeats it.
- * Below it, the candidates we dropped and why.
+ * Below it, the candidates we dropped: a compact list of the name, the one-line reason (our
+ * judgment, labelled) and the evidence. Assumption bases wait in the page's <Assumptions> list.
  */
 export function Board({ intro, copy, jobs, rows, dropped, order }: BoardProps) {
   return (
     <OvSection id="board" lede={intro.lede}>
-      <ClaimList claims={[intro.segment]} order={order} className="ov-small ov-board-why" />
+      <ClaimList claims={[intro.segment]} order={order} className="ov-small ov-board-why" deferBasis />
       {/* The caption names the table; this visible copy stays put while the table scrolls. */}
       <p className="ov-board-legend" aria-hidden="true">
         {copy.caption}
@@ -75,17 +77,25 @@ export function Board({ intro, copy, jobs, rows, dropped, order }: BoardProps) {
           </tbody>
         </table>
       </div>
-      <ClaimList claims={copy.claims} order={order} className="ov-small ov-board-note" />
+      <ClaimList claims={copy.claims} order={order} className="ov-small ov-board-note" deferBasis />
 
       <div className="ov-dropped">
         <h3>{copy.droppedHeading}</h3>
         <ul className="ov-dropped-list">
-          {dropped.map((d) => (
-            <li key={d.id} className="ov-dropped-item">
-              <h4>{d.name}</h4>
-              <ClaimList claims={d.claims} order={order} className="ov-small" />
-            </li>
-          ))}
+          {dropped.map((d) => {
+            const [reason, ...evidence] = d.claims;
+            return (
+              <li key={d.id} className="ov-dropped-item">
+                <h4>{d.name}</h4>
+                <div className="ov-drop-body">
+                  <p className="ov-drop-reason">
+                    <InlineClaim claim={reason} order={order} deferBasis />
+                  </p>
+                  {evidence.length > 0 && <ClaimList claims={evidence} order={order} className="ov-small ov-drop-ev" deferBasis />}
+                </div>
+              </li>
+            );
+          })}
         </ul>
       </div>
     </OvSection>

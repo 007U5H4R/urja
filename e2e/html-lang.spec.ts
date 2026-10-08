@@ -31,6 +31,11 @@ const LANGS: [string, "hi" | "en"][] = [
   // TASK-21: the bet pages are English only (EXE39).
   ["/bet", "en"],
   ["/bet/tiers", "en"],
+  // TASK-32 (EXE49): the bet's other tabs.
+  ["/bet/market", "en"],
+  ["/bet/product", "en"],
+  ["/bet/plan", "en"],
+  ["/bet/artifacts", "en"],
   ["/trucks/rj14-gb-4521", "en"],
 ];
 

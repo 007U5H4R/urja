@@ -13,14 +13,21 @@ function collectErrors(page: Page): string[] {
   return errors;
 }
 
+// TASK-32 (EXE49): the bet's tabs add /bet/market, /bet/product, /bet/plan and /bet/artifacts.
+// /bet/artifacts states no research claim, so it has no Sources list; its note says so instead.
 const PAGES = [
   { path: "/bet", h1: "Munshi → credit" },
+  { path: "/bet/market", h1: "Where we play" },
+  { path: "/bet/product", h1: "The product" },
   { path: "/bet/tiers", h1: "Four tiers, and who pays for each" },
   { path: "/trucks/rj14-gb-4521", h1: "RJ14 GB 4521 the lender view" },
+  { path: "/bet/plan", h1: "Roadmap, metrics and what we're testing" },
+  { path: "/bet/artifacts", h1: "Artifacts", noSources: true },
 ] as const;
 
-for (const { path, h1 } of PAGES) {
-  test(`${path}: 200, one h1, the prototype note, cited sources, and no console errors`, async ({ page }) => {
+for (const { path, h1, ...opts } of PAGES) {
+  const noSources = "noSources" in opts && opts.noSources;
+  test(`${path}: 200, one h1, the prototype note, ${noSources ? "the research note" : "cited sources"}, and no console errors`, async ({ page }) => {
     const errors = collectErrors(page);
     const res = await page.goto(path);
     expect(res?.status()).toBe(200);
@@ -29,15 +36,22 @@ for (const { path, h1 } of PAGES) {
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(h1);
     await expect(page.locator("main")).toContainText("Prototype, simulated data");
 
-    // Every [n] link lands on an entry of the page's source list, and each entry says Unverified.
-    const sources = page.getByRole("region", { name: "Sources" });
-    const items = sources.getByRole("listitem");
-    expect(await items.count()).toBeGreaterThan(0);
-    await expect(items.filter({ hasText: "Unverified" })).toHaveCount(await items.count());
-    const ids = await items.evaluateAll((lis) => lis.map((li) => li.id));
-    const hrefs = await page.locator("main a.cite-n").evaluateAll((as) => as.map((a) => a.getAttribute("href")));
-    expect(hrefs.length).toBeGreaterThan(0);
-    for (const href of hrefs) expect(ids).toContain(href!.slice(1));
+    if (noSources) {
+      // No claim, so no [n] and no source list; the note points to the research report.
+      await expect(page.getByRole("region", { name: "Sources" })).toHaveCount(0);
+      await expect(page.locator("main a.cite-n")).toHaveCount(0);
+      await expect(page.locator("main")).toContainText("Research figures are unverified; see the research report");
+    } else {
+      // Every [n] link lands on an entry of the page's source list, and each entry says Unverified.
+      const sources = page.getByRole("region", { name: "Sources" });
+      const items = sources.getByRole("listitem");
+      expect(await items.count()).toBeGreaterThan(0);
+      await expect(items.filter({ hasText: "Unverified" })).toHaveCount(await items.count());
+      const ids = await items.evaluateAll((lis) => lis.map((li) => li.id));
+      const hrefs = await page.locator("main a.cite-n").evaluateAll((as) => as.map((a) => a.getAttribute("href")));
+      expect(hrefs.length).toBeGreaterThan(0);
+      for (const href of hrefs) expect(ids).toContain(href!.slice(1));
+    }
 
     // EXE48: The bet pill is current, and no other.
     const current = page.locator('nav[aria-label="Main"] a[aria-current="page"]');

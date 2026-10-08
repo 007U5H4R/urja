@@ -2,32 +2,51 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
+import BetArtifactsPage from "@/app/(site)/bet/artifacts/page";
+import BetMarketPage from "@/app/(site)/bet/market/page";
 import BetPage from "@/app/(site)/bet/page";
+import BetPlanPage from "@/app/(site)/bet/plan/page";
+import BetProductPage from "@/app/(site)/bet/product/page";
+import { ARTIFACTS, ARTIFACTS_NOTE, NEW_TAB_CUE } from "@/content/bet/artifacts";
 import { BOARD_COPY, BOARD_JOBS, BOARD_ROWS, DROPPED } from "@/content/bet/board";
 import { BET_OVERVIEW } from "@/content/bet/copy";
 import { HYPOTHESES, HYPOTHESES_COPY, UNTESTED } from "@/content/bet/hypotheses";
 import { HYPE, HYPE_COPY, STRUCTURAL } from "@/content/bet/hype";
 import { GUARDRAILS, METRICS_COPY, NORTH_STAR, PRIMARY_METRICS } from "@/content/bet/metrics";
-import { AUTONOMY, BOARD_INTRO, LOOP, OVERVIEW_SECTIONS, TEASERS, TENX, overviewClaims } from "@/content/bet/overview";
+import {
+  AUTONOMY,
+  BOARD_INTRO,
+  HEADLINES,
+  LOOP,
+  TEASERS,
+  TENX,
+  marketClaims,
+  overviewSummaryClaims,
+  planClaims,
+  productClaims,
+} from "@/content/bet/overview";
 import { NOT_BUILDING, ROADMAP, ROADMAP_COPY } from "@/content/bet/roadmap";
-import { citedSourceIds } from "@/content/bet/sources";
+import { citedSourceIds, isCited, type Claim } from "@/content/bet/sources";
+import { BET_TABS } from "@/content/bet/tabs";
 import { getTiersView } from "@/lib/bet/views/tiers";
 import { getTruckView } from "@/lib/bet/views/truck";
 import { Autonomy } from "./Autonomy";
 import { BetLoop } from "./BetLoop";
 import { Board } from "./Board";
+import { Headlines } from "./Headlines";
 import { Hypotheses } from "./Hypotheses";
 import { Metrics } from "./Metrics";
 import { Roadmap } from "./Roadmap";
 import { Shifts } from "./Shifts";
-import { Teasers } from "./Teasers";
+import { StartHere } from "./StartHere";
 import { TenX } from "./TenX";
 
-// TASK-28: the /bet overview sections, rendered from content/bet and the bet views only.
+// TASK-28, split into tabs by TASK-32 (EXE49): the bet's sections, rendered from content/bet and
+// the bet views only, and the four tab pages they make up.
 
 afterEach(cleanup);
 
-const order = citedSourceIds(overviewClaims());
+const order = citedSourceIds([...overviewSummaryClaims(), ...marketClaims(), ...productClaims(), ...planClaims()]);
 const tiers = getTiersView().rows;
 const truck = getTruckView(TEASERS.lender.slug)!;
 const truckProps = { plate: truck.plate, scoreText: truck.trust.scoreText, scoreLabel: truck.trust.label, verifiedText: truck.verified.text };
@@ -103,11 +122,18 @@ describe("Board", () => {
     expect(within(region).getByRole("table")).toBeTruthy();
   });
 
-  it("lists the dropped candidates with their reasons and citations", () => {
+  it("lists the dropped candidates compactly: name, a one-line reason, then its evidence", () => {
     const { container } = renderBoard();
     const items = [...container.querySelectorAll(".ov-dropped-item")];
     expect(items.map((li) => li.querySelector("h4")?.textContent)).toEqual(DROPPED.map((d) => d.name));
-    expect(items[0].textContent).toContain("Assumption");
+    for (const [i, d] of DROPPED.entries()) {
+      const reason = items[i].querySelector(".ov-drop-reason")!;
+      expect(reason.textContent?.startsWith(d.claims[0].text), d.id).toBe(true);
+      expect(reason.querySelector(".bet-assume-tag")?.textContent, d.id).toBe("Assumption");
+      // The long basis waits in the page's assumptions list.
+      if (!isCited(d.claims[0])) expect(reason.textContent, d.id).not.toContain(d.claims[0].basis);
+      expect(items[i].querySelectorAll(".ov-drop-ev > li"), d.id).toHaveLength(d.claims.length - 1);
+    }
     expect(items[0].querySelector("a.cite-n")?.getAttribute("href")).toBe("#src-vahak-network");
   });
 });
@@ -146,21 +172,41 @@ describe("Autonomy", () => {
   });
 });
 
-describe("Teasers", () => {
-  it("shows the four prices from getTiersView() and links to /bet/tiers", () => {
-    render(<Teasers copy={TEASERS} tiers={tiers} truck={truckProps} />);
-    const section = screen.getByRole("region", { name: "Four tiers" });
-    expect([...section.querySelectorAll(".ov-price")].map((p) => p.textContent)).toEqual(tiers.map((t) => t.price));
-    expect(within(section).getByRole("link", { name: /How the tiers work/ }).getAttribute("href")).toBe("/bet/tiers");
+describe("Headlines", () => {
+  it("shows the three figures from content, each with its claim's citation or Assumption tag", () => {
+    const { container } = render(<Headlines headlines={HEADLINES} order={order} />);
+    const items = [...container.querySelectorAll(".ov-head")];
+    expect(items.map((li) => li.querySelector(".ov-head-value")?.textContent)).toEqual(HEADLINES.map((h) => h.value));
+    expect(items[0].querySelector("a.cite-n")?.getAttribute("href")).toBe("#src-zinka-prospectus");
+    expect(items[1].querySelector(".bet-assume-tag")?.textContent).toBe("Assumption");
+    expect(items[2].querySelector("a.cite-n")?.getAttribute("href")).toBe("#src-fastag-98");
+  });
+});
+
+describe("StartHere", () => {
+  const renderCards = () => render(<StartHere tabs={BET_TABS} tiers={tiers} truck={truckProps} />);
+
+  it("has one card per tab but the overview, each with a one-line summary and a link to it", () => {
+    renderCards();
+    const section = screen.getByRole("region", { name: "Start here" });
+    const cards = within(section).getAllByRole("listitem").filter((li) => li.classList.contains("ov-start-card"));
+    const others = BET_TABS.filter((t) => t.id !== "overview");
+    expect(cards).toHaveLength(others.length);
+    for (const [i, t] of others.entries()) {
+      expect(within(cards[i]).getByRole("heading", { level: 3 }).textContent).toBe(t.label);
+      expect(cards[i].textContent).toContain(t.summary);
+      expect(within(cards[i]).getByRole("link").getAttribute("href")).toBe(t.href);
+    }
   });
 
-  it("shows the lender view's plate, score and 27 of 180 verified days, and links to the truck", () => {
-    render(<Teasers copy={TEASERS} tiers={tiers} truck={truckProps} />);
-    const section = screen.getByRole("region", { name: "The lender view" });
-    expect(section.textContent).toContain("27 of 180 verified days");
-    expect(section.textContent).toContain(truck.plate);
-    expect(section.textContent).toContain(truck.trust.scoreText);
-    expect(within(section).getByRole("link", { name: /Open the lender view/ }).getAttribute("href")).toBe("/trucks/rj14-gb-4521");
+  it("keeps the four prices from getTiersView() and the lender view's figures in their cards", () => {
+    const { container } = renderCards();
+    const tiersCard = container.querySelector(".ov-start-tiers")!;
+    expect([...tiersCard.querySelectorAll(".ov-price")].map((p) => p.textContent)).toEqual(tiers.map((t) => t.price));
+    const lender = container.querySelector(".ov-start-lender")!;
+    expect(lender.textContent).toContain("27 of 180 verified days");
+    expect(lender.textContent).toContain(truck.plate);
+    expect(lender.textContent).toContain(truck.trust.scoreText);
   });
 });
 
@@ -227,36 +273,145 @@ describe("Hypotheses", () => {
   });
 });
 
-describe("/bet page", () => {
-  it("keeps the h1, lists every section in the in-page nav, and ends with Sources covering every [n]", () => {
-    const { container } = render(<BetPage />);
-    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Munshi → credit");
-    const nav = screen.getByRole("navigation", { name: "On this page" });
-    expect(within(nav).getAllByRole("link").map((a) => a.getAttribute("href"))).toEqual(OVERVIEW_SECTIONS.map((s) => `#ov-${s.id}`));
-    for (const s of OVERVIEW_SECTIONS) expect(container.querySelector(`#ov-${s.id}`), s.id).not.toBeNull();
+/** The page's Sources entries cover every [n] link, first appear in reading order, and come last. */
+function expectOwnSources(container: HTMLElement, claims: readonly Claim[]) {
+  const pageOrder = citedSourceIds(claims);
+  const sources = screen.getByRole("region", { name: "Sources" });
+  const ids = within(sources).getAllByRole("listitem").map((li) => li.id);
+  expect(ids).toEqual(pageOrder.map((id) => `src-${id}`));
+  const links = [...container.querySelectorAll("main a.cite-n")];
+  const hrefs = links.map((a) => a.getAttribute("href")!.slice(1));
+  for (const h of hrefs) expect(ids).toContain(h);
+  for (const id of ids) expect(hrefs).toContain(id);
+  const firsts = [...new Set(links.map((a) => Number(/\[(\d+)\]/.exec(a.textContent ?? "")![1])))];
+  expect(firsts).toEqual(firsts.map((_, i) => i + 1));
+  const sections = container.querySelectorAll("main > section");
+  expect(sections[sections.length - 1]).toBe(sources);
+}
 
-    const sources = screen.getByRole("region", { name: "Sources" });
-    const ids = within(sources).getAllByRole("listitem").map((li) => li.id);
-    expect(ids).toEqual(order.map((id) => `src-${id}`));
-    const links = [...container.querySelectorAll("main a.cite-n")];
-    const hrefs = links.map((a) => a.getAttribute("href")!.slice(1));
-    for (const h of hrefs) expect(ids).toContain(h);
-    for (const id of ids) expect(hrefs).toContain(id);
-    // The [n] numbers first appear in reading order: 1, 2, 3…
-    const firsts = [...new Set(links.map((a) => Number(/\[(\d+)\]/.exec(a.textContent ?? "")![1])))];
-    expect(firsts).toEqual(firsts.map((_, i) => i + 1));
-    const sections = container.querySelectorAll("main > section");
-    expect(sections[sections.length - 1]).toBe(sources);
+/** The page's assumptions, bases and all, in its closed "Assumptions behind this page" list. */
+function expectAssumptions(container: HTMLElement, claims: readonly Claim[]) {
+  const details = container.querySelector("details.bet-assumptions") as HTMLDetailsElement;
+  expect(details).not.toBeNull();
+  expect(details.open).toBe(false);
+  expect(details.querySelector("summary")?.textContent).toContain("Assumptions behind this page");
+  const text = details.textContent ?? "";
+  for (const c of claims) if (!isCited(c)) expect(text, c.text).toContain(c.basis);
+}
+
+const bodyClaims = (container: HTMLElement) =>
+  [...container.querySelectorAll("main .bet-claims > li")].filter((li) => !li.closest(".bet-assumptions")).map((li) => li.textContent ?? "");
+
+describe("/bet, the overview", () => {
+  it("keeps the h1 and the head, shows the tab bar with Overview current, and drops the in-page nav", () => {
+    render(<BetPage />);
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Munshi → credit");
+    const tabs = screen.getByRole("navigation", { name: "The bet" });
+    expect(within(tabs).getAllByRole("link")).toHaveLength(7);
+    expect(tabs.querySelector('[aria-current="page"]')?.textContent).toBe("Overview");
+    expect(screen.queryByRole("navigation", { name: "On this page" })).toBeNull();
   });
 
-  it("states every BET_OVERVIEW claim exactly once", () => {
+  it("is short: the loop, three figures and the start-here cards, then its assumptions and Sources", () => {
     const { container } = render(<BetPage />);
-    const items = [...container.querySelectorAll("main .bet-claims > li")].map((li) => li.textContent ?? "");
+    expect(screen.getByRole("figure", { name: LOOP.caption })).toBeTruthy();
+    expect(container.querySelectorAll(".ov-head")).toHaveLength(3);
+    expect(container.querySelectorAll(".ov-start-card")).toHaveLength(6);
+    expect(container.querySelector(".ov-board, .ov-hyps, .ov-tenx")).toBeNull();
+    expectAssumptions(container, overviewSummaryClaims());
+    expectOwnSources(container, overviewSummaryClaims());
+  });
+});
+
+describe("/bet/market", () => {
+  it("has its h1, the board and structural vs hype, its assumptions and its own Sources", () => {
+    const { container } = render(<BetMarketPage />);
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Where we play");
+    expect(screen.getByRole("navigation", { name: "The bet" }).querySelector('[aria-current="page"]')?.textContent).toBe("Where we play");
+    expect(screen.getByRole("table", { name: /The board: segments by jobs/ })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: HYPE_COPY.structuralHeading })).toBeTruthy();
+    expectAssumptions(container, marketClaims());
+    expectOwnSources(container, marketClaims());
+  });
+
+  it("states every BET_OVERVIEW claim exactly once outside the assumptions list", () => {
+    const { container } = render(<BetMarketPage />);
+    const items = bodyClaims(container);
     for (const c of BET_OVERVIEW.claims) expect(items.filter((t) => t.startsWith(c.text)), c.text).toHaveLength(1);
   });
+});
 
-  it("uses no accusing word", () => {
-    const { container } = render(<BetPage />);
-    expect(container.textContent).not.toMatch(/\b(theft|stolen|steal|thief)\b|चोरी|चुरा/i);
+describe("/bet/product", () => {
+  it("has its h1, the 5–10x, streams × autonomy and the flag-lab link, its assumptions and its own Sources", () => {
+    const { container } = render(<BetProductPage />);
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("The product");
+    expect(screen.getByRole("navigation", { name: "The bet" }).querySelector('[aria-current="page"]')?.textContent).toBe("Product");
+    expect(container.querySelectorAll(".ov-tenx-card")).toHaveLength(4);
+    expect(container.querySelectorAll(".ov-rung")).toHaveLength(5);
+    expect(screen.getByRole("link", { name: /See it on a real flag/ }).getAttribute("href")).toBe("/trips/0926-04#flag-lab");
+    expectAssumptions(container, productClaims());
+    expectOwnSources(container, productClaims());
+  });
+});
+
+describe("/bet/plan", () => {
+  it("has its h1, the roadmap, the metrics and H1–H7, its assumptions and its own Sources", () => {
+    const { container } = render(<BetPlanPage />);
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Roadmap, metrics and what we're testing");
+    expect(screen.getByRole("navigation", { name: "The bet" }).querySelector('[aria-current="page"]')?.textContent).toBe("Plan");
+    expect(container.querySelector(".ov-nsm-name")?.textContent).toBe("Verified truck-months");
+    expect(container.querySelectorAll(".ov-hyp")).toHaveLength(7);
+    expectAssumptions(container, [ROADMAP_COPY.claim, ROADMAP_COPY.funding, ...NORTH_STAR.definition, METRICS_COPY.claim]);
+    expectOwnSources(container, planClaims());
+  });
+});
+
+describe("/bet/artifacts", () => {
+  it("has one card per deliverable, each link opening in a new tab, the note, and no Sources", () => {
+    const { container } = render(<BetArtifactsPage />);
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Artifacts");
+    expect(screen.getByRole("navigation", { name: "The bet" }).querySelector('[aria-current="page"]')?.textContent).toBe("Artifacts");
+    const cards = [...container.querySelectorAll(".bet-artifact")];
+    expect(cards).toHaveLength(ARTIFACTS.length);
+    for (const [i, a] of ARTIFACTS.entries()) {
+      expect(within(cards[i] as HTMLElement).getByRole("heading", { level: 2 }).textContent).toBe(a.title);
+      expect(cards[i].textContent).toContain(a.description);
+      expect(cards[i].textContent).toContain(a.format);
+      expect(cards[i].textContent).toContain(a.access === "shared" ? "Opens if shared with you" : "Public");
+      const link = within(cards[i] as HTMLElement).getByRole("link");
+      expect(link.getAttribute("href")).toBe(a.href);
+      expect(link.getAttribute("target")).toBe("_blank");
+      expect(link.getAttribute("rel")).toBe("noopener noreferrer");
+      expect(link.textContent).toContain("(opens in a new tab)");
+    }
+    const note = container.querySelector(".bet-artifacts-note")!;
+    expect(note.textContent?.replace(` ↗ ${NEW_TAB_CUE}`, "")).toBe(ARTIFACTS_NOTE.text);
+    expect(note.querySelector("a")?.getAttribute("href")).toBe(ARTIFACTS_NOTE.href);
+    expect(screen.queryByRole("region", { name: "Sources" })).toBeNull();
+    for (const a of container.querySelectorAll('a[target="_blank"]')) expect(a.getAttribute("rel")).toBe("noopener noreferrer");
+  });
+});
+
+describe("the bet's tab pages", () => {
+  const pages = [BetPage, BetMarketPage, BetProductPage, BetPlanPage, BetArtifactsPage];
+
+  it("use no accusing word", () => {
+    for (const Page of pages) {
+      const { container } = render(<Page />);
+      expect(container.textContent).not.toMatch(/\b(theft|stolen|steal|thief)\b|चोरी|चुरा/i);
+      cleanup();
+    }
+  });
+
+  it("render every claim the old single page rendered, across them", () => {
+    const seen = new Set<string>();
+    for (const Page of pages) {
+      const { container } = render(<Page />);
+      for (const li of container.querySelectorAll("main .bet-claims > li")) seen.add(li.textContent ?? "");
+      for (const el of container.querySelectorAll(".ov-mech, .ov-target, .ov-head")) seen.add(el.textContent ?? "");
+      cleanup();
+    }
+    const all = [...overviewSummaryClaims(), ...marketClaims(), ...productClaims(), ...planClaims()];
+    for (const c of all) expect([...seen].some((t) => t.includes(c.text)), c.text).toBe(true);
   });
 });

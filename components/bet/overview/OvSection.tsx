@@ -11,7 +11,7 @@ export interface OvSectionProps {
   children: ReactNode;
 }
 
-/** One overview section: a panel named by its h2, with an anchor the in-page nav jumps to. */
+/** One section of a bet tab page: a panel named by its h2, with an anchor (`#ov-<id>`). */
 export function OvSection({ id, lede, aside, className, children }: OvSectionProps) {
   const h = `ov-${id}-h`;
   return (

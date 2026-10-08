@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { BetHead } from "@/components/bet/BetHead";
+import { BetTabs } from "@/components/bet/BetTabs";
 import { ClaimList } from "@/components/bet/ClaimList";
 import { Sources } from "@/components/bet/Sources";
 import { CostTable } from "@/components/bet/tiers/CostTable";
@@ -24,6 +25,7 @@ export default function BetTiersPage() {
   return (
     <main className="wrap bet bet-tiers" id="main">
       <BetHead eyebrow={c.eyebrow} h1={c.h1} thesis={c.thesis} />
+      <BetTabs path={c.path} />
 
       <TierTable rows={view.rows} hardware={view.hardware} table={view.table} order={order} />
 
